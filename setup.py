@@ -21,6 +21,11 @@ setup(
     version=version,
     license='Apache 2.0',
     install_requires=[],
+    extras_require={
+        'dev': [
+            'pytest>=6',
+        ],
+    },
     author='Kotaro Terada',
     author_email='kotarot@apache.org',
     url='https://github.com/kotarot/sawatabi',
