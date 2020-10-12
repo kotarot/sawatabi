@@ -26,7 +26,7 @@ setup(
             'pytest>=6',
         ],
     },
-    author='Kotaro Terada',
+    author='Kotaro Terada, Shingo Furuyama, Junya Usui, and Kazuki Ono',
     author_email='kotarot@apache.org',
     url='https://github.com/kotarot/sawatabi',
     description='sawatabi.',
