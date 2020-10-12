@@ -1,3 +1,5 @@
+![sawatabi-logo](./figs/sawatabi-logo.gif)
+
 # sawatabi
 
 :warning: **This project is work in progress** :warning:
