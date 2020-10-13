@@ -12,7 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi import utils
-from .model.LogicalModel import *
+import pytest
 
-__all__ = ["utils"]
+from sawatabi import LogicalModel
+
+def test_logical_model_ising():
+    model = LogicalModel(type='ising')
+
+def test_logical_model_qubo():
+    model = LogicalModel(type='qubo')
+
+def test_logical_model_with_invalid_type():
+    with pytest.raises(ValueError):
+        model = LogicalModel()
+
+    with pytest.raises(ValueError):
+        model = LogicalModel(type='othertype')

@@ -12,7 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi import utils
-from .model.LogicalModel import *
+from ..constants import *
 
-__all__ = ["utils"]
+class LogicalModel():
+    def __init__(self, type=''):
+        if type == MODEL_TYPE_ISING:
+            self.type = type
+        elif type == MODEL_TYPE_QUBO:
+            self.type = type
+        else:
+            raise ValueError("type must be '{}' or '{}'.".format(MODEL_TYPE_ISING, MODEL_TYPE_QUBO))
+
+    def add_variable(self):
+        raise NotImplementedError
+
+    def add_interaction(self):
+        raise NotImplementedError
