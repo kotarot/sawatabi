@@ -16,12 +16,10 @@ from ..constants import *
 
 class LogicalModel():
     def __init__(self, type=''):
-        if type == MODEL_TYPE_ISING:
-            self.type = type
-        elif type == MODEL_TYPE_QUBO:
+        if type in [MODEL_TYPE_ISING, MODEL_TYPE_QUBO]:
             self.type = type
         else:
-            raise ValueError("type must be '{}' or '{}'.".format(MODEL_TYPE_ISING, MODEL_TYPE_QUBO))
+            raise ValueError("type must be one of {}.".format([MODEL_TYPE_ISING, MODEL_TYPE_QUBO]))
 
     def add_variable(self):
         raise NotImplementedError

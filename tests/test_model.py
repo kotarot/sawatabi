@@ -28,3 +28,6 @@ def test_logical_model_with_invalid_type():
 
     with pytest.raises(ValueError):
         model = LogicalModel(type='othertype')
+
+    with pytest.raises(ValueError):
+        model = LogicalModel(type=12345)

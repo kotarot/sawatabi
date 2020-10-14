@@ -13,6 +13,6 @@
 # limitations under the License.
 
 from sawatabi import utils
-from .model.LogicalModel import *
+from .model.logical_model import *
 
 __all__ = ["utils"]
