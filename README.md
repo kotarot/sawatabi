@@ -2,8 +2,11 @@
 
 # sawatabi
 
-[![PyPI](https://badge.fury.io/py/sawatabi.svg)](https://badge.fury.io/py/sawatabi)
-[![ci](https://github.com/kotarot/sawatabi/workflows/ci/badge.svg)](https://github.com/kotarot/sawatabi/actions?query=workflow%3Aci)
+[![PyPI](https://img.shields.io/pypi/v/sawatabi?style=flat-square)](https://pypi.org/project/sawatabi/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/sawatabi?style=flat-square)](https://pypi.org/project/sawatabi/)
+[![GitHub repo size](https://img.shields.io/github/repo-size/kotarot/sawatabi?style=flat-square)](https://github.com/kotarot/sawatabi)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/kotarot/sawatabi/ci?style=flat-square)](https://github.com/kotarot/sawatabi/actions?query=workflow%3Aci)
+[![GitHub](https://img.shields.io/github/license/kotarot/sawatabi?style=flat-square)](https://github.com/kotarot/sawatabi/blob/main/LICENSE)
 
 :warning: **This project is work in progress** :warning:
 
