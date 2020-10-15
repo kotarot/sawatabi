@@ -22,7 +22,7 @@ with open(path.join(root_dir, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name=package_name,
-    packages=[package_name],
+    packages=packages,
     version=version,
     license='Apache 2.0',
     install_requires=[
