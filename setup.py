@@ -29,7 +29,6 @@ setup(
         'pyqubo>=0.4.0,<1.0.0',
         'dwave-neal>=0.5.6,<1.0.0',
         'apache-beam>=2.24.0,<3.0.0',
-        'apache-beam[interactive]>=2.24.0,<3.0.0',
     ],
     extras_require={
         'dev': [
