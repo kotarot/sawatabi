@@ -7,9 +7,14 @@ import re
 from setuptools import setup
 
 package_name = 'sawatabi'
+packages = [
+    package_name,
+    package_name + '.utils',
+]
+
 root_dir = path.abspath(path.dirname(__file__))
 
-with open(path.join(root_dir, package_name, 'version.py'), encoding='utf8') as f:
+with open(path.join(root_dir, package_name, '__version__.py'), encoding='utf8') as f:
     version = re.search(r'__version__\s*=\s*[\'\"](.+?)[\'\"]', f.read()).group(1)
 
 with open(path.join(root_dir, 'README.md'), encoding='utf-8') as f:
@@ -17,14 +22,13 @@ with open(path.join(root_dir, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name=package_name,
-    packages=[package_name],
+    packages=packages,
     version=version,
     license='Apache 2.0',
     install_requires=[
         'pyqubo>=0.4.0,<1.0.0',
         'dwave-neal>=0.5.6,<1.0.0',
         'apache-beam>=2.24.0,<3.0.0',
-        'apache-beam[interactive]>=2.24.0,<3.0.0',
     ],
     extras_require={
         'dev': [
