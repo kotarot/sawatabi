@@ -7,9 +7,14 @@ import re
 from setuptools import setup
 
 package_name = 'sawatabi'
+packages = [
+    package_name,
+    package_name + '.utils',
+]
+
 root_dir = path.abspath(path.dirname(__file__))
 
-with open(path.join(root_dir, package_name, 'version.py'), encoding='utf8') as f:
+with open(path.join(root_dir, package_name, '__version__.py'), encoding='utf8') as f:
     version = re.search(r'__version__\s*=\s*[\'\"](.+?)[\'\"]', f.read()).group(1)
 
 with open(path.join(root_dir, 'README.md'), encoding='utf-8') as f:
