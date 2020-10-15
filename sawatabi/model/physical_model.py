@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi import utils
-from .model.logical_model import *
-from .model.physical_model import *
+from ..constants import *
+from .abstract_model import *
 
-__all__ = ["utils"]
+class PhysicalModel(AbstractModel):
+    def __init__(self, type=''):
+        super().__init__()

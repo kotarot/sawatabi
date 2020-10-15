@@ -18,9 +18,11 @@ from sawatabi import LogicalModel
 
 def test_logical_model_ising():
     model = LogicalModel(type='ising')
+    print(model)
 
 def test_logical_model_qubo():
     model = LogicalModel(type='qubo')
+    print(model)
 
 def test_logical_model_with_invalid_type():
     with pytest.raises(ValueError):
