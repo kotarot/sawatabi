@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '0.0.1.dev1'
+__version__ = '0.0.1.dev2'
 __version_info__ = tuple(int(i) if i.isdigit() else i for i in __version__.split('.'))
