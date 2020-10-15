@@ -16,15 +16,16 @@ import pytest
 
 from sawatabi import LogicalModel
 
-def test_logical_model_ising():
-    model = LogicalModel(type='ising')
-    print(model)
+################################
+# Model
+################################
 
-def test_logical_model_qubo():
-    model = LogicalModel(type='qubo')
-    print(model)
+@pytest.mark.parametrize('type', ['ising', 'qubo'])
+def test_logical_model_constructor(type):
+    model = LogicalModel(type=type)
+    assert model.get_type() == type
 
-def test_logical_model_with_invalid_type():
+def test_logical_model_invalid_type():
     with pytest.raises(ValueError):
         model = LogicalModel()
 
@@ -33,3 +34,47 @@ def test_logical_model_with_invalid_type():
 
     with pytest.raises(ValueError):
         model = LogicalModel(type=12345)
+
+################################
+# Array
+################################
+
+def test_logical_model_array():
+    model = LogicalModel(type='ising')
+    model.array('x', shape=(2, 3))
+
+@pytest.mark.parametrize('name,shape', [
+    (12345, (2, 3)),
+    ('x', 12345),
+    ('x', ()),
+    ('x', ('a', 'b')),
+])
+def test_logical_model_invalid_arrays(name, shape):
+    model = LogicalModel(type='ising')
+    with pytest.raises(TypeError):
+        model.array(name, shape=shape)
+
+def test_logical_model_arrays_from_pyqubo():
+    import pyqubo
+    x = pyqubo.Array.create('x', shape=(2, 3), vartype='BINARY')
+    model = LogicalModel(type='qubo')
+    model.array(x)
+
+################################
+# Add
+################################
+
+def test_logical_model_add():
+    model = LogicalModel(type='ising')
+
+    with pytest.raises(NotImplementedError):
+        model.add_variable()
+
+    with pytest.raises(NotImplementedError):
+        model.add_variables()
+
+    with pytest.raises(NotImplementedError):
+        model.add_interaction()
+
+    with pytest.raises(NotImplementedError):
+        model.add_interactions()

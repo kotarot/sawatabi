@@ -16,6 +16,6 @@ from ..constants import *
 
 class AbstractModel():
     def __init__(self):
-        self.array = None
-        self.variables = []
-        self.interactions = []
+        self._array = None
+        self._variables = []
+        self._interactions = []

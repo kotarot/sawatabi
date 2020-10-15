@@ -15,13 +15,43 @@
 from ..constants import *
 from .abstract_model import *
 
+import pyqubo
+
 class LogicalModel(AbstractModel):
     def __init__(self, type=''):
         super().__init__()
         if type in [MODEL_TYPE_ISING, MODEL_TYPE_QUBO]:
-            self.type = type
+            self._type = type
         else:
-            raise ValueError("type must be one of {}.".format([MODEL_TYPE_ISING, MODEL_TYPE_QUBO]))
+            raise ValueError("'type' must be one of {}.".format([MODEL_TYPE_ISING, MODEL_TYPE_QUBO]))
+
+    ################################
+    # Array
+    ################################
+
+    def array(self, name, shape=()):
+        if isinstance(name, pyqubo.Array):
+            self._array = name
+            return self._array
+
+        if not isinstance(name, str):
+            raise TypeError("'name' must be a string.")
+        if not isinstance(shape, tuple):
+            raise TypeError("'shape' must be a tuple.")
+        else:
+            if len(shape) == 0:
+                raise TypeError("'shape' must not be an empty tuple.")
+            for i in shape:
+                if not isinstance(i, int):
+                    raise TypeError("All elements of 'shape' must be an integer.")
+
+        if self._type == MODEL_TYPE_ISING:
+            vartype = 'SPIN'
+        elif self._type == MODEL_TYPE_QUBO:
+            vartype = 'BINARY'
+
+        self._array = pyqubo.Array.create(name, shape=shape, vartype=vartype)
+        return self._array
 
     ################################
     # Add
@@ -106,14 +136,24 @@ class LogicalModel(AbstractModel):
     def convert_to_physical(self):
         raise NotImplementedError
 
+    def convert_type(self):
+        """
+        Converts the model to a QUBO model if the current model type is Ising, and vice versa.
+        """
+        raise NotImplementedError
+
     ################################
-    # Others
+    # Getters
     ################################
+
+    def get_type(self):
+        return self._type
+
     def get_array(self):
         """
         Returns a list of alive variables (i.e., variables which are not removed nor fixed).
         """
-        raise NotImplementedError
+        return self._array
 
     def get_fixed_array(self):
         """
@@ -164,7 +204,8 @@ class LogicalModel(AbstractModel):
     def __repr__(self):
         s = []
         s.append('--- Logical Model ---')
-        s.append('  type: ' + self.type)
-        s.append('  variables: ' + str(self.variables))
-        s.append('  interactions: ' + str(self.interactions))
+        s.append('type: ' + self._type)
+        s.append('array: ' + str(self._array))
+        s.append('variables: ' + str(self._variables))
+        s.append('interactions: ' + str(self._interactions))
         return '\n'.join(s)
