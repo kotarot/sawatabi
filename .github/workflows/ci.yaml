@@ -25,6 +25,10 @@ jobs:
       run: |
         pytest --verbose
 
-    - name: Lint with black
+    - name: Check with black
       run: |
         black --check --diff .
+
+    - name: Check with flake8
+      run: |
+        flake8 --statistics --count --show-source .
