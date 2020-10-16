@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..__version__ import __version__, __version_info__
+from sawatabi.__version__ import __version__, __version_info__
 
 
 def version():
