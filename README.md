@@ -6,6 +6,7 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/sawatabi?style=flat-square)](https://pypi.org/project/sawatabi/)
 [![GitHub repo size](https://img.shields.io/github/repo-size/kotarot/sawatabi?style=flat-square)](https://github.com/kotarot/sawatabi)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/kotarot/sawatabi/ci?style=flat-square)](https://github.com/kotarot/sawatabi/actions?query=workflow%3Aci)
+[![Codecov branch](https://img.shields.io/codecov/c/gh/kotarot/sawatabi/main?flag=unittests&style=flat-square&token=SKXOS0VKOA)](https://codecov.io/gh/kotarot/sawatabi)
 [![GitHub](https://img.shields.io/github/license/kotarot/sawatabi?style=flat-square)](https://github.com/kotarot/sawatabi/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
