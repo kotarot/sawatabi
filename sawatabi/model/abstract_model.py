@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..constants import *
+from sawatabi.constants import *
 
 class AbstractModel():
     def __init__(self):

@@ -14,7 +14,7 @@
 
 import pytest
 
-from sawatabi import LogicalModel
+from sawatabi.model import LogicalModel
 
 ################################
 # Model

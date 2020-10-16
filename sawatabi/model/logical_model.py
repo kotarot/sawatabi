@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..constants import *
-from .abstract_model import *
+from sawatabi.constants import *
+from sawatabi.model.abstract_model import *
 
 import pyqubo
 

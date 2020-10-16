@@ -19,7 +19,7 @@ def version():
     print('version_info:', sawatabi.utils.version_info())
 
 def model():
-    model = sawatabi.LogicalModel(type='ising')
+    model = sawatabi.model.LogicalModel(type='ising')
     a = model.array('x', shape=(2, 3))
     print(model)
     print(a)
