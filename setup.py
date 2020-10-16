@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import re
 from codecs import open
 from os import path
-import re
+
 from setuptools import setup
 
 package_name = "sawatabi"
