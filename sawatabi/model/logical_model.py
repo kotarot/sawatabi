@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pyqubo
+
 from sawatabi.constants import MODEL_TYPE_ISING, MODEL_TYPE_QUBO
 from sawatabi.model.abstract_model import AbstractModel
-
-import pyqubo
 
 
 class LogicalModel(AbstractModel):

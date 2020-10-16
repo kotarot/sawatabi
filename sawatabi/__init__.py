@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi import utils
-from sawatabi import model
+from sawatabi import model, utils
 
-__all__ = ["utils", "model"]
+__all__ = ["model", "utils"]

@@ -16,7 +16,6 @@ import pytest
 
 from sawatabi.model import LogicalModel
 
-
 ################################
 # Model
 ################################
