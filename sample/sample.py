@@ -15,19 +15,39 @@
 import sawatabi
 
 
-def version():
+def sample_version():
+    print("\n=== version ===")
     print("version:", sawatabi.utils.version())
     print("version_info:", sawatabi.utils.version_info())
 
 
-def model():
+def sample_model_1d():
+    print("\n=== model ===")
     model = sawatabi.model.LogicalModel(type="ising")
-    a = model.array("x", shape=(2, 3))
+    x = model.array("x", shape=(2,))
+    print("--- Model ---")
     print(model)
-    print("--- Returns ---")
-    print(a)
+    print("--- Return Value ---")
+    print(x)
+
+    model.update_variable(x[0], coefficient=1.0)
+    model.update_variable(x[1], coefficient=2.0, attributes={"foo": "bar"})
+    model.update_interaction((x[0], x[1]), coefficient=-3.0)
+
+    x = model.append(shape=(1,))
+    print("--- Model ---")
+    print(model)
+    print("--- Return Value ---")
+    print(x)
+
+    model.update_variable(
+        x[2],
+        coefficient=4.0,
+        attributes={"myattr1": "foo", "myattr2": "bar"},
+        timestamp=15988860000000,
+    )
 
 
 if __name__ == "__main__":
-    version()
-    model()
+    sample_version()
+    sample_model_1d()

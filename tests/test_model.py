@@ -43,9 +43,11 @@ def test_logical_model_invalid_type():
 ################################
 
 
-def test_logical_model_array():
+@pytest.mark.parametrize("shape", [(2,), (3, 4), (5, 6, 7)])
+def test_logical_model_array(shape):
     model = LogicalModel(type="ising")
-    model.array("x", shape=(2, 3))
+    x = model.array("x", shape=shape)
+    assert x.shape == shape
 
 
 @pytest.mark.parametrize(

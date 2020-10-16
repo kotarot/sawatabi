@@ -16,5 +16,6 @@
 class AbstractModel:
     def __init__(self):
         self._array = None
-        self._variables = []
-        self._interactions = []
+        self._array_name = ""
+        self._variables = {}
+        self._interactions = {}

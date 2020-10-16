@@ -35,10 +35,35 @@ class LogicalModel(AbstractModel):
     def array(self, name, shape=()):
         if isinstance(name, pyqubo.Array):
             self._array = name
+            self._array_name = "TODO"
             return self._array
+        self._check_argument_for_name(name)
+        self._check_argument_for_shape(shape)
 
+        vartype = self._modeltype_to_vartype(self._type)
+
+        self._array = pyqubo.Array.create(name, shape=shape, vartype=vartype)
+        self._array_name = name
+        return self._array
+
+    def append(self, shape=()):
+        self._check_argument_for_shape(shape)
+
+        new_shape = tuple(
+            map(sum, zip(self._array.shape, shape))
+        )  # tuple elementwise addition
+        vartype = self._modeltype_to_vartype(self._type)
+
+        self._array = pyqubo.Array.create(
+            self._array_name, shape=new_shape, vartype=vartype
+        )
+        return self._array
+
+    def _check_argument_for_name(self, name):
         if not isinstance(name, str):
             raise TypeError("'name' must be a string.")
+
+    def _check_argument_for_shape(self, shape):
         if not isinstance(shape, tuple):
             raise TypeError("'shape' must be a tuple.")
         else:
@@ -48,13 +73,23 @@ class LogicalModel(AbstractModel):
                 if not isinstance(i, int):
                     raise TypeError("All elements of 'shape' must be an integer.")
 
-        if self._type == MODEL_TYPE_ISING:
+    def _modeltype_to_vartype(self, modeltype):
+        if modeltype == MODEL_TYPE_ISING:
             vartype = "SPIN"
-        elif self._type == MODEL_TYPE_QUBO:
+        elif modeltype == MODEL_TYPE_QUBO:
             vartype = "BINARY"
+        else:
+            raise ValueError("Invalid 'modeltype'")
+        return vartype
 
-        self._array = pyqubo.Array.create(name, shape=shape, vartype=vartype)
-        return self._array
+    def _vartype_to_modeltype(self, vartype):
+        if vartype == "SPIN":
+            modeltype = MODEL_TYPE_ISING
+        elif vartype == "BINARY":
+            modeltype = MODEL_TYPE_QUBO
+        else:
+            raise ValueError("Invalid 'vartype'")
+        return modeltype
 
     ################################
     # Add
@@ -86,11 +121,19 @@ class LogicalModel(AbstractModel):
     # Update
     ################################
 
-    def update_variable(self):
-        raise NotImplementedError
+    def update_variable(self, name, coefficient=0.0, attributes={}, timestamp=0):
+        self._variables[name.label] = {
+            "coefficient": coefficient,
+            "attributes": attributes,
+            "timestamp": timestamp,
+        }
 
-    def update_interaction(self):
-        raise NotImplementedError
+    def update_interaction(self, name, coefficient=0.0, attributes={}, timestamp=0):
+        self._interactions[(name[0].label, name[1].label)] = {
+            "coefficient": coefficient,
+            "attributes": attributes,
+            "timestamp": timestamp,
+        }
 
     ################################
     # Remove
@@ -206,7 +249,7 @@ class LogicalModel(AbstractModel):
 
     def __repr__(self):
         s = []
-        s.append("--- Logical Model ---")
+        s.append("[Logical Model]")
         s.append("type: " + self._type)
         s.append("array: " + str(self._array.shape))
         s.append(str(self._array))
