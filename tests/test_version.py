@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pytest
 import re
 
-from sawatabi import version, version_info
+import sawatabi
 
 
 def test_version_format():
-    assert re.match(r"^\d+.\d+.\d+(.(dev|a|b|rc)\d+)?$", version())
+    assert re.match(r"^\d+.\d+.\d+(.(dev|a|b|rc)\d+)?$", sawatabi.utils.version())
 
 
 def test_version_info_format():
-    ver_info = version_info()
+    ver_info = sawatabi.utils.version_info()
     assert (len(ver_info) == 3) or (len(ver_info) == 4)
 
     assert isinstance(ver_info[0], int)
