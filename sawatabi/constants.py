@@ -13,5 +13,5 @@
 # limitations under the License.
 
 # Model Types
-MODEL_TYPE_ISING = 'ising'
-MODEL_TYPE_QUBO  = 'qubo'
+MODEL_TYPE_ISING = "ising"
+MODEL_TYPE_QUBO = "qubo"

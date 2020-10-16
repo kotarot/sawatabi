@@ -14,7 +14,8 @@
 
 from sawatabi.constants import *
 
-class AbstractModel():
+
+class AbstractModel:
     def __init__(self):
         self._array = None
         self._variables = []

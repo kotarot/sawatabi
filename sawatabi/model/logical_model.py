@@ -17,13 +17,16 @@ from sawatabi.model.abstract_model import *
 
 import pyqubo
 
+
 class LogicalModel(AbstractModel):
-    def __init__(self, type=''):
+    def __init__(self, type=""):
         super().__init__()
         if type in [MODEL_TYPE_ISING, MODEL_TYPE_QUBO]:
             self._type = type
         else:
-            raise ValueError("'type' must be one of {}.".format([MODEL_TYPE_ISING, MODEL_TYPE_QUBO]))
+            raise ValueError(
+                "'type' must be one of {}.".format([MODEL_TYPE_ISING, MODEL_TYPE_QUBO])
+            )
 
     ################################
     # Array
@@ -46,9 +49,9 @@ class LogicalModel(AbstractModel):
                     raise TypeError("All elements of 'shape' must be an integer.")
 
         if self._type == MODEL_TYPE_ISING:
-            vartype = 'SPIN'
+            vartype = "SPIN"
         elif self._type == MODEL_TYPE_QUBO:
-            vartype = 'BINARY'
+            vartype = "BINARY"
 
         self._array = pyqubo.Array.create(name, shape=shape, vartype=vartype)
         return self._array

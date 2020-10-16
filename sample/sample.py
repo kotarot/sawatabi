@@ -14,17 +14,20 @@
 
 import sawatabi
 
+
 def version():
-    print('version:', sawatabi.utils.version())
-    print('version_info:', sawatabi.utils.version_info())
+    print("version:", sawatabi.utils.version())
+    print("version_info:", sawatabi.utils.version_info())
+
 
 def model():
-    model = sawatabi.model.LogicalModel(type='ising')
-    a = model.array('x', shape=(2, 3))
+    model = sawatabi.model.LogicalModel(type="ising")
+    a = model.array("x", shape=(2, 3))
     print(model)
-    print('--- Returns ---')
+    print("--- Returns ---")
     print(a)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     version()
     model()

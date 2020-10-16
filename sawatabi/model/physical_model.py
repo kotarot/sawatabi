@@ -15,6 +15,7 @@
 from sawatabi.constants import *
 from sawatabi.model.abstract_model import *
 
+
 class PhysicalModel(AbstractModel):
-    def __init__(self, type=''):
+    def __init__(self, type=""):
         super().__init__()
