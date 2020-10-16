@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.7, 3.8]
     steps:
     - uses: actions/checkout@v2
 
@@ -25,14 +25,14 @@ jobs:
       run: |
         pytest --verbose
 
-    - name: Check with black
+    - name: Lint with black
       run: |
         black . --check --diff
 
-    - name: Check with flake8
+    - name: Lint with flake8
       run: |
         flake8 . --statistics --count --show-source
 
-    - name: Check with isort
+    - name: Lint with isort
       run: |
         isort . --check-only --diff
