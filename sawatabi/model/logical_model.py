@@ -203,9 +203,10 @@ class LogicalModel(AbstractModel):
 
     def __repr__(self):
         s = []
-        s.append('--- Logical Model ---')
-        s.append('type: ' + self._type)
-        s.append('array: ' + str(self._array))
-        s.append('variables: ' + str(self._variables))
-        s.append('interactions: ' + str(self._interactions))
-        return '\n'.join(s)
+        s.append("--- Logical Model ---")
+        s.append("type: " + self._type)
+        s.append("array: " + str(self._array.shape))
+        s.append(str(self._array))
+        s.append("variables: " + str(self._variables))
+        s.append("interactions: " + str(self._interactions))
+        return "\n".join(s)

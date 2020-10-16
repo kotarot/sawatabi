@@ -22,6 +22,7 @@ def model():
     model = sawatabi.model.LogicalModel(type='ising')
     a = model.array('x', shape=(2, 3))
     print(model)
+    print('--- Returns ---')
     print(a)
 
 if __name__ == '__main__':
