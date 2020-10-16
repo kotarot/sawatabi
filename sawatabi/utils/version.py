@@ -14,8 +14,10 @@
 
 from ..__version__ import __version__, __version_info__
 
+
 def version():
     return __version__
+
 
 def version_info():
     return __version_info__
