@@ -27,8 +27,12 @@ jobs:
 
     - name: Check with black
       run: |
-        black --check --diff .
+        black . --check --diff
 
     - name: Check with flake8
       run: |
-        flake8 --statistics --count --show-source .
+        flake8 . --statistics --count --show-source
+
+    - name: Check with isort
+      run: |
+        isort . --check-only --diff
