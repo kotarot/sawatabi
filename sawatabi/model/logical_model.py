@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.constants import *
-from sawatabi.model.abstract_model import *
+from sawatabi.constants import MODEL_TYPE_ISING, MODEL_TYPE_QUBO
+from sawatabi.model.abstract_model import AbstractModel
 
 import pyqubo
 
@@ -79,7 +79,7 @@ class LogicalModel(AbstractModel):
     def select_variable(self):
         raise NotImplementedError
 
-    def select_variable(self):
+    def select_interaction(self):
         raise NotImplementedError
 
     ################################
@@ -89,7 +89,7 @@ class LogicalModel(AbstractModel):
     def update_variable(self):
         raise NotImplementedError
 
-    def update_variable(self):
+    def update_interaction(self):
         raise NotImplementedError
 
     ################################
@@ -99,7 +99,7 @@ class LogicalModel(AbstractModel):
     def remove_variable(self):
         raise NotImplementedError
 
-    def remove_variable(self):
+    def remove_interaction(self):
         raise NotImplementedError
 
     ################################
@@ -109,7 +109,7 @@ class LogicalModel(AbstractModel):
     def fix_variable(self):
         raise NotImplementedError
 
-    def fix_variable(self):
+    def fix_interaction(self):
         raise NotImplementedError
 
     ################################

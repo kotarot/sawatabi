@@ -30,13 +30,13 @@ def test_logical_model_constructor(type):
 
 def test_logical_model_invalid_type():
     with pytest.raises(ValueError):
-        model = LogicalModel()
+        model = LogicalModel()  # noqa: F841
 
     with pytest.raises(ValueError):
-        model = LogicalModel(type="othertype")
+        model = LogicalModel(type="othertype")  # noqa: F841
 
     with pytest.raises(ValueError):
-        model = LogicalModel(type=12345)
+        model = LogicalModel(type=12345)  # noqa: F841
 
 
 ################################

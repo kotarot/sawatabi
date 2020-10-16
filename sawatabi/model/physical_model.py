@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.constants import *
-from sawatabi.model.abstract_model import *
+from sawatabi.model.abstract_model import AbstractModel
 
 
 class PhysicalModel(AbstractModel):
