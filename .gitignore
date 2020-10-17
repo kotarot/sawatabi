@@ -1,3 +1,41 @@
+################################
+# macOS
+################################
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+# https://stackoverflow.com/questions/17556250/how-to-ignore-icon-in-git
+Icon[
+]
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+
+################################
+# Python
+################################
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -20,6 +58,7 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -136,3 +175,15 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# IDE (VS Code / IntelliJ / PyCharm)
+.vscode/
+.idea/
+*.iml
+*.iws
+*~
+
+
+################################
+# Project specific settings
+################################
