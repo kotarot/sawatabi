@@ -59,11 +59,13 @@ class LogicalModel(AbstractModel):
         )
         return self._array
 
-    def _check_argument_for_name(self, name):
+    @staticmethod
+    def _check_argument_for_name(name):
         if not isinstance(name, str):
             raise TypeError("'name' must be a string.")
 
-    def _check_argument_for_shape(self, shape):
+    @staticmethod
+    def _check_argument_for_shape(shape):
         if not isinstance(shape, tuple):
             raise TypeError("'shape' must be a tuple.")
         else:
@@ -73,7 +75,8 @@ class LogicalModel(AbstractModel):
                 if not isinstance(i, int):
                     raise TypeError("All elements of 'shape' must be an integer.")
 
-    def _modeltype_to_vartype(self, modeltype):
+    @staticmethod
+    def _modeltype_to_vartype(modeltype):
         if modeltype == MODEL_TYPE_ISING:
             vartype = "SPIN"
         elif modeltype == MODEL_TYPE_QUBO:
@@ -82,7 +85,8 @@ class LogicalModel(AbstractModel):
             raise ValueError("Invalid 'modeltype'")
         return vartype
 
-    def _vartype_to_modeltype(self, vartype):
+    @staticmethod
+    def _vartype_to_modeltype(vartype):
         if vartype == "SPIN":
             modeltype = MODEL_TYPE_ISING
         elif vartype == "BINARY":

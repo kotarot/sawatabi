@@ -15,7 +15,7 @@
 
 class AbstractModel:
     def __init__(self):
-        self._array = None
+        self._array = None  # Note: Cannot rename to 'array' because we already have 'array' method.
         self._array_name = ""
         self._variables = {}
         self._interactions = {}
