@@ -16,6 +16,7 @@ import pyqubo
 
 from sawatabi.constants import MODEL_TYPE_ISING, MODEL_TYPE_QUBO
 from sawatabi.model.abstract_model import AbstractModel
+from sawatabi.utils.time import current_time_ms
 
 
 class LogicalModel(AbstractModel):
@@ -125,16 +126,40 @@ class LogicalModel(AbstractModel):
     # Update
     ################################
 
-    def update_variable(self, name, coefficient=0.0, attributes={}, timestamp=0):
-        self._variables[name.label] = {
+    def update_variable(
+        self,
+        name,
+        coefficient=0.0,
+        scale=1.0,
+        attributes={},
+        timestamp=current_time_ms(),
+    ):
+        this_name = name.label
+        self._variables[this_name] = {
+            "name": this_name,
             "coefficient": coefficient,
+            "scale": scale,
             "attributes": attributes,
             "timestamp": timestamp,
         }
 
-    def update_interaction(self, name, coefficient=0.0, attributes={}, timestamp=0):
-        self._interactions[(name[0].label, name[1].label)] = {
+    def update_interaction(
+        self,
+        name,
+        coefficient=0.0,
+        scale=1.0,
+        attributes={},
+        timestamp=current_time_ms(),
+    ):
+        # To dictionary order
+        if name[0].label < name[1].label:
+            this_name = (name[0].label, name[1].label)
+        else:
+            this_name = (name[1].label, name[0].label)
+        self._interactions[this_name] = {
+            "name": this_name,
             "coefficient": coefficient,
+            "scale": scale,
             "attributes": attributes,
             "timestamp": timestamp,
         }
@@ -163,7 +188,11 @@ class LogicalModel(AbstractModel):
     # PyQUBO
     ################################
 
-    def add_from_pyqubo(self):
+    def from_pyqubo(self, expression):
+        if not isinstance(expression, pyqubo.Express):
+            raise TypeError(
+                "'expression' must be a PyQUBO Expression (pyqubo.Express)."
+            )
         raise NotImplementedError
 
     ################################

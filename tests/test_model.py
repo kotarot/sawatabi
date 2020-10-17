@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pyqubo
 import pytest
 
 from sawatabi.model import LogicalModel
@@ -72,6 +73,9 @@ def test_logical_model_arrays_from_pyqubo():
     model = LogicalModel(type="qubo")
     model.array(x)
 
+    x_from_model = model.get_array()
+    assert x == x_from_model
+
 
 ################################
 # Add
@@ -92,3 +96,50 @@ def test_logical_model_add():
 
     with pytest.raises(NotImplementedError):
         model.add_interactions()
+
+
+################################
+# Remove
+################################
+
+
+def test_logical_model_remove():
+    model = LogicalModel(type="ising")
+
+    with pytest.raises(NotImplementedError):
+        model.remove_variable()
+
+    with pytest.raises(NotImplementedError):
+        model.remove_interaction()
+
+
+################################
+# Fix
+################################
+
+
+def test_logical_model_fix():
+    model = LogicalModel(type="ising")
+
+    with pytest.raises(NotImplementedError):
+        model.fix_variable()
+
+    with pytest.raises(NotImplementedError):
+        model.fix_interaction()
+
+
+################################
+# PyQUBO
+################################
+
+
+def test_logical_model_pyqubo():
+    model = LogicalModel(type="ising")
+    x, y = pyqubo.Spin("x"), pyqubo.Spin("y")
+    exp = 2 * x * y + pyqubo.Placeholder("a") * x
+
+    with pytest.raises(TypeError):
+        model.from_pyqubo("another type")
+
+    with pytest.raises(NotImplementedError):
+        model.from_pyqubo(exp)
