@@ -17,8 +17,8 @@ import sawatabi
 
 def sample_version():
     print("\n=== version ===")
-    print("version:", sawatabi.utils.version())
-    print("version_info:", sawatabi.utils.version_info())
+    print("version:", sawatabi.version())
+    print("version_info:", sawatabi.version_info())
 
 
 def sample_current_time():

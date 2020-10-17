@@ -13,5 +13,6 @@
 # limitations under the License.
 
 from sawatabi import model, utils
+from sawatabi.version import version, version_info
 
-__all__ = ["model", "utils"]
+__all__ = ["model", "utils", "version", "version_info"]

@@ -18,13 +18,5 @@ from sawatabi.utils.time import (
     current_time_us,
     current_time_ns,
 )
-from sawatabi.utils.version import version, version_info
 
-__all__ = [
-    "version",
-    "version_info",
-    "current_time",
-    "current_time_ms",
-    "current_time_us",
-    "current_time_ns",
-]
+__all__ = ["current_time", "current_time_ms", "current_time_us", "current_time_ns"]
