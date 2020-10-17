@@ -16,13 +16,13 @@ import sawatabi
 
 
 def sample_version():
-    print("\n=== version ===")
+    print("\n=== version ===\n")
     print("version:", sawatabi.version())
     print("version_info:", sawatabi.version_info())
 
 
 def sample_current_time():
-    print("\n=== current time ===")
+    print("\n=== current time ===\n")
     print("sec:", sawatabi.utils.current_time())
     print("ms: ", sawatabi.utils.current_time_ms())
     print("us: ", sawatabi.utils.current_time_us())
@@ -32,28 +32,31 @@ def sample_current_time():
 def sample_model_1d():
     print("\n=== model ===")
     model = sawatabi.model.LogicalModel(type="ising")
-    x = model.array("x", shape=(2,))
-    print("--- Model ---")
+    x = model.variables("x", shape=(2,))
+    print("\n--- Model ---")
     print(model)
-    print("--- Return Value ---")
+    print("\n--- Return Value of variables (x) ---")
     print(x)
 
-    model.update_variable(x[0], coefficient=1.0)
-    model.update_variable(x[1], coefficient=2.0, attributes={"foo": "bar"})
-    model.update_interaction((x[0], x[1]), coefficient=-3.0)
+    model.add_interaction(x[0], coefficient=1.0)
+    model.add_interaction(x[1], coefficient=2.0, attributes={"foo": "bar"})
+    model.add_interaction((x[0], x[1]), coefficient=-3.0)
 
-    x = model.append(shape=(1,))
-    print("--- Model ---")
+    x = model.append("x", shape=(1,))
+    print("\n--- Model ---")
     print(model)
-    print("--- Return Value ---")
+    print("\n--- Return Value of append (x) ---")
     print(x)
 
-    model.update_variable(
+    model.add_interaction(
         x[2],
         coefficient=4.0,
         attributes={"myattr1": "foo", "myattr2": "bar"},
-        timestamp=15988860000000,
+        timestamp=1234567890123,
     )
+    model.update_interaction(x[0], coefficient=1000.0)
+    print("\n--- Model ---")
+    print(model)
 
 
 if __name__ == "__main__":

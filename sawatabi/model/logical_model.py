@@ -14,7 +14,7 @@
 
 import pyqubo
 
-from sawatabi.constants import MODEL_TYPE_ISING, MODEL_TYPE_QUBO
+from sawatabi.constants import MODEL_ISING, MODEL_QUBO, INTERACTION_1_BODY, INTERACTION_2_BODY
 from sawatabi.model.abstract_model import AbstractModel
 from sawatabi.utils.time import current_time_ms
 
@@ -22,43 +22,49 @@ from sawatabi.utils.time import current_time_ms
 class LogicalModel(AbstractModel):
     def __init__(self, type=""):
         super().__init__()
-        if type in [MODEL_TYPE_ISING, MODEL_TYPE_QUBO]:
+        if type in [MODEL_ISING, MODEL_QUBO]:
             self._type = type
         else:
             raise ValueError(
-                "'type' must be one of {}.".format([MODEL_TYPE_ISING, MODEL_TYPE_QUBO])
+                "'type' must be one of {}.".format([MODEL_ISING, MODEL_QUBO])
             )
 
+
     ################################
-    # Array
+    # Variables
     ################################
 
-    def array(self, name, shape=()):
+    def variables(self, name, shape=()):
         if isinstance(name, pyqubo.Array):
-            self._array = name
-            self._array_name = "TODO"
-            return self._array
+            # TODO: Check if pyqubo Array's vartype and model type is the same.
+
+            self._variables["FIXME"] = name
+            return self._variables["FIXME"]
+
         self._check_argument_for_name(name)
         self._check_argument_for_shape(shape)
 
         vartype = self._modeltype_to_vartype(self._type)
 
-        self._array = pyqubo.Array.create(name, shape=shape, vartype=vartype)
-        self._array_name = name
-        return self._array
+        self._variables[name] = pyqubo.Array.create(name, shape=shape, vartype=vartype)
+        return self._variables[name]
 
-    def append(self, shape=()):
+    def append(self, name, shape=()):
+        self._check_argument_for_name(name)
         self._check_argument_for_shape(shape)
 
+        if name not in self._variables:
+            raise KeyError("Variables name '{}' is not defined in the model.".format(name))
+
         new_shape = tuple(
-            map(sum, zip(self._array.shape, shape))
+            map(sum, zip(self._variables[name].shape, shape))
         )  # tuple elementwise addition
         vartype = self._modeltype_to_vartype(self._type)
 
-        self._array = pyqubo.Array.create(
-            self._array_name, shape=new_shape, vartype=vartype
+        self._variables[name] = pyqubo.Array.create(
+            name, shape=new_shape, vartype=vartype
         )
-        return self._array
+        return self._variables[name]
 
     @staticmethod
     def _check_argument_for_name(name):
@@ -78,9 +84,9 @@ class LogicalModel(AbstractModel):
 
     @staticmethod
     def _modeltype_to_vartype(modeltype):
-        if modeltype == MODEL_TYPE_ISING:
+        if modeltype == MODEL_ISING:
             vartype = "SPIN"
-        elif modeltype == MODEL_TYPE_QUBO:
+        elif modeltype == MODEL_QUBO:
             vartype = "BINARY"
         else:
             raise ValueError("Invalid 'modeltype'")
@@ -89,28 +95,13 @@ class LogicalModel(AbstractModel):
     @staticmethod
     def _vartype_to_modeltype(vartype):
         if vartype == "SPIN":
-            modeltype = MODEL_TYPE_ISING
+            modeltype = MODEL_ISING
         elif vartype == "BINARY":
-            modeltype = MODEL_TYPE_QUBO
+            modeltype = MODEL_QUBO
         else:
             raise ValueError("Invalid 'vartype'")
         return modeltype
 
-    ################################
-    # Add
-    ################################
-
-    def add_variable(self):
-        raise NotImplementedError
-
-    def add_variables(self):
-        raise NotImplementedError
-
-    def add_interaction(self):
-        raise NotImplementedError
-
-    def add_interactions(self):
-        raise NotImplementedError
 
     ################################
     # Select
@@ -122,40 +113,35 @@ class LogicalModel(AbstractModel):
     def select_interaction(self):
         raise NotImplementedError
 
+
     ################################
-    # Update
+    # Add
     ################################
 
-    def update_variable(
+    def add_interaction(
         self,
-        name,
+        target,
+        name="",
         coefficient=0.0,
         scale=1.0,
         attributes={},
         timestamp=current_time_ms(),
     ):
-        this_name = name.label
-        self._variables[this_name] = {
-            "name": this_name,
-            "coefficient": coefficient,
-            "scale": scale,
-            "attributes": attributes,
-            "timestamp": timestamp,
-        }
+        if not target:
+            raise ValueError("'target' must be specified.")
 
-    def update_interaction(
-        self,
-        name,
-        coefficient=0.0,
-        scale=1.0,
-        attributes={},
-        timestamp=current_time_ms(),
-    ):
-        # To dictionary order
-        if name[0].label < name[1].label:
-            this_name = (name[0].label, name[1].label)
+        # TODO: Check for other arguments
+
+        this_type = self._get_interaction_type_from_target(target)
+
+        if name:
+            # Already given the specific name
+            self._check_argument_for_name(name)
+            this_name = name
         else:
-            this_name = (name[1].label, name[0].label)
+            # Will be automatically named by the default name
+            this_name = self._get_default_name(this_type, target)
+
         self._interactions[this_name] = {
             "name": this_name,
             "coefficient": coefficient,
@@ -164,15 +150,92 @@ class LogicalModel(AbstractModel):
             "timestamp": timestamp,
         }
 
+    @staticmethod
+    def _get_interaction_type_from_target(target):
+        if isinstance(target, pyqubo.Spin) or isinstance(target, pyqubo.Binary):
+            this_type = INTERACTION_1_BODY
+        elif isinstance(target, tuple):
+            if len(target) != 2:
+                raise TypeError("The length of a tuple 'target' must be two.")
+            for i in target:
+                if not (isinstance(i, pyqubo.Spin) or isinstance(i, pyqubo.Binary)):
+                    raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
+            this_type = INTERACTION_2_BODY
+        else:
+            raise TypeError("Invalid 'target'.")
+        return this_type
+
+    @staticmethod
+    def _get_default_name(interaction_type, target):
+        if interaction_type == INTERACTION_1_BODY:
+            this_name = target.label
+        elif interaction_type == INTERACTION_2_BODY:
+            # To dictionary order
+            if target[0].label < target[1].label:
+                this_target = (target[0].label, target[1].label)
+            else:
+                this_target = (target[1].label, target[0].label)
+            this_name = str(this_target)
+        return this_name
+
+
+    ################################
+    # Update
+    ################################
+
+    def update_interaction(
+        self,
+        target=None,
+        name="",
+        coefficient=0.0,
+        scale=1.0,
+        attributes={},
+        timestamp=current_time_ms(),
+    ):
+        if (not target) and (not name):
+            raise ValueError("Either 'target' or 'name' must be specified.")
+        if target and name:
+            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
+
+        # TODO: Check for other arguments
+
+        if name:
+            # Already given the specific name
+            this_name = name
+            self._check_argument_for_name(name)
+        else:
+            # Will be automatically named by the default name
+            this_type = self._get_interaction_type_from_target(target)
+            this_name = self._get_default_name(this_type, target)
+
+        if this_name not in self._interactions:
+            raise KeyError("An interaction named '{}' does not exist.".format(this_name))
+
+        # TODO: Need to change only updated values.
+        self._variables[this_name] = {
+            "name": this_name,
+            "coefficient": coefficient,
+            "scale": scale,
+            "attributes": attributes,
+            "timestamp": timestamp,
+        }
+
+
     ################################
     # Remove
     ################################
 
-    def remove_variable(self):
-        raise NotImplementedError
-
     def remove_interaction(self):
         raise NotImplementedError
+
+
+    ################################
+    # Erase
+    ################################
+
+    def erase_variable(self):
+        raise NotImplementedError
+
 
     ################################
     # Fix
@@ -181,19 +244,17 @@ class LogicalModel(AbstractModel):
     def fix_variable(self):
         raise NotImplementedError
 
-    def fix_interaction(self):
-        raise NotImplementedError
-
     ################################
     # PyQUBO
     ################################
 
     def from_pyqubo(self, expression):
-        if not isinstance(expression, pyqubo.Express):
+        if not (isinstance(expression, pyqubo.Express) or isinstance(expression, pyqubo.Model)):
             raise TypeError(
-                "'expression' must be a PyQUBO Expression (pyqubo.Express)."
+                "'expression' must be a PyQUBO Expression (pyqubo.Express) or a PyQUBO Model (pyqubo.Model)."
             )
         raise NotImplementedError
+
 
     ################################
     # Constraints
@@ -204,6 +265,7 @@ class LogicalModel(AbstractModel):
 
     def dependency_constraint(self):
         raise NotImplementedError
+
 
     ################################
     # Utils
@@ -221,6 +283,7 @@ class LogicalModel(AbstractModel):
         """
         raise NotImplementedError
 
+
     ################################
     # Getters
     ################################
@@ -228,11 +291,11 @@ class LogicalModel(AbstractModel):
     def get_type(self):
         return self._type
 
-    def get_array(self):
+    def get_variables(self, name):
         """
-        Returns a list of alive variables (i.e., variables which are not removed nor fixed).
+        Returns a list of alive variables (i.e., variables which are not removed nor fixed) of the given name.
         """
-        return self._array
+        return self._variables[name]
 
     def get_fixed_array(self):
         """
@@ -276,6 +339,7 @@ class LogicalModel(AbstractModel):
         """
         raise NotImplementedError
 
+
     ################################
     # Built-in functions
     ################################
@@ -283,9 +347,10 @@ class LogicalModel(AbstractModel):
     def __repr__(self):
         s = []
         s.append("[Logical Model]")
-        s.append("type: " + self._type)
-        s.append("array: " + str(self._array.shape))
-        s.append(str(self._array))
-        s.append("variables: " + str(self._variables))
-        s.append("interactions: " + str(self._interactions))
+        s.append("* type: " + str(self._type))
+        s.append("* variables: " + str(list(self._variables.keys())))
+        for name, vars in self._variables.items():
+            s.append("- name: " + name)
+            s.append(str(vars))
+        s.append("* interactions: " + str(self._interactions))
         return "\n".join(s)

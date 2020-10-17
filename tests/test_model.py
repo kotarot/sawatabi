@@ -17,6 +17,12 @@ import pytest
 
 from sawatabi.model import LogicalModel
 
+
+@pytest.fixture
+def model():
+    return LogicalModel(type="ising")
+
+
 ################################
 # Model
 ################################
@@ -28,26 +34,27 @@ def test_logical_model_constructor(type):
     assert model.get_type() == type
 
 
-def test_logical_model_invalid_type():
+def test_logical_model_invalid_type(model):
     with pytest.raises(ValueError):
         model = LogicalModel()  # noqa: F841
 
     with pytest.raises(ValueError):
-        model = LogicalModel(type="othertype")  # noqa: F841
+        model = LogicalModel(type="anothertype")  # noqa: F841
 
     with pytest.raises(ValueError):
         model = LogicalModel(type=12345)  # noqa: F841
 
 
 ################################
-# Array
+# Variables
 ################################
 
 
 @pytest.mark.parametrize("shape", [(2,), (3, 4), (5, 6, 7)])
-def test_logical_model_array(shape):
+def test_logical_model_variables(shape):
     model = LogicalModel(type="ising")
-    x = model.array("x", shape=shape)
+    x = model.variables("x", shape=shape)
+
     assert x.shape == shape
 
 
@@ -60,21 +67,35 @@ def test_logical_model_array(shape):
         ("x", ("a", "b")),
     ],
 )
-def test_logical_model_invalid_arrays(name, shape):
+def test_logical_model_variables_invalid(name, shape):
     model = LogicalModel(type="ising")
     with pytest.raises(TypeError):
-        model.array(name, shape=shape)
+        model.variables(name, shape=shape)
 
 
-def test_logical_model_arrays_from_pyqubo():
+@pytest.mark.parametrize("vartype,modeltype", [("SPIN", "ising"), ("BINARY", "qubo")])
+def test_logical_model_variables_from_pyqubo(vartype, modeltype):
     import pyqubo
 
-    x = pyqubo.Array.create("x", shape=(2, 3), vartype="BINARY")
-    model = LogicalModel(type="qubo")
-    model.array(x)
+    x = pyqubo.Array.create("x", shape=(2, 3), vartype=vartype)
+    model = LogicalModel(type=modeltype)
+    model.variables(x)
 
-    x_from_model = model.get_array()
+    x_from_model = model.get_variables("FIXME")
     assert x == x_from_model
+
+
+################################
+# Select
+################################
+
+
+def test_logical_model_select(model):
+    with pytest.raises(NotImplementedError):
+        model.select_variable()
+
+    with pytest.raises(NotImplementedError):
+        model.select_interaction()
 
 
 ################################
@@ -82,20 +103,77 @@ def test_logical_model_arrays_from_pyqubo():
 ################################
 
 
-def test_logical_model_add():
-    model = LogicalModel(type="ising")
+def test_logical_model_add(model):
+    x = model.variables("x", shape=(2, 2))
 
-    with pytest.raises(NotImplementedError):
-        model.add_variable()
+    model.add_interaction(x[0][0], coefficient=1.0)
+    # TODO: Check result
+    model.add_interaction(x[0][1], coefficient=2.0, scale=0.1)
+    # TODO: Check result
+    model.add_interaction(x[1][0], coefficient=3.0, attributes={"foo": "bar"})
+    # TODO: Check result
+    model.add_interaction((x[0][0], x[1][1]), coefficient=-4.0, timestamp=1234567890123)
+    # TODO: Check result
 
-    with pytest.raises(NotImplementedError):
-        model.add_variables()
 
-    with pytest.raises(NotImplementedError):
+def test_logical_model_add_invalid(model):
+    x = model.variables("x", shape=(3,))
+
+    with pytest.raises(ValueError):
+        model.add_interaction(target=None)
+
+    with pytest.raises(TypeError):
         model.add_interaction()
 
-    with pytest.raises(NotImplementedError):
-        model.add_interactions()
+    with pytest.raises(TypeError):
+        model.add_interaction("another type", coefficient=1.0)
+
+    with pytest.raises(TypeError):
+        model.add_interaction((x[0], x[1], x[2]), coefficient=1.0)
+
+    with pytest.raises(TypeError):
+        model.add_interaction(("a", "b"), coefficient=1.0)
+
+
+################################
+# Update
+################################
+
+
+def test_logical_model_update(model):
+    x = model.variables("x", shape=(1,))
+
+    model.add_interaction(x[0], coefficient=1.0)
+    # TODO: Check result
+    model.update_interaction(x[0], coefficient=10.0)
+    # TODO: Check result
+    model.update_interaction(target=x[0], coefficient=100.0)
+    # TODO: Check result
+    model.update_interaction(name="x[0]", coefficient=1000.0)
+    # TODO: Check result
+
+
+def test_logical_model_update_invalid(model):
+    x = model.variables("x", shape=(3,))
+    model.add_interaction(x[0], coefficient=1.0)
+
+    with pytest.raises(ValueError):
+        model.update_interaction()
+
+    with pytest.raises(ValueError):
+        model.update_interaction(x[0], name="x[0]")
+
+    with pytest.raises(KeyError):
+        model.update_interaction(x[1], coefficient=1.0)
+
+    with pytest.raises(TypeError):
+        model.update_interaction("another type", coefficient=1.0)
+
+    with pytest.raises(TypeError):
+        model.update_interaction((x[0], x[1], x[2]), coefficient=1.0)
+
+    with pytest.raises(TypeError):
+        model.update_interaction(("a", "b"), coefficient=1.0)
 
 
 ################################
@@ -103,14 +181,19 @@ def test_logical_model_add():
 ################################
 
 
-def test_logical_model_remove():
-    model = LogicalModel(type="ising")
-
-    with pytest.raises(NotImplementedError):
-        model.remove_variable()
-
+def test_logical_model_remove(model):
     with pytest.raises(NotImplementedError):
         model.remove_interaction()
+
+
+################################
+# Erase
+################################
+
+
+def test_logical_model_erase(model):
+    with pytest.raises(NotImplementedError):
+        model.erase_variable()
 
 
 ################################
@@ -118,14 +201,9 @@ def test_logical_model_remove():
 ################################
 
 
-def test_logical_model_fix():
-    model = LogicalModel(type="ising")
-
+def test_logical_model_fix(model):
     with pytest.raises(NotImplementedError):
         model.fix_variable()
-
-    with pytest.raises(NotImplementedError):
-        model.fix_interaction()
 
 
 ################################
@@ -133,13 +211,27 @@ def test_logical_model_fix():
 ################################
 
 
-def test_logical_model_pyqubo():
-    model = LogicalModel(type="ising")
+def test_logical_model_pyqubo(model):
     x, y = pyqubo.Spin("x"), pyqubo.Spin("y")
     exp = 2 * x * y + pyqubo.Placeholder("a") * x
 
+    with pytest.raises(NotImplementedError):
+        model.from_pyqubo(exp)
+
+
+def test_logical_model_pyqubo_invalid(model):
     with pytest.raises(TypeError):
         model.from_pyqubo("another type")
 
+
+################################
+# Constraints
+################################
+
+
+def test_logical_model_constraints(model):
     with pytest.raises(NotImplementedError):
-        model.from_pyqubo(exp)
+        model.n_hot_constraint()
+
+    with pytest.raises(NotImplementedError):
+        model.dependency_constraint()

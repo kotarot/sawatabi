@@ -13,5 +13,9 @@
 # limitations under the License.
 
 # Model Types
-MODEL_TYPE_ISING = "ising"
-MODEL_TYPE_QUBO = "qubo"
+MODEL_ISING = "ising"
+MODEL_QUBO = "qubo"
+
+# Interaction Types
+INTERACTION_1_BODY = "1-body"
+INTERACTION_2_BODY = "2-body"
