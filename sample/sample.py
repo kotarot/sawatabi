@@ -21,6 +21,14 @@ def sample_version():
     print("version_info:", sawatabi.utils.version_info())
 
 
+def sample_current_time():
+    print("\n=== current time ===")
+    print("sec:", sawatabi.utils.current_time())
+    print("ms: ", sawatabi.utils.current_time_ms())
+    print("us: ", sawatabi.utils.current_time_us())
+    print("ns: ", sawatabi.utils.current_time_ns())
+
+
 def sample_model_1d():
     print("\n=== model ===")
     model = sawatabi.model.LogicalModel(type="ising")
@@ -50,4 +58,5 @@ def sample_model_1d():
 
 if __name__ == "__main__":
     sample_version()
+    sample_current_time()
     sample_model_1d()
