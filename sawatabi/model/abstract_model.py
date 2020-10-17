@@ -15,6 +15,7 @@
 
 class AbstractModel:
     def __init__(self):
-        self._variables = {}  # Note: Cannot rename to 'variables' because we already have 'variables' method.
+        # Note: Cannot rename to 'variables' because we already have 'variables' method.
+        self._variables = {}
         self._interactions = {}
         self._constraints = {}

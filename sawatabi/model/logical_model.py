@@ -14,7 +14,7 @@
 
 import pyqubo
 
-from sawatabi.constants import MODEL_ISING, MODEL_QUBO, INTERACTION_1_BODY, INTERACTION_2_BODY
+import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
 from sawatabi.utils.time import current_time_ms
 
@@ -22,13 +22,14 @@ from sawatabi.utils.time import current_time_ms
 class LogicalModel(AbstractModel):
     def __init__(self, type=""):
         super().__init__()
-        if type in [MODEL_ISING, MODEL_QUBO]:
+        if type in [constants.MODEL_ISING, constants.MODEL_QUBO]:
             self._type = type
         else:
             raise ValueError(
-                "'type' must be one of {}.".format([MODEL_ISING, MODEL_QUBO])
+                "'type' must be one of {}.".format(
+                    [constants.MODEL_ISING, constants.MODEL_QUBO]
+                )
             )
-
 
     ################################
     # Variables
@@ -54,7 +55,9 @@ class LogicalModel(AbstractModel):
         self._check_argument_for_shape(shape)
 
         if name not in self._variables:
-            raise KeyError("Variables name '{}' is not defined in the model.".format(name))
+            raise KeyError(
+                "Variables name '{}' is not defined in the model.".format(name)
+            )
 
         new_shape = tuple(
             map(sum, zip(self._variables[name].shape, shape))
@@ -84,9 +87,9 @@ class LogicalModel(AbstractModel):
 
     @staticmethod
     def _modeltype_to_vartype(modeltype):
-        if modeltype == MODEL_ISING:
+        if modeltype == constants.MODEL_ISING:
             vartype = "SPIN"
-        elif modeltype == MODEL_QUBO:
+        elif modeltype == constants.MODEL_QUBO:
             vartype = "BINARY"
         else:
             raise ValueError("Invalid 'modeltype'")
@@ -95,13 +98,12 @@ class LogicalModel(AbstractModel):
     @staticmethod
     def _vartype_to_modeltype(vartype):
         if vartype == "SPIN":
-            modeltype = MODEL_ISING
+            modeltype = constants.MODEL_ISING
         elif vartype == "BINARY":
-            modeltype = MODEL_QUBO
+            modeltype = constants.MODEL_QUBO
         else:
             raise ValueError("Invalid 'vartype'")
         return modeltype
-
 
     ################################
     # Select
@@ -112,7 +114,6 @@ class LogicalModel(AbstractModel):
 
     def select_interaction(self):
         raise NotImplementedError
-
 
     ################################
     # Add
@@ -153,23 +154,25 @@ class LogicalModel(AbstractModel):
     @staticmethod
     def _get_interaction_type_from_target(target):
         if isinstance(target, pyqubo.Spin) or isinstance(target, pyqubo.Binary):
-            this_type = INTERACTION_1_BODY
+            this_type = constants.INTERACTION_1_BODY
         elif isinstance(target, tuple):
             if len(target) != 2:
                 raise TypeError("The length of a tuple 'target' must be two.")
             for i in target:
                 if not (isinstance(i, pyqubo.Spin) or isinstance(i, pyqubo.Binary)):
-                    raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
-            this_type = INTERACTION_2_BODY
+                    raise TypeError(
+                        "All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'."
+                    )
+            this_type = constants.INTERACTION_2_BODY
         else:
             raise TypeError("Invalid 'target'.")
         return this_type
 
     @staticmethod
     def _get_default_name(interaction_type, target):
-        if interaction_type == INTERACTION_1_BODY:
+        if interaction_type == constants.INTERACTION_1_BODY:
             this_name = target.label
-        elif interaction_type == INTERACTION_2_BODY:
+        elif interaction_type == constants.INTERACTION_2_BODY:
             # To dictionary order
             if target[0].label < target[1].label:
                 this_target = (target[0].label, target[1].label)
@@ -177,7 +180,6 @@ class LogicalModel(AbstractModel):
                 this_target = (target[1].label, target[0].label)
             this_name = str(this_target)
         return this_name
-
 
     ################################
     # Update
@@ -195,7 +197,9 @@ class LogicalModel(AbstractModel):
         if (not target) and (not name):
             raise ValueError("Either 'target' or 'name' must be specified.")
         if target and name:
-            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
+            raise ValueError(
+                "Both 'target' and 'name' cannot be specified simultaneously."
+            )
 
         # TODO: Check for other arguments
 
@@ -209,7 +213,9 @@ class LogicalModel(AbstractModel):
             this_name = self._get_default_name(this_type, target)
 
         if this_name not in self._interactions:
-            raise KeyError("An interaction named '{}' does not exist.".format(this_name))
+            raise KeyError(
+                "An interaction named '{}' does not exist.".format(this_name)
+            )
 
         # TODO: Need to change only updated values.
         self._variables[this_name] = {
@@ -220,7 +226,6 @@ class LogicalModel(AbstractModel):
             "timestamp": timestamp,
         }
 
-
     ################################
     # Remove
     ################################
@@ -228,14 +233,12 @@ class LogicalModel(AbstractModel):
     def remove_interaction(self):
         raise NotImplementedError
 
-
     ################################
     # Erase
     ################################
 
     def erase_variable(self):
         raise NotImplementedError
-
 
     ################################
     # Fix
@@ -249,12 +252,14 @@ class LogicalModel(AbstractModel):
     ################################
 
     def from_pyqubo(self, expression):
-        if not (isinstance(expression, pyqubo.Express) or isinstance(expression, pyqubo.Model)):
+        if not (
+            isinstance(expression, pyqubo.Express)
+            or isinstance(expression, pyqubo.Model)
+        ):
             raise TypeError(
                 "'expression' must be a PyQUBO Expression (pyqubo.Express) or a PyQUBO Model (pyqubo.Model)."
             )
         raise NotImplementedError
-
 
     ################################
     # Constraints
@@ -265,7 +270,6 @@ class LogicalModel(AbstractModel):
 
     def dependency_constraint(self):
         raise NotImplementedError
-
 
     ################################
     # Utils
@@ -282,7 +286,6 @@ class LogicalModel(AbstractModel):
         Converts the model to a QUBO model if the current model type is Ising, and vice versa.
         """
         raise NotImplementedError
-
 
     ################################
     # Getters
@@ -338,7 +341,6 @@ class LogicalModel(AbstractModel):
         Returns the value of the key for the given variable or interaction.
         """
         raise NotImplementedError
-
 
     ################################
     # Built-in functions
