@@ -202,13 +202,15 @@ class LogicalModel(AbstractModel):
             body = self._get_interaction_body_from_target(target)
             new_name = self._get_default_name_of_interaction(body, target)
 
-        self._interactions[new_name] = {
+        add_object = {
             "name": new_name,
             "coefficient": coefficient,
             "scale": scale,
             "attributes": attributes,
             "timestamp": timestamp,
         }
+        self._interactions[new_name] = add_object
+        return add_object
 
     ################################
     # Update
@@ -252,13 +254,15 @@ class LogicalModel(AbstractModel):
             )
 
         # TODO: Need to change only updated values.
-        self._interactions[new_name] = {
+        update_object = {
             "name": new_name,
             "coefficient": coefficient,
             "scale": scale,
             "attributes": attributes,
             "timestamp": timestamp,
         }
+        self._interactions[new_name] = update_object
+        return update_object
 
     ################################
     # Remove
