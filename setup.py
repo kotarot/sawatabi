@@ -24,7 +24,9 @@ from setuptools import setup
 package_name = "sawatabi"
 packages = [
     package_name,
+    package_name + ".algorithm",
     package_name + ".model",
+    package_name + ".solver",
     package_name + ".utils",
 ]
 
