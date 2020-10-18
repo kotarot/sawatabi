@@ -20,4 +20,10 @@ from sawatabi.utils.time import (
     current_time_ns,
 )
 
-__all__ = ["current_time", "current_time_ms", "current_time_us", "current_time_ns", "Functions"]
+__all__ = [
+    "current_time",
+    "current_time_ms",
+    "current_time_us",
+    "current_time_ns",
+    "Functions",
+]

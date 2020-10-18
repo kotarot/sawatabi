@@ -52,6 +52,8 @@ def sample_model_1d():
     y = model.variables("y", shape=(2,))
     print("\n")
     print(model)
+    print("\n--- Return Value of variables (y) ---")
+    print(y)
 
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0, attributes={"foo": "bar"})

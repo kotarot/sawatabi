@@ -118,7 +118,13 @@ class LogicalModel(AbstractModel):
     def variables(self, name, shape=()):
         if isinstance(name, pyqubo.Array):
             flattened = list(Functions._flatten(name.bit_list))
-            if (self._type == constants.MODEL_ISING) and isinstance(flattened[0], pyqubo.Binary) or (self._type == constants.MODEL_QUBO) and isinstance(flattened[0], pyqubo.Spin):
+            if (
+                (self._type == constants.MODEL_ISING)
+                and isinstance(flattened[0], pyqubo.Binary)
+            ) or (
+                (self._type == constants.MODEL_QUBO)
+                and isinstance(flattened[0], pyqubo.Spin)
+            ):
                 raise TypeError("Model type and PyQUBO Array type mismatch.")
 
             # Retrieve label from the pyqubo variable
@@ -240,7 +246,9 @@ class LogicalModel(AbstractModel):
 
         if new_name not in self._interactions:
             raise KeyError(
-                "An interaction named '{}' does not exist yet. Need to be added firstly.".format(new_name)
+                "An interaction named '{}' does not exist yet. Need to be added before updating.".format(
+                    new_name
+                )
             )
 
         # TODO: Need to change only updated values.

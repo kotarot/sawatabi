@@ -72,6 +72,8 @@ def test_logical_model_multi_variables(shape):
     assert len(model.get_variables()) == 1
     assert "x" in model.get_variables()
     assert "y" not in model.get_variables()
+    assert model.get_variables_by_name("x") == x
+    assert id(model.get_variables_by_name("x")) == id(x)
     with pytest.raises(KeyError):
         model.get_variables_by_name("y")
 
