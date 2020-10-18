@@ -16,7 +16,6 @@ import pytest
 
 from sawatabi.model import NHotConstraint
 
-
 ################################
 # N-Hot Constraint
 ################################
@@ -64,7 +63,7 @@ def test_n_hot_constraint_constructors():
     assert c4._variables == ["a", "b", "c"]
 
 
-def test_n_hot_constraint_constructors():
+def test_n_hot_constraint_invalid():
     with pytest.raises(TypeError):
         NHotConstraint(n="invalid type")
 
@@ -80,5 +79,5 @@ def test_n_hot_constraint_constructors():
     with pytest.raises(TypeError):
         NHotConstraint(variables="invalid type")
 
-    #with pytest.raises(TypeError):
-    #    NHotConstraint(variables=[1, 2, 3])
+    # with pytest.raises(TypeError):
+    #     NHotConstraint(variables=[1, 2, 3])

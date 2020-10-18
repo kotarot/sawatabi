@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numbers
+
 import pyqubo
 
 import sawatabi.constants as constants
@@ -51,6 +52,64 @@ class LogicalModel(AbstractModel):
                     article = "a"
             raise TypeError("'{}' must be {} {}.".format(name, article, typestr))
 
+    @staticmethod
+    def _check_argument_for_shape(shape):
+        if len(shape) == 0:
+            raise TypeError("'shape' must not be an empty tuple.")
+        for i in shape:
+            if not isinstance(i, int):
+                raise TypeError("All elements of 'shape' must be an integer.")
+
+    @staticmethod
+    def _modeltype_to_vartype(modeltype):
+        if modeltype == constants.MODEL_ISING:
+            vartype = "SPIN"
+        elif modeltype == constants.MODEL_QUBO:
+            vartype = "BINARY"
+        else:
+            raise ValueError("Invalid 'modeltype'")
+        return vartype
+
+    @staticmethod
+    def _vartype_to_modeltype(vartype):
+        if vartype == "SPIN":
+            modeltype = constants.MODEL_ISING
+        elif vartype == "BINARY":
+            modeltype = constants.MODEL_QUBO
+        else:
+            raise ValueError("Invalid 'vartype'")
+        return modeltype
+
+    @staticmethod
+    def _get_interaction_body_from_target(target):
+        if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
+            body = constants.INTERACTION_1_BODY
+        elif isinstance(target, tuple):
+            if len(target) != 2:
+                raise TypeError("The length of a tuple 'target' must be two.")
+            for i in target:
+                if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
+                    raise TypeError(
+                        "All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'."
+                    )
+            body = constants.INTERACTION_2_BODY
+        else:
+            raise TypeError("Invalid 'target'.")
+        return body
+
+    @staticmethod
+    def _get_default_name_of_interaction(interaction_body, target):
+        if interaction_body == constants.INTERACTION_1_BODY:
+            name = target.label
+        elif interaction_body == constants.INTERACTION_2_BODY:
+            # To dictionary order
+            if target[0].label < target[1].label:
+                this_target = (target[0].label, target[1].label)
+            else:
+                this_target = (target[1].label, target[0].label)
+            name = str(this_target)
+        return name
+
     ################################
     # Variables
     ################################
@@ -82,43 +141,13 @@ class LogicalModel(AbstractModel):
             )
 
         # tuple elementwise addition
-        new_shape = tuple(
-            map(sum, zip(self._variables[name].shape, shape))
-        )
+        new_shape = tuple(map(sum, zip(self._variables[name].shape, shape)))
         vartype = self._modeltype_to_vartype(self._type)
 
         self._variables[name] = pyqubo.Array.create(
             name, shape=new_shape, vartype=vartype
         )
         return self._variables[name]
-
-    @staticmethod
-    def _check_argument_for_shape(shape):
-        if len(shape) == 0:
-            raise TypeError("'shape' must not be an empty tuple.")
-        for i in shape:
-            if not isinstance(i, int):
-                raise TypeError("All elements of 'shape' must be an integer.")
-
-    @staticmethod
-    def _modeltype_to_vartype(modeltype):
-        if modeltype == constants.MODEL_ISING:
-            vartype = "SPIN"
-        elif modeltype == constants.MODEL_QUBO:
-            vartype = "BINARY"
-        else:
-            raise ValueError("Invalid 'modeltype'")
-        return vartype
-
-    @staticmethod
-    def _vartype_to_modeltype(vartype):
-        if vartype == "SPIN":
-            modeltype = constants.MODEL_ISING
-        elif vartype == "BINARY":
-            modeltype = constants.MODEL_QUBO
-        else:
-            raise ValueError("Invalid 'vartype'")
-        return modeltype
 
     ################################
     # Select
@@ -167,36 +196,6 @@ class LogicalModel(AbstractModel):
             "attributes": attributes,
             "timestamp": timestamp,
         }
-
-    @staticmethod
-    def _get_interaction_body_from_target(target):
-        if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
-            body = constants.INTERACTION_1_BODY
-        elif isinstance(target, tuple):
-            if len(target) != 2:
-                raise TypeError("The length of a tuple 'target' must be two.")
-            for i in target:
-                if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
-                    raise TypeError(
-                        "All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'."
-                    )
-            body = constants.INTERACTION_2_BODY
-        else:
-            raise TypeError("Invalid 'target'.")
-        return body
-
-    @staticmethod
-    def _get_default_name_of_interaction(interaction_body, target):
-        if interaction_body == constants.INTERACTION_1_BODY:
-            name = target.label
-        elif interaction_body == constants.INTERACTION_2_BODY:
-            # To dictionary order
-            if target[0].label < target[1].label:
-                this_target = (target[0].label, target[1].label)
-            else:
-                this_target = (target[1].label, target[0].label)
-            name = str(this_target)
-        return name
 
     ################################
     # Update
@@ -285,8 +284,12 @@ class LogicalModel(AbstractModel):
     # Constraints
     ################################
 
-    def n_hot_constraint(self, target, n=1, scale=1.0, label=constants.DEFAULT_LABEL_N_HOT):
-        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
+    def n_hot_constraint(
+        self, target, n=1, scale=1.0, label=constants.DEFAULT_LABEL_N_HOT
+    ):
+        self._check_argument_type(
+            "target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary)
+        )
         self._check_argument_type("n", n, int)
         self._check_argument_type("scale", scale, numbers.Number)
         self._check_argument_type("label", label, str)
@@ -298,7 +301,13 @@ class LogicalModel(AbstractModel):
                 self._constraints[label] = NHotConstraint(n, scale, label)
             self._constraints[label].add(t.label)
 
-    def dependency_constraint(self, target_src, target_dst, scale=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
+    def dependency_constraint(
+        self,
+        target_src,
+        target_dst,
+        scale=1.0,
+        label=constants.DEFAULT_LABEL_DEPENDENCY,
+    ):
         self._check_argument_type("scale", scale, numbers.Number)
         self._check_argument_type("label", label, str)
         raise NotImplementedError

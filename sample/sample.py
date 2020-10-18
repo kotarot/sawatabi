@@ -62,11 +62,11 @@ def sample_model_1d():
 def sample_model_2d():
     print("\n=== model (2d) ===")
     model = sawatabi.model.LogicalModel(type="ising")
-    y = model.variables("y", shape=(2, 2))
+    model.variables("y", shape=(2, 2))
     print("\n--- Model ---")
     print(model)
 
-    y = model.append("y", shape=(1, 1))
+    model.append("y", shape=(1, 1))
     print("\n--- Model ---")
     print(model)
 
