@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.model.logical_model import LogicalModel
-from sawatabi.model.physical_model import PhysicalModel
-from sawatabi.model.n_hot_constraint import NHotConstraint
-from sawatabi.model.dependency_constraint import DependencyConstraint
+from sawatabi.model.abstract_constraint import AbstractConstraint
 
-__all__ = ["LogicalModel", "PhysicalModel", "NHotConstraint", "DependencyConstraint"]
+
+class DependencyConstraint(AbstractConstraint):
+    def __init__(self, scale=1.0, label="", variables=[]):
+        super().__init__(scale, label, variables)

@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numbers
 import pyqubo
 
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
+from sawatabi.model.n_hot_constraint import NHotConstraint
 from sawatabi.utils.time import current_time_ms
 
 
@@ -32,6 +34,24 @@ class LogicalModel(AbstractModel):
             )
 
     ################################
+    # Private static methods
+    ################################
+
+    @staticmethod
+    def _check_argument_type(name, value, type):
+        if not isinstance(value, type):
+            if isinstance(type, tuple):
+                typestr = [t.__name__ for t in type]
+                article = "one of"
+            else:
+                typestr = type.__name__
+                if typestr[0] in ["a", "e", "i", "o", "u"]:
+                    article = "an"
+                else:
+                    article = "a"
+            raise TypeError("'{}' must be {} {}.".format(name, article, typestr))
+
+    ################################
     # Variables
     ################################
 
@@ -42,7 +62,8 @@ class LogicalModel(AbstractModel):
             self._variables["FIXME"] = name
             return self._variables["FIXME"]
 
-        self._check_argument_for_name(name)
+        self._check_argument_type("name", name, str)
+        self._check_argument_type("shape", shape, tuple)
         self._check_argument_for_shape(shape)
 
         vartype = self._modeltype_to_vartype(self._type)
@@ -51,7 +72,8 @@ class LogicalModel(AbstractModel):
         return self._variables[name]
 
     def append(self, name, shape=()):
-        self._check_argument_for_name(name)
+        self._check_argument_type("name", name, str)
+        self._check_argument_type("shape", shape, tuple)
         self._check_argument_for_shape(shape)
 
         if name not in self._variables:
@@ -59,9 +81,10 @@ class LogicalModel(AbstractModel):
                 "Variables name '{}' is not defined in the model.".format(name)
             )
 
+        # tuple elementwise addition
         new_shape = tuple(
             map(sum, zip(self._variables[name].shape, shape))
-        )  # tuple elementwise addition
+        )
         vartype = self._modeltype_to_vartype(self._type)
 
         self._variables[name] = pyqubo.Array.create(
@@ -70,20 +93,12 @@ class LogicalModel(AbstractModel):
         return self._variables[name]
 
     @staticmethod
-    def _check_argument_for_name(name):
-        if not isinstance(name, str):
-            raise TypeError("'name' must be a string.")
-
-    @staticmethod
     def _check_argument_for_shape(shape):
-        if not isinstance(shape, tuple):
-            raise TypeError("'shape' must be a tuple.")
-        else:
-            if len(shape) == 0:
-                raise TypeError("'shape' must not be an empty tuple.")
-            for i in shape:
-                if not isinstance(i, int):
-                    raise TypeError("All elements of 'shape' must be an integer.")
+        if len(shape) == 0:
+            raise TypeError("'shape' must not be an empty tuple.")
+        for i in shape:
+            if not isinstance(i, int):
+                raise TypeError("All elements of 'shape' must be an integer.")
 
     @staticmethod
     def _modeltype_to_vartype(modeltype):
@@ -131,20 +146,22 @@ class LogicalModel(AbstractModel):
         if not target:
             raise ValueError("'target' must be specified.")
 
-        # TODO: Check for other arguments
-
-        this_type = self._get_interaction_type_from_target(target)
+        self._check_argument_type("coefficient", coefficient, numbers.Number)
+        self._check_argument_type("scale", scale, numbers.Number)
+        self._check_argument_type("attributes", attributes, dict)
+        self._check_argument_type("timestamp", timestamp, int)
 
         if name:
             # Already given the specific name
-            self._check_argument_for_name(name)
-            this_name = name
+            self._check_argument_type("name", name, str)
+            new_name = name
         else:
             # Will be automatically named by the default name
-            this_name = self._get_default_name(this_type, target)
+            body = self._get_interaction_body_from_target(target)
+            new_name = self._get_default_name_of_interaction(body, target)
 
-        self._interactions[this_name] = {
-            "name": this_name,
+        self._interactions[new_name] = {
+            "name": new_name,
             "coefficient": coefficient,
             "scale": scale,
             "attributes": attributes,
@@ -152,34 +169,34 @@ class LogicalModel(AbstractModel):
         }
 
     @staticmethod
-    def _get_interaction_type_from_target(target):
-        if isinstance(target, pyqubo.Spin) or isinstance(target, pyqubo.Binary):
-            this_type = constants.INTERACTION_1_BODY
+    def _get_interaction_body_from_target(target):
+        if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
+            body = constants.INTERACTION_1_BODY
         elif isinstance(target, tuple):
             if len(target) != 2:
                 raise TypeError("The length of a tuple 'target' must be two.")
             for i in target:
-                if not (isinstance(i, pyqubo.Spin) or isinstance(i, pyqubo.Binary)):
+                if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
                     raise TypeError(
                         "All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'."
                     )
-            this_type = constants.INTERACTION_2_BODY
+            body = constants.INTERACTION_2_BODY
         else:
             raise TypeError("Invalid 'target'.")
-        return this_type
+        return body
 
     @staticmethod
-    def _get_default_name(interaction_type, target):
-        if interaction_type == constants.INTERACTION_1_BODY:
-            this_name = target.label
-        elif interaction_type == constants.INTERACTION_2_BODY:
+    def _get_default_name_of_interaction(interaction_body, target):
+        if interaction_body == constants.INTERACTION_1_BODY:
+            name = target.label
+        elif interaction_body == constants.INTERACTION_2_BODY:
             # To dictionary order
             if target[0].label < target[1].label:
                 this_target = (target[0].label, target[1].label)
             else:
                 this_target = (target[1].label, target[0].label)
-            this_name = str(this_target)
-        return this_name
+            name = str(this_target)
+        return name
 
     ################################
     # Update
@@ -201,25 +218,28 @@ class LogicalModel(AbstractModel):
                 "Both 'target' and 'name' cannot be specified simultaneously."
             )
 
-        # TODO: Check for other arguments
+        self._check_argument_type("coefficient", coefficient, numbers.Number)
+        self._check_argument_type("scale", scale, numbers.Number)
+        self._check_argument_type("attributes", attributes, dict)
+        self._check_argument_type("timestamp", timestamp, int)
 
         if name:
             # Already given the specific name
-            this_name = name
-            self._check_argument_for_name(name)
+            self._check_argument_type("name", name, str)
+            new_name = name
         else:
             # Will be automatically named by the default name
-            this_type = self._get_interaction_type_from_target(target)
-            this_name = self._get_default_name(this_type, target)
+            body = self._get_interaction_body_from_target(target)
+            new_name = self._get_default_name_of_interaction(body, target)
 
-        if this_name not in self._interactions:
+        if new_name not in self._interactions:
             raise KeyError(
-                "An interaction named '{}' does not exist.".format(this_name)
+                "An interaction named '{}' does not exist yet.".format(new_name)
             )
 
         # TODO: Need to change only updated values.
-        self._variables[this_name] = {
-            "name": this_name,
+        self._variables[new_name] = {
+            "name": new_name,
             "coefficient": coefficient,
             "scale": scale,
             "attributes": attributes,
@@ -265,20 +285,32 @@ class LogicalModel(AbstractModel):
     # Constraints
     ################################
 
-    def n_hot_constraint(self):
-        raise NotImplementedError
+    def n_hot_constraint(self, target, n=1, scale=1.0, label=constants.DEFAULT_LABEL_N_HOT):
+        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
+        self._check_argument_type("n", n, int)
+        self._check_argument_type("scale", scale, numbers.Number)
+        self._check_argument_type("label", label, str)
 
-    def dependency_constraint(self):
+        if not isinstance(target, pyqubo.Array):
+            target = [target]
+        for t in target:
+            if label not in self._constraints:
+                self._constraints[label] = NHotConstraint(n, scale, label)
+            self._constraints[label].add(t.label)
+
+    def dependency_constraint(self, target_src, target_dst, scale=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
+        self._check_argument_type("scale", scale, numbers.Number)
+        self._check_argument_type("label", label, str)
         raise NotImplementedError
 
     ################################
     # Utils
     ################################
 
-    def merge(self):
+    def merge(self, other):
         raise NotImplementedError
 
-    def convert_to_physical(self):
+    def convert_to_physical(self, placeholder={}):
         raise NotImplementedError
 
     def convert_type(self):
@@ -355,4 +387,5 @@ class LogicalModel(AbstractModel):
             s.append("- name: " + name)
             s.append(str(vars))
         s.append("* interactions: " + str(self._interactions))
+        s.append("* constraints: " + str(self._constraints))
         return "\n".join(s)

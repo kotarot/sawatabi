@@ -19,3 +19,7 @@ MODEL_QUBO = "qubo"
 # Interaction Types
 INTERACTION_1_BODY = "1-body"
 INTERACTION_2_BODY = "2-body"
+
+# Default label for Constraints
+DEFAULT_LABEL_N_HOT = "Default N-hot Constraint"
+DEFAULT_LABEL_DEPENDENCY = "Default Dependency Constraint"

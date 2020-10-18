@@ -30,7 +30,7 @@ def sample_current_time():
 
 
 def sample_model_1d():
-    print("\n=== model ===")
+    print("\n=== model (1d) ===")
     model = sawatabi.model.LogicalModel(type="ising")
     x = model.variables("x", shape=(2,))
     print("\n--- Model ---")
@@ -59,7 +59,37 @@ def sample_model_1d():
     print(model)
 
 
+def sample_model_2d():
+    print("\n=== model (2d) ===")
+    model = sawatabi.model.LogicalModel(type="ising")
+    y = model.variables("y", shape=(2, 2))
+    print("\n--- Model ---")
+    print(model)
+
+    y = model.append("y", shape=(1, 1))
+    print("\n--- Model ---")
+    print(model)
+
+
+def sample_model_constraints():
+    print("\n=== model (constraints) ===")
+    model = sawatabi.model.LogicalModel(type="qubo")
+    a = model.variables("a", shape=(3,))
+    print("\n--- Model ---")
+    print(model)
+
+    model.n_hot_constraint(a[(slice(0, 2),)], n=1)
+    print("\n--- Model ---")
+    print(model)
+
+    model.n_hot_constraint(a[2], n=1)
+    print("\n--- Model ---")
+    print(model)
+
+
 if __name__ == "__main__":
     sample_version()
     sample_current_time()
     sample_model_1d()
+    sample_model_2d()
+    sample_model_constraints()

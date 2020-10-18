@@ -39,7 +39,7 @@ def test_logical_model_invalid_type(model):
         model = LogicalModel()  # noqa: F841
 
     with pytest.raises(ValueError):
-        model = LogicalModel(type="anothertype")  # noqa: F841
+        model = LogicalModel(type="invalidtype")  # noqa: F841
 
     with pytest.raises(ValueError):
         model = LogicalModel(type=12345)  # noqa: F841
@@ -106,13 +106,13 @@ def test_logical_model_select(model):
 def test_logical_model_add(model):
     x = model.variables("x", shape=(2, 2))
 
-    model.add_interaction(x[0][0], coefficient=1.0)
+    model.add_interaction(x[0, 0], coefficient=1.0)
     # TODO: Check result
-    model.add_interaction(x[0][1], coefficient=2.0, scale=0.1)
+    model.add_interaction(x[0, 1], coefficient=2.0, scale=0.1)
     # TODO: Check result
-    model.add_interaction(x[1][0], coefficient=3.0, attributes={"foo": "bar"})
+    model.add_interaction(x[1, 0], coefficient=3.0, attributes={"foo": "bar"})
     # TODO: Check result
-    model.add_interaction((x[0][0], x[1][1]), coefficient=-4.0, timestamp=1234567890123)
+    model.add_interaction((x[0, 0], x[1, 1]), coefficient=-4.0, timestamp=1234567890123)
     # TODO: Check result
 
 
@@ -126,13 +126,25 @@ def test_logical_model_add_invalid(model):
         model.add_interaction()
 
     with pytest.raises(TypeError):
-        model.add_interaction("another type", coefficient=1.0)
+        model.add_interaction("invalid type", coefficient=1.0)
 
     with pytest.raises(TypeError):
         model.add_interaction((x[0], x[1], x[2]), coefficient=1.0)
 
     with pytest.raises(TypeError):
         model.add_interaction(("a", "b"), coefficient=1.0)
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], coefficient="invalid type")
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], scale="invalid type")
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], attributes="invalid type")
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], timestamp="invalid type")
 
 
 ################################
@@ -167,13 +179,25 @@ def test_logical_model_update_invalid(model):
         model.update_interaction(x[1], coefficient=1.0)
 
     with pytest.raises(TypeError):
-        model.update_interaction("another type", coefficient=1.0)
+        model.update_interaction("invalid type", coefficient=1.0)
 
     with pytest.raises(TypeError):
         model.update_interaction((x[0], x[1], x[2]), coefficient=1.0)
 
     with pytest.raises(TypeError):
         model.update_interaction(("a", "b"), coefficient=1.0)
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], coefficient="invalid type")
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], scale="invalid type")
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], attributes="invalid type")
+
+    with pytest.raises(TypeError):
+        model.add_interaction(x[0], timestamp="invalid type")
 
 
 ################################
@@ -221,7 +245,7 @@ def test_logical_model_pyqubo(model):
 
 def test_logical_model_pyqubo_invalid(model):
     with pytest.raises(TypeError):
-        model.from_pyqubo("another type")
+        model.from_pyqubo("invalid type")
 
 
 ################################
@@ -229,9 +253,56 @@ def test_logical_model_pyqubo_invalid(model):
 ################################
 
 
-def test_logical_model_constraints(model):
-    with pytest.raises(NotImplementedError):
-        model.n_hot_constraint()
+def test_logical_model_n_hot_constraint_1(model):
+    x = model.variables("x", shape=(3,))
+
+    model.n_hot_constraint(x[0], n=1)
+    model.n_hot_constraint(x[(slice(1, 3),)], n=1)
+
+
+def test_logical_model_n_hot_constraint_2(model):
+    y = model.variables("y", shape=(2, 2))
+
+    model.n_hot_constraint(y[0, :], n=2, label="my label")
+    model.n_hot_constraint(y[1, :], n=2, label="my label")
+
+
+def test_logical_model_n_hot_constraint_invalid(model):
+    z = model.variables("z", shape=(4, 4, 4))
+
+    with pytest.raises(TypeError):
+        model.n_hot_constraint("invalid type")
+
+    with pytest.raises(TypeError):
+        model.n_hot_constraint(z[0, 0, :], n="invalid type")
+
+    with pytest.raises(TypeError):
+        model.n_hot_constraint(z[0, 0, :], scale="invalid type")
+
+    with pytest.raises(TypeError):
+        model.n_hot_constraint(z[0, 0, :], label=12345)
+
+
+def test_logical_model_dependency_constraint(model):
+    x = model.variables("x", shape=(2, 3))
 
     with pytest.raises(NotImplementedError):
-        model.dependency_constraint()
+        model.dependency_constraint(x[0, :], x[1, :])
+
+
+################################
+# Utils
+################################
+
+
+def test_logical_model_utils(model):
+    other_model = LogicalModel(type="ising")
+    with pytest.raises(NotImplementedError):
+        model.merge(other_model)
+
+    placeholder = {"a": 10.0}
+    with pytest.raises(NotImplementedError):
+        model.convert_to_physical(placeholder=placeholder)
+
+    with pytest.raises(NotImplementedError):
+        model.convert_type()
