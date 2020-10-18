@@ -15,6 +15,7 @@
 import pyqubo
 import pytest
 
+import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
 
 
@@ -24,7 +25,7 @@ def model():
 
 
 ################################
-# Model
+# Logical Model
 ################################
 
 
@@ -144,26 +145,30 @@ def test_logical_model_add(model):
     x = model.variables("x", shape=(2, 2))
 
     res = model.add_interaction(x[0, 0], coefficient=1.0)
-    assert len(model._interactions) == 1
-    assert model._interactions[res["name"]]["coefficient"] == 1.0
-    assert model._interactions[res["name"]]["scale"] == 1.0
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["coefficient"] == 1.0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["scale"] == 1.0
 
     res = model.add_interaction(x[0, 1], coefficient=2.0, scale=0.1)
-    assert len(model._interactions) == 2
-    assert model._interactions[res["name"]]["coefficient"] == 2.0
-    assert model._interactions[res["name"]]["scale"] == 0.1
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 2
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["coefficient"] == 2.0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["scale"] == 0.1
 
     res = model.add_interaction(x[1, 0], coefficient=3.0, attributes={"foo": "bar"})
-    assert len(model._interactions) == 3
-    assert model._interactions[res["name"]]["coefficient"] == 3.0
-    assert model._interactions[res["name"]]["attributes"]["foo"] == "bar"
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 3
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["coefficient"] == 3.0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["attributes"]["foo"] == "bar"
 
     res = model.add_interaction(
         (x[0, 0], x[1, 1]), coefficient=-4.0, timestamp=1234567890123
     )
-    assert len(model._interactions) == 4
-    assert model._interactions[res["name"]]["coefficient"] == -4.0
-    assert model._interactions[res["name"]]["timestamp"] == 1234567890123
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 3
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][res["name"]]["coefficient"] == -4.0
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][res["name"]]["timestamp"] == 1234567890123
 
 
 def test_logical_model_add_invalid(model):
@@ -206,20 +211,24 @@ def test_logical_model_update(model):
     x = model.variables("x", shape=(1,))
 
     model.add_interaction(x[0], coefficient=1.0)
-    assert len(model._interactions) == 1
-    assert model._interactions["x[0]"]["coefficient"] == 1.0
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 1.0
 
     model.update_interaction(x[0], coefficient=10.0)
-    assert len(model._interactions) == 1
-    assert model._interactions["x[0]"]["coefficient"] == 10.0
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 10.0
 
     model.update_interaction(target=x[0], coefficient=100.0)
-    assert len(model._interactions) == 1
-    assert model._interactions["x[0]"]["coefficient"] == 100.0
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 100.0
 
     model.update_interaction(name="x[0]", coefficient=1000.0)
-    assert len(model._interactions) == 1
-    assert model._interactions["x[0]"]["coefficient"] == 1000.0
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 1000.0
 
 
 def test_logical_model_update_invalid(model):
@@ -393,14 +402,38 @@ def test_logical_model_dependency_constraint(model):
 ################################
 
 
+def test_logical_model_convert(model):
+    placeholder = {"a": 10.0}
+    model.convert_to_physical(placeholder=placeholder)
+
+
 def test_logical_model_utils(model):
     other_model = LogicalModel(type="ising")
     with pytest.raises(NotImplementedError):
         model.merge(other_model)
 
-    placeholder = {"a": 10.0}
-    with pytest.raises(NotImplementedError):
-        model.convert_to_physical(placeholder=placeholder)
-
     with pytest.raises(NotImplementedError):
         model.convert_type()
+
+
+################################
+# Built-in functions
+################################
+
+
+def test_logical_model_repr(model):
+    assert isinstance(model.__repr__(), str)
+    assert "LogicalModel({" in model.__repr__()
+    assert "type" in model.__repr__()
+    assert "variables" in model.__repr__()
+    assert "interactions" in model.__repr__()
+    assert "constraints" in model.__repr__()
+
+
+def test_logical_model_str(model):
+    assert isinstance(model.__str__(), str)
+    assert "LOGICAL MODEL" in model.__str__()
+    assert "type" in model.__str__()
+    assert "variables" in model.__str__()
+    assert "interactions" in model.__str__()
+    assert "constraints" in model.__str__()

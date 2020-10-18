@@ -13,11 +13,13 @@
 # limitations under the License.
 
 import numbers
+import pprint
 
 import pyqubo
 
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
+from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.model.n_hot_constraint import NHotConstraint
 from sawatabi.utils.functions import Functions
 from sawatabi.utils.time import current_time_ms
@@ -25,15 +27,8 @@ from sawatabi.utils.time import current_time_ms
 
 class LogicalModel(AbstractModel):
     def __init__(self, type=""):
-        super().__init__()
-        if type in [constants.MODEL_ISING, constants.MODEL_QUBO]:
-            self._type = type
-        else:
-            raise ValueError(
-                "'type' must be one of {}.".format(
-                    [constants.MODEL_ISING, constants.MODEL_QUBO]
-                )
-            )
+        super().__init__(type)
+        self._constraints = {}
 
     ################################
     # Private static methods
@@ -84,7 +79,7 @@ class LogicalModel(AbstractModel):
     @staticmethod
     def _get_interaction_body_from_target(target):
         if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
-            body = constants.INTERACTION_1_BODY
+            body = constants.INTERACTION_BODY_LINEAR
         elif isinstance(target, tuple):
             if len(target) != 2:
                 raise TypeError("The length of a tuple 'target' must be two.")
@@ -93,22 +88,21 @@ class LogicalModel(AbstractModel):
                     raise TypeError(
                         "All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'."
                     )
-            body = constants.INTERACTION_2_BODY
+            body = constants.INTERACTION_BODY_QUADRATIC
         else:
             raise TypeError("Invalid 'target'.")
         return body
 
     @staticmethod
     def _get_default_name_of_interaction(interaction_body, target):
-        if interaction_body == constants.INTERACTION_1_BODY:
+        if interaction_body == constants.INTERACTION_BODY_LINEAR:
             name = target.label
-        elif interaction_body == constants.INTERACTION_2_BODY:
-            # To dictionary order
+        elif interaction_body == constants.INTERACTION_BODY_QUADRATIC:
+            # Tuple elements to dictionary order
             if target[0].label < target[1].label:
-                this_target = (target[0].label, target[1].label)
+                name = (target[0].label, target[1].label)
             else:
-                this_target = (target[1].label, target[0].label)
-            name = str(this_target)
+                name = (target[1].label, target[0].label)
         return name
 
     ################################
@@ -209,7 +203,7 @@ class LogicalModel(AbstractModel):
             "attributes": attributes,
             "timestamp": timestamp,
         }
-        self._interactions[new_name] = add_object
+        self._interactions[body][new_name] = add_object
         return add_object
 
     ################################
@@ -241,12 +235,16 @@ class LogicalModel(AbstractModel):
             # Already given the specific name
             self._check_argument_type("name", name, str)
             new_name = name
+            for b in [constants.INTERACTION_BODY_LINEAR, constants.INTERACTION_BODY_QUADRATIC]:
+                if name in self._interactions[b]:
+                    body = b
+                    break
         else:
             # Will be automatically named by the default name
             body = self._get_interaction_body_from_target(target)
             new_name = self._get_default_name_of_interaction(body, target)
 
-        if new_name not in self._interactions:
+        if new_name not in self._interactions[body]:
             raise KeyError(
                 "An interaction named '{}' does not exist yet. Need to be added before updating.".format(
                     new_name
@@ -261,7 +259,7 @@ class LogicalModel(AbstractModel):
             "attributes": attributes,
             "timestamp": timestamp,
         }
-        self._interactions[new_name] = update_object
+        self._interactions[body][new_name] = update_object
         return update_object
 
     ################################
@@ -339,7 +337,19 @@ class LogicalModel(AbstractModel):
         raise NotImplementedError
 
     def convert_to_physical(self, placeholder={}):
-        raise NotImplementedError
+        # TODO:
+        # - deal with multiple interactions
+        # - resolve constraints
+        # - resolve placeholder
+
+        physical = PhysicalModel(type=self._type)
+
+        for k, v in self._interactions[constants.INTERACTION_BODY_LINEAR].items():
+            physical.add_interaction(k, body=constants.INTERACTION_BODY_LINEAR, coefficient=float(v["coefficient"] * v["scale"]))
+        for k, v in self._interactions[constants.INTERACTION_BODY_QUADRATIC].items():
+            physical.add_interaction(k, body=constants.INTERACTION_BODY_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"]))
+
+        return physical
 
     def convert_type(self):
         """
@@ -350,9 +360,6 @@ class LogicalModel(AbstractModel):
     ################################
     # Getters
     ################################
-
-    def get_type(self):
-        return self._type
 
     def get_variables(self):
         """
@@ -425,15 +432,29 @@ class LogicalModel(AbstractModel):
     ################################
 
     def __repr__(self):
+        s = "LogicalModel({"
+        s += "'type': '" + str(self._type) + "', "
+        s += "'variables': " + self.remove_leading_spaces(str(self._variables)) + ", "
+        s += "'interactions': " + str(self._interactions) + ", "
+        s += "'constraints': " + str(self._constraints) + "})"
+        return s
+
+    def __str__(self):
         s = []
-        s.append("┏━━━━━━━━━━━━━━━━━━━━━━━━")
+        s.append("┏" + ("━" * 64))
         s.append("┃ LOGICAL MODEL")
-        s.append("┣━━━━━━━━━━━━━━━━━━━━━━━━")
+        s.append("┣" + ("━" * 64))
         s.append("┣━ type: " + str(self._type))
-        s.append("┣┳ variables: " + str(list(self._variables.keys())))
+        s.append("┣━ variables: " + str(list(self._variables.keys())))
         for name, vars in self._variables.items():
-            s.append(" ┗ name: " + name)
-            s.append(str(vars))
-        s.append("┣━ interactions: " + str(self._interactions))
-        s.append("┗━ constraints: " + str(self._constraints))
+            s.append("┃  name: " + name)
+            s.append(self.append_prefix(str(vars), length=4))
+        s.append("┣━ interactions:")
+        s.append("┃  linear:")
+        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_BODY_LINEAR]), length=4))
+        s.append("┃  quadratic:")
+        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_BODY_QUADRATIC]), length=4))
+        s.append("┣━ constraints:")
+        s.append(self.append_prefix(pprint.pformat(self._constraints), length=4))
+        s.append("┗" + ("━" * 64))
         return "\n".join(s)

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pyqubo
-
 import sawatabi
 
 
@@ -32,6 +30,8 @@ def sample_current_time():
 
 
 def sample_model_pyqubo():
+    import pyqubo
+
     print("\n=== model (pyqubo) ===")
     x = pyqubo.Array.create("x", shape=(2, 3), vartype="SPIN")
     model = sawatabi.model.LogicalModel(type="ising")
@@ -95,19 +95,70 @@ def sample_model_constraints():
     print("\n")
     print(model)
 
-    model.n_hot_constraint(a[(slice(0, 2),)], n=1)
+    model.n_hot_constraint(a[(slice(0, 2),)], n=1, label="my constraint 1")
     print("\n")
     print(model)
 
-    model.n_hot_constraint(a[2], n=1)
+    model.n_hot_constraint(a[2], n=1, label="my constraint 1")
     print("\n")
     print(model)
 
 
-if __name__ == "__main__":
+def sample_model_convert():
+    print("\n=== convert ===")
+    model = sawatabi.model.LogicalModel(type="ising")
+
+    x = model.variables("x", shape=(1, 2))
+    model.add_interaction(x[0, 0], coefficient=10.0)
+    model.add_interaction((x[0, 0], x[0, 1]), coefficient=1.0)
+    print("\n")
+    print(model)
+
+    x = model.append("x", shape=(1, 0))
+    model.add_interaction((x[0, 1], x[1, 0]), coefficient=-2.0)
+    model.add_interaction((x[1, 0], x[1, 1]), coefficient=3.0)
+    print("\n")
+    print(model)
+
+    physical_model = model.convert_to_physical()
+    print("\n")
+    print(physical_model)
+
+
+def sample_neal():
+    import dimod
+    import neal
+
+    print("\n=== neal (sample) ===\n")
+
+    # BQM
+    # bqm = dimod.BinaryQuadraticModel({0: -1, 1: 1}, {(0, 1): 2}, 0.0, dimod.BINARY)
+    bqm = dimod.BinaryQuadraticModel(
+        {"x[0]": 1, "x[1]": 0}, {("x[0]", "x[1]"): 2}, 0.0, dimod.SPIN
+    )
+
+    # dimod's brute force solver
+    sampleset = dimod.ExactSolver().sample(bqm)
+    print(sampleset)
+
+    # SA
+    sampler = neal.SimulatedAnnealingSampler()
+    sampleset = sampler.sample(bqm)
+    print(sampleset)
+
+
+def main():
     sample_version()
     sample_current_time()
     sample_model_pyqubo()
     sample_model_1d()
     sample_model_2d()
     sample_model_constraints()
+
+    sample_model_convert()
+    # sample_neal()
+    # sample_solver()
+
+
+if __name__ == "__main__":
+    main()
