@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.utils.functions import Functions
-from sawatabi.utils.time import (
-    current_time,
-    current_time_ms,
-    current_time_us,
-    current_time_ns,
-)
+import time
 
-__all__ = [
-    "current_time",
-    "current_time_ms",
-    "current_time_us",
-    "current_time_ns",
-    "Functions",
-]
+
+def current_time():
+    return int(time.time())
+
+
+def current_time_ms():
+    return int(time.time() * 1_000)
+
+
+def current_time_us():
+    return int(time.time() * 1_000_000)
+
+
+def current_time_ns():
+    return int(time.time() * 1_000_000_000)

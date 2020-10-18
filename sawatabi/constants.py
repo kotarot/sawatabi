@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.utils.functions import Functions
-from sawatabi.utils.time import (
-    current_time,
-    current_time_ms,
-    current_time_us,
-    current_time_ns,
-)
+# Model Types
+MODEL_ISING = "ising"
+MODEL_QUBO = "qubo"
 
-__all__ = [
-    "current_time",
-    "current_time_ms",
-    "current_time_us",
-    "current_time_ns",
-    "Functions",
-]
+# Interaction Types
+INTERACTION_1_BODY = "1-body"
+INTERACTION_2_BODY = "2-body"
+
+# Default label for Constraints
+DEFAULT_LABEL_N_HOT = "Default N-hot Constraint"
+DEFAULT_LABEL_DEPENDENCY = "Default Dependency Constraint"

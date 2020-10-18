@@ -12,18 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.utils.functions import Functions
-from sawatabi.utils.time import (
-    current_time,
-    current_time_ms,
-    current_time_us,
-    current_time_ns,
-)
+from sawatabi.model.abstract_constraint import AbstractConstraint
 
-__all__ = [
-    "current_time",
-    "current_time_ms",
-    "current_time_us",
-    "current_time_ns",
-    "Functions",
-]
+
+class DependencyConstraint(AbstractConstraint):
+    def __init__(self, scale=1.0, label="", variables=[]):
+        super().__init__(scale, label, variables)
