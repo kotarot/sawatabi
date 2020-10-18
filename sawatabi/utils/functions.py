@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.utils.functions import Functions
-from sawatabi.utils.time import (
-    current_time,
-    current_time_ms,
-    current_time_us,
-    current_time_ns,
-)
 
-__all__ = ["current_time", "current_time_ms", "current_time_us", "current_time_ns", "Functions"]
+class Functions:
+    @classmethod
+    def _flatten(cls, lst):
+        for element in lst:
+            if isinstance(element, list):
+                yield from cls._flatten(element)
+            else:
+                yield element

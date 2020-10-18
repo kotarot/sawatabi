@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pyqubo
+
 import sawatabi
 
 
@@ -29,21 +31,34 @@ def sample_current_time():
     print("ns: ", sawatabi.utils.current_time_ns())
 
 
+def sample_model_pyqubo():
+    print("\n=== model (pyqubo) ===")
+    x = pyqubo.Array.create("x", shape=(2, 3), vartype="SPIN")
+    model = sawatabi.model.LogicalModel(type="ising")
+    model.variables(x)
+    print("\n")
+    print(model)
+
+
 def sample_model_1d():
     print("\n=== model (1d) ===")
     model = sawatabi.model.LogicalModel(type="ising")
     x = model.variables("x", shape=(2,))
-    print("\n--- Model ---")
+    print("\n")
     print(model)
     print("\n--- Return Value of variables (x) ---")
     print(x)
+
+    y = model.variables("y", shape=(2,))
+    print("\n")
+    print(model)
 
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0, attributes={"foo": "bar"})
     model.add_interaction((x[0], x[1]), coefficient=-3.0)
 
     x = model.append("x", shape=(1,))
-    print("\n--- Model ---")
+    print("\n")
     print(model)
     print("\n--- Return Value of append (x) ---")
     print(x)
@@ -55,7 +70,7 @@ def sample_model_1d():
         timestamp=1234567890123,
     )
     model.update_interaction(x[0], coefficient=1000.0)
-    print("\n--- Model ---")
+    print("\n")
     print(model)
 
 
@@ -63,11 +78,11 @@ def sample_model_2d():
     print("\n=== model (2d) ===")
     model = sawatabi.model.LogicalModel(type="ising")
     model.variables("y", shape=(2, 2))
-    print("\n--- Model ---")
+    print("\n")
     print(model)
 
     model.append("y", shape=(1, 1))
-    print("\n--- Model ---")
+    print("\n")
     print(model)
 
 
@@ -75,21 +90,22 @@ def sample_model_constraints():
     print("\n=== model (constraints) ===")
     model = sawatabi.model.LogicalModel(type="qubo")
     a = model.variables("a", shape=(3,))
-    print("\n--- Model ---")
+    print("\n")
     print(model)
 
     model.n_hot_constraint(a[(slice(0, 2),)], n=1)
-    print("\n--- Model ---")
+    print("\n")
     print(model)
 
     model.n_hot_constraint(a[2], n=1)
-    print("\n--- Model ---")
+    print("\n")
     print(model)
 
 
 if __name__ == "__main__":
     sample_version()
     sample_current_time()
+    sample_model_pyqubo()
     sample_model_1d()
     sample_model_2d()
     sample_model_constraints()

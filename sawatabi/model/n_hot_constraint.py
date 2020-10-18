@@ -20,6 +20,8 @@ from sawatabi.model.abstract_constraint import AbstractConstraint
 class NHotConstraint(AbstractConstraint):
     def __init__(self, n=1, scale=1.0, label="", variables=None):
         self._check_argument_type("n", n, int)
+        if n <= 0:
+            raise ValueError("'n' must be a positive integer.")
         self._check_argument_type("scale", scale, numbers.Number)
         self._check_argument_type("label", label, str)
         if variables is None:

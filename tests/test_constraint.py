@@ -36,6 +36,9 @@ def test_n_hot_constraint():
     assert c._variables == ["x0", "x1", "x2"]
     assert len(c._variables) == 3
 
+    assert c.get() == ["x0", "x1", "x2"]
+    assert len(c.get()) == 3
+
 
 def test_n_hot_constraint_constructors():
     c1 = NHotConstraint(n=2)
@@ -63,7 +66,13 @@ def test_n_hot_constraint_constructors():
     assert c4._variables == ["a", "b", "c"]
 
 
-def test_n_hot_constraint_invalid():
+@pytest.mark.parametrize("n", [-10, 0])
+def test_n_hot_constraint_valueerror(n):
+    with pytest.raises(ValueError):
+        NHotConstraint(n=n)
+
+
+def test_n_hot_constraint_typeerror():
     with pytest.raises(TypeError):
         NHotConstraint(n="invalid type")
 

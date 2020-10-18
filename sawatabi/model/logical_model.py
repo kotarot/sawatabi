@@ -19,6 +19,7 @@ import pyqubo
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
 from sawatabi.model.n_hot_constraint import NHotConstraint
+from sawatabi.utils.functions import Functions
 from sawatabi.utils.time import current_time_ms
 
 
@@ -116,10 +117,16 @@ class LogicalModel(AbstractModel):
 
     def variables(self, name, shape=()):
         if isinstance(name, pyqubo.Array):
-            # TODO: Check if pyqubo Array's vartype and model type is the same.
+            flattened = list(Functions._flatten(name.bit_list))
+            if (self._type == constants.MODEL_ISING) and isinstance(flattened[0], pyqubo.Binary) or (self._type == constants.MODEL_QUBO) and isinstance(flattened[0], pyqubo.Spin):
+                raise TypeError("Model type and PyQUBO Array type mismatch.")
 
-            self._variables["FIXME"] = name
-            return self._variables["FIXME"]
+            # Retrieve label from the pyqubo variable
+            found = flattened[0].label.index("[")
+            this_name = flattened[0].label[:found]
+
+            self._variables[this_name] = name
+            return self._variables[this_name]
 
         self._check_argument_type("name", name, str)
         self._check_argument_type("shape", shape, tuple)
@@ -233,11 +240,11 @@ class LogicalModel(AbstractModel):
 
         if new_name not in self._interactions:
             raise KeyError(
-                "An interaction named '{}' does not exist yet.".format(new_name)
+                "An interaction named '{}' does not exist yet. Need to be added firstly.".format(new_name)
             )
 
         # TODO: Need to change only updated values.
-        self._variables[new_name] = {
+        self._interactions[new_name] = {
             "name": new_name,
             "coefficient": coefficient,
             "scale": scale,
@@ -335,9 +342,15 @@ class LogicalModel(AbstractModel):
     def get_type(self):
         return self._type
 
-    def get_variables(self, name):
+    def get_variables(self):
         """
-        Returns a list of alive variables (i.e., variables which are not removed nor fixed) of the given name.
+        Returns a list of alive variables (i.e., variables which are not removed nor fixed).
+        """
+        return self._variables
+
+    def get_variables_by_name(self, name):
+        """
+        Returns a list of alive variables (i.e., variables which are not removed nor fixed) by the given name.
         """
         return self._variables[name]
 
@@ -383,18 +396,32 @@ class LogicalModel(AbstractModel):
         """
         raise NotImplementedError
 
+    def get_constraints(self):
+        """
+        Returns a list of constraints.
+        """
+        return self._constraints
+
+    def get_constraints_by_label(self, label):
+        """
+        Returns a list of constraints by the given label.
+        """
+        return self._constraints[label]
+
     ################################
     # Built-in functions
     ################################
 
     def __repr__(self):
         s = []
-        s.append("[Logical Model]")
-        s.append("* type: " + str(self._type))
-        s.append("* variables: " + str(list(self._variables.keys())))
+        s.append("┏━━━━━━━━━━━━━━━━━━━━━━━━")
+        s.append("┃ LOGICAL MODEL")
+        s.append("┣━━━━━━━━━━━━━━━━━━━━━━━━")
+        s.append("┣━ type: " + str(self._type))
+        s.append("┣┳ variables: " + str(list(self._variables.keys())))
         for name, vars in self._variables.items():
-            s.append("- name: " + name)
+            s.append(" ┗ name: " + name)
             s.append(str(vars))
-        s.append("* interactions: " + str(self._interactions))
-        s.append("* constraints: " + str(self._constraints))
+        s.append("┣━ interactions: " + str(self._interactions))
+        s.append("┗━ constraints: " + str(self._constraints))
         return "\n".join(s)
