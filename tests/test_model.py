@@ -158,7 +158,9 @@ def test_logical_model_add(model):
     assert model._interactions[res["name"]]["coefficient"] == 3.0
     assert model._interactions[res["name"]]["attributes"]["foo"] == "bar"
 
-    res = model.add_interaction((x[0, 0], x[1, 1]), coefficient=-4.0, timestamp=1234567890123)
+    res = model.add_interaction(
+        (x[0, 0], x[1, 1]), coefficient=-4.0, timestamp=1234567890123
+    )
     assert len(model._interactions) == 4
     assert model._interactions[res["name"]]["coefficient"] == -4.0
     assert model._interactions[res["name"]]["timestamp"] == 1234567890123
