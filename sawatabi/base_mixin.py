@@ -29,42 +29,42 @@ class BaseMixin:
         return article
 
     @staticmethod
-    def _check_argument_type(name, value, type):
-        if not isinstance(value, type):
-            if isinstance(type, tuple):
-                typestr = [t.__name__ for t in type]
+    def _check_argument_type(name, value, atype):
+        if not isinstance(value, atype):
+            if isinstance(atype, tuple):
+                typestr = [t.__name__ for t in atype]
                 article = "one of"
             else:
-                typestr = type.__name__
+                typestr = atype.__name__
                 article = BaseMixin._get_artitle(typestr)
             raise TypeError("'{}' must be {} {}.".format(name, article, typestr))
 
     @staticmethod
-    def _check_argument_type_in_tuple(name, values, type):
+    def _check_argument_type_in_tuple(name, values, atype):
         if len(values) == 0:
             raise TypeError("'{}' must not be an empty tuple.".format(name))
         for v in values:
-            if not isinstance(v, type):
-                typestr = type.__name__
+            if not isinstance(v, atype):
+                typestr = atype.__name__
                 article = BaseMixin._get_artitle(typestr)
                 raise TypeError("All elements in '{}' must be {} {}.".format(name, article, typestr))
 
     @staticmethod
-    def _modeltype_to_vartype(modeltype):
-        if modeltype == constants.MODEL_ISING:
+    def _modeltype_to_vartype(mtype):
+        if mtype == constants.MODEL_ISING:
             vartype = "SPIN"
-        elif modeltype == constants.MODEL_QUBO:
+        elif mtype == constants.MODEL_QUBO:
             vartype = "BINARY"
         else:
-            raise ValueError("Invalid 'modeltype'")
+            raise ValueError("Invalid 'mtype'")
         return vartype
 
     @staticmethod
     def _vartype_to_modeltype(vartype):
         if vartype == "SPIN":
-            modeltype = constants.MODEL_ISING
+            mtype = constants.MODEL_ISING
         elif vartype == "BINARY":
-            modeltype = constants.MODEL_QUBO
+            mtype = constants.MODEL_QUBO
         else:
             raise ValueError("Invalid 'vartype'")
-        return modeltype
+        return mtype

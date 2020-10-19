@@ -103,6 +103,12 @@ def test_logical_model_variables_invalid(name, shape):
         model.variables(name, shape=shape)
 
 
+def test_logical_model_variables_comma(model):
+    # We cannot name variables whose name contains a comma
+    with pytest.raises(AssertionError):
+        model.variables("x*y", shape=(2, 2))
+
+
 @pytest.mark.parametrize("vartype,mtype", [("SPIN", "ising"), ("BINARY", "qubo")])
 def test_logical_model_variables_from_pyqubo(vartype, mtype):
     x = pyqubo.Array.create("x", shape=(2, 3), vartype=vartype)
@@ -148,6 +154,9 @@ def test_logical_model_add(model):
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
     assert res["name"] == "x[0][0]"
+    assert res["key"] == "x[0][0]"
+    assert res["interacts"] == x[0, 0]
+    assert id(res["interacts"]) == id(x[0, 0])
     assert model._interactions[constants.INTERACTION_LINEAR]["x[0][0]"]["coefficient"] == 1.0
     assert model._interactions[constants.INTERACTION_LINEAR]["x[0][0]"]["scale"] == 1.0
 
@@ -168,17 +177,25 @@ def test_logical_model_add(model):
     res = model.add_interaction((x[0, 0], x[0, 1]), coefficient=-4.0, timestamp=1234567890123)
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 3
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
-    assert res["name"] == "('x[0][0]', 'x[0][1]')"
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[0][0]", "x[0][1]")]["coefficient"] == -4.0
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[0][0]", "x[0][1]")]["timestamp"] == 1234567890123
+    assert res["name"] == "x[0][0]*x[0][1]"
+    assert res["key"] == ("x[0][0]", "x[0][1]")
+    assert res["interacts"] == (x[0, 0], x[0, 1])
+    assert id(res["interacts"][0]) == id(x[0, 0])
+    assert id(res["interacts"][1]) == id(x[0, 1])
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0][0]*x[0][1]"]["coefficient"] == -4.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0][0]*x[0][1]"]["timestamp"] == 1234567890123
 
     # Check key order
     res = model.add_interaction((x[1, 1], x[1, 0]), coefficient=-4.0, timestamp=1234567890123)
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 3
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 2
-    assert res["name"] == "('x[1][0]', 'x[1][1]')"
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[1][0]", "x[1][1]")]["coefficient"] == -4.0
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[1][0]", "x[1][1]")]["timestamp"] == 1234567890123
+    assert res["name"] == "x[1][0]*x[1][1]"
+    assert res["key"] == ("x[1][0]", "x[1][1]")
+    assert res["interacts"] == (x[1, 0], x[1, 1])
+    assert id(res["interacts"][0]) == id(x[1, 0])
+    assert id(res["interacts"][1]) == id(x[1, 1])
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[1][0]*x[1][1]"]["coefficient"] == -4.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[1][0]*x[1][1]"]["timestamp"] == 1234567890123
 
 
 def test_logical_model_add_invalid(model):
@@ -226,13 +243,17 @@ def test_logical_model_update(model):
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
     assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["coefficient"] == 1.0
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 2.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["coefficient"] == 2.0
 
     # update by a variable
-    model.update_interaction(x[0], coefficient=10.0)
+    res = model.update_interaction(x[0], coefficient=10.0)
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
     assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["coefficient"] == 10.0
+    assert res["name"] == "x[0]"
+    assert res["key"] == "x[0]"
+    assert res["interacts"] == x[0]
+    assert id(res["interacts"]) == id(x[0])
 
     # update by a target
     model.update_interaction(target=x[0], coefficient=100.0)
@@ -247,25 +268,35 @@ def test_logical_model_update(model):
     assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["coefficient"] == 1000.0
 
     # update by a pair of variables
-    model.update_interaction(target=(x[0], x[1]), coefficient=20.0)
+    res = model.update_interaction(target=(x[0], x[1]), coefficient=20.0)
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 20.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["coefficient"] == 20.0
+    assert res["name"] == "x[0]*x[1]"
+    assert res["key"] == ("x[0]", "x[1]")
+    assert res["interacts"] == (x[0], x[1])
+    assert id(res["interacts"][0]) == id(x[0])
+    assert id(res["interacts"][1]) == id(x[1])
 
     # update by a pair of variables (reversed order)
-    model.update_interaction(target=(x[1], x[0]), coefficient=200.0)
+    res = model.update_interaction(target=(x[1], x[0]), coefficient=200.0)
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 200.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["coefficient"] == 200.0
+    assert res["name"] == "x[0]*x[1]"
+    assert res["key"] == ("x[0]", "x[1]")
+    assert res["interacts"] == (x[0], x[1])
+    assert id(res["interacts"][0]) == id(x[0])
+    assert id(res["interacts"][1]) == id(x[1])
 
     # update by a name
-    model.update_interaction(name=("x[0]", "x[1]"), coefficient=2000.0)
+    model.update_interaction(name="x[0]*x[1]", coefficient=2000.0)
     assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
-    assert model._interactions[constants.INTERACTION_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 2000.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["coefficient"] == 2000.0
 
 
-def test_logical_model_update_by_a_custom_key(model):
+def test_logical_model_update_by_custom_names(model):
     y = model.variables("y", shape=(2,))
     n1 = "custom interaction 1"
     n2 = "custom interaction 2"

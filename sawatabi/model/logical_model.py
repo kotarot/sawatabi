@@ -104,23 +104,27 @@ class LogicalModel(AbstractModel):
         self._check_argument_type("attributes", attributes, dict)
         self._check_argument_type("timestamp", timestamp, int)
 
-        body = self._get_interaction_body_from_target(target)
+        interaction_info = self._get_interaction_info_from_target(target)
+
+        body = interaction_info["body"]
         if name:
-            # Already given the specific name
+            # Use the given specific name
             self._check_argument_type("name", name, str)
-            new_name = name
+            internal_name = name
         else:
-            # Will be automatically named by the default name
-            new_name = self._get_default_name_of_interaction(body, target)
+            # Automatically named by the default name
+            internal_name = interaction_info["name"]
 
         add_object = {
-            "name": str(new_name),
+            "name": internal_name,
+            "key": interaction_info["key"],
+            "interacts": interaction_info["interacts"],
             "coefficient": coefficient,
             "scale": scale,
             "attributes": attributes,
             "timestamp": timestamp,
         }
-        self._interactions[body][new_name] = add_object
+        self._interactions[body][internal_name] = add_object
         return add_object
 
     ################################
@@ -131,9 +135,9 @@ class LogicalModel(AbstractModel):
         self,
         target=None,
         name="",
-        coefficient=0.0,
-        scale=1.0,
-        attributes={},
+        coefficient=None,
+        scale=None,
+        attributes=None,
         timestamp=current_time_ms(),
     ):
         if (not target) and (not name):
@@ -141,49 +145,59 @@ class LogicalModel(AbstractModel):
         if target and name:
             raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
 
-        self._check_argument_type("coefficient", coefficient, numbers.Number)
-        self._check_argument_type("scale", scale, numbers.Number)
-        self._check_argument_type("attributes", attributes, dict)
-        self._check_argument_type("timestamp", timestamp, int)
+        if coefficient is not None:
+            self._check_argument_type("coefficient", coefficient, numbers.Number)
+        if scale is not None:
+            self._check_argument_type("scale", scale, numbers.Number)
+        if attributes is not None:
+            self._check_argument_type("attributes", attributes, dict)
+        if timestamp is not None:
+            self._check_argument_type("timestamp", timestamp, int)
+
+        if target is not None:
+            interaction_info = self._get_interaction_info_from_target(target)
 
         body = None
         if name:
             # Already given the specific name
             self._check_argument_type("name", name, (str, tuple))
-            new_name = name
+            internal_name = name
             for b in [constants.INTERACTION_LINEAR, constants.INTERACTION_QUADRATIC]:
                 if name in self._interactions[b]:
                     body = b
                     break
         else:
             # Will be automatically named by the default name
-            body = self._get_interaction_body_from_target(target)
-            new_name = self._get_default_name_of_interaction(body, target)
+            body = interaction_info["body"]
+            internal_name = interaction_info["name"]
 
-        if (body is None) or (new_name not in self._interactions[body]):
+        if (body is None) or (internal_name not in self._interactions[body]):
             raise KeyError(
-                "An interaction named '{}' does not exist yet. Need to be added before updating.".format(new_name)
+                "An interaction named '{}' does not exist yet. Need to be added before updating.".format(internal_name)
             )
 
-        # TODO: Need to change only updated values.
-        update_object = {
-            "name": str(new_name),
-            "coefficient": coefficient,
-            "scale": scale,
-            "attributes": attributes,
-            "timestamp": timestamp,
-        }
-        self._interactions[body][new_name] = update_object
-        return update_object
+        # update if the value was given
+        if coefficient is not None:
+            self._interactions[body][internal_name]["coefficient"] = coefficient
+        if scale is not None:
+            self._interactions[body][internal_name]["scale"] = scale
+        if attributes is not None:
+            self._interactions[body][internal_name]["attributes"] = attributes
+        self._interactions[body][internal_name]["timestamp"] = timestamp
+
+        return self._interactions[body][internal_name]
 
     ################################
     # Helper methods for add and update
     ################################
 
     @staticmethod
-    def _get_interaction_body_from_target(target):
+    def _get_interaction_info_from_target(target):
         if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
             body = constants.INTERACTION_LINEAR
+            interacts = target
+            key = target.label
+            name = target.label
         elif isinstance(target, tuple):
             if len(target) != 2:
                 raise TypeError("The length of a tuple 'target' must be two.")
@@ -191,21 +205,19 @@ class LogicalModel(AbstractModel):
                 if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
                     raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
             body = constants.INTERACTION_QUADRATIC
-        else:
-            raise TypeError("Invalid 'target'.")
-        return body
 
-    @staticmethod
-    def _get_default_name_of_interaction(interaction_body, target):
-        if interaction_body == constants.INTERACTION_LINEAR:
-            name = target.label
-        elif interaction_body == constants.INTERACTION_QUADRATIC:
             # Tuple elements to dictionary order
             if target[0].label < target[1].label:
-                name = (target[0].label, target[1].label)
+                interacts = (target[0], target[1])
+                key = (target[0].label, target[1].label)
+                name = "{}*{}".format(target[0].label, target[1].label)
             else:
-                name = (target[1].label, target[0].label)
-        return name
+                interacts = (target[1], target[0])
+                key = (target[1].label, target[0].label)
+                name = "{}*{}".format(target[1].label, target[0].label)
+        else:
+            raise TypeError("Invalid 'target'.")
+        return {"body": body, "interacts": interacts, "key": key, "name": name}
 
     ################################
     # Remove
@@ -278,11 +290,11 @@ class LogicalModel(AbstractModel):
 
         for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
             physical.add_interaction(
-                k, body=constants.INTERACTION_LINEAR, coefficient=float(v["coefficient"] * v["scale"])
+                v["key"], body=constants.INTERACTION_LINEAR, coefficient=float(v["coefficient"] * v["scale"])
             )
         for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
             physical.add_interaction(
-                k, body=constants.INTERACTION_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"])
+                v["key"], body=constants.INTERACTION_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"])
             )
 
         return physical
