@@ -17,8 +17,8 @@ MODEL_ISING = "ising"
 MODEL_QUBO = "qubo"
 
 # Interaction Body Types
-INTERACTION_BODY_LINEAR = 1  # 1-body
-INTERACTION_BODY_QUADRATIC = 2  # 2-body
+INTERACTION_LINEAR = 1  # 1-body
+INTERACTION_QUADRATIC = 2  # 2-body
 
 # Default label for Constraints
 DEFAULT_LABEL_N_HOT = "Default N-hot Constraint"

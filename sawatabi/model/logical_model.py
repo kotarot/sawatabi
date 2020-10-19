@@ -151,7 +151,7 @@ class LogicalModel(AbstractModel):
             # Already given the specific name
             self._check_argument_type("name", name, (str, tuple))
             new_name = name
-            for b in [constants.INTERACTION_BODY_LINEAR, constants.INTERACTION_BODY_QUADRATIC]:
+            for b in [constants.INTERACTION_LINEAR, constants.INTERACTION_QUADRATIC]:
                 if name in self._interactions[b]:
                     body = b
                     break
@@ -183,23 +183,23 @@ class LogicalModel(AbstractModel):
     @staticmethod
     def _get_interaction_body_from_target(target):
         if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
-            body = constants.INTERACTION_BODY_LINEAR
+            body = constants.INTERACTION_LINEAR
         elif isinstance(target, tuple):
             if len(target) != 2:
                 raise TypeError("The length of a tuple 'target' must be two.")
             for i in target:
                 if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
                     raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
-            body = constants.INTERACTION_BODY_QUADRATIC
+            body = constants.INTERACTION_QUADRATIC
         else:
             raise TypeError("Invalid 'target'.")
         return body
 
     @staticmethod
     def _get_default_name_of_interaction(interaction_body, target):
-        if interaction_body == constants.INTERACTION_BODY_LINEAR:
+        if interaction_body == constants.INTERACTION_LINEAR:
             name = target.label
-        elif interaction_body == constants.INTERACTION_BODY_QUADRATIC:
+        elif interaction_body == constants.INTERACTION_QUADRATIC:
             # Tuple elements to dictionary order
             if target[0].label < target[1].label:
                 name = (target[0].label, target[1].label)
@@ -276,13 +276,13 @@ class LogicalModel(AbstractModel):
 
         physical = PhysicalModel(mtype=self._mtype)
 
-        for k, v in self._interactions[constants.INTERACTION_BODY_LINEAR].items():
+        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
             physical.add_interaction(
-                k, body=constants.INTERACTION_BODY_LINEAR, coefficient=float(v["coefficient"] * v["scale"])
+                k, body=constants.INTERACTION_LINEAR, coefficient=float(v["coefficient"] * v["scale"])
             )
-        for k, v in self._interactions[constants.INTERACTION_BODY_QUADRATIC].items():
+        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
             physical.add_interaction(
-                k, body=constants.INTERACTION_BODY_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"])
+                k, body=constants.INTERACTION_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"])
             )
 
         return physical
@@ -387,9 +387,9 @@ class LogicalModel(AbstractModel):
             s.append(self.append_prefix(str(vars), length=4))
         s.append("┣━ interactions:")
         s.append("┃  linear:")
-        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_BODY_LINEAR]), length=4))
+        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_LINEAR]), length=4))
         s.append("┃  quadratic:")
-        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_BODY_QUADRATIC]), length=4))
+        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_QUADRATIC]), length=4))
         s.append("┣━ constraints:")
         s.append(self.append_prefix(pprint.pformat(self._constraints), length=4))
         s.append("┗" + ("━" * 64))

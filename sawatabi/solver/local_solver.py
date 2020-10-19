@@ -28,9 +28,9 @@ class LocalSolver(AbstractSolver):
         self._check_argument_type("model", model, PhysicalModel)
 
         linear, quadratic = {}, {}
-        for k, v in model._interactions[constants.INTERACTION_BODY_LINEAR].items():
+        for k, v in model._interactions[constants.INTERACTION_LINEAR].items():
             linear[k] = -1.0 * v
-        for k, v in model._interactions[constants.INTERACTION_BODY_QUADRATIC].items():
+        for k, v in model._interactions[constants.INTERACTION_QUADRATIC].items():
             quadratic[k] = -1.0 * v
 
         if model.get_mtype() == constants.MODEL_ISING:

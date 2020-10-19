@@ -26,8 +26,8 @@ class AbstractModel(BaseMixin):
         # Note: Cannot rename to 'variables' because we already have 'variables' method.
         self._variables = {}
         self._interactions = {
-            constants.INTERACTION_BODY_LINEAR: {},  # linear (1-body)
-            constants.INTERACTION_BODY_QUADRATIC: {},  # quadratic (2-body)
+            constants.INTERACTION_LINEAR: {},  # linear (1-body)
+            constants.INTERACTION_QUADRATIC: {},  # quadratic (2-body)
         }
         self._offset = 0.0
 
