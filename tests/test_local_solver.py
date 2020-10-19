@@ -20,7 +20,7 @@ from sawatabi.solver import LocalSolver
 
 
 def test_local_solver_exact_ising():
-    model = LogicalModel(type="ising")
+    model = LogicalModel(mtype="ising")
     s = model.variables("s", shape=(2,))
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
@@ -39,7 +39,7 @@ def test_local_solver_exact_ising():
 
 
 def test_local_solver_exact_qubo():
-    model = LogicalModel(type="qubo")
+    model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)
@@ -58,7 +58,7 @@ def test_local_solver_exact_qubo():
 
 
 def test_local_solver_sa_ising():
-    model = LogicalModel(type="ising")
+    model = LogicalModel(mtype="ising")
     s = model.variables("s", shape=(2,))
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
@@ -77,7 +77,7 @@ def test_local_solver_sa_ising():
 
 
 def test_local_solver_sa_qubo():
-    model = LogicalModel(type="qubo")
+    model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)

@@ -17,7 +17,7 @@ import sawatabi
 
 def solver():
     print("\n=== solver ===")
-    model = sawatabi.model.LogicalModel(type="ising")
+    model = sawatabi.model.LogicalModel(mtype="ising")
 
     print("\nSet shape to (1, 2)")
     x = model.variables("x", shape=(1, 2))

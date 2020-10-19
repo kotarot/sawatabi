@@ -33,9 +33,9 @@ class LocalSolver(AbstractSolver):
         for k, v in model._interactions[constants.INTERACTION_BODY_QUADRATIC].items():
             quadratic[k] = -1.0 * v
 
-        if model.get_type() == constants.MODEL_ISING:
+        if model.get_mtype() == constants.MODEL_ISING:
             vartype = dimod.SPIN
-        elif model.get_type() == constants.MODEL_QUBO:
+        elif model.get_mtype() == constants.MODEL_QUBO:
             vartype = dimod.BINARY
         bqm = dimod.BinaryQuadraticModel(linear, quadratic, model._offset, vartype)
 

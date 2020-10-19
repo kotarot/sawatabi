@@ -17,11 +17,11 @@ from sawatabi.base_mixin import BaseMixin
 
 
 class AbstractModel(BaseMixin):
-    def __init__(self, type=""):
-        if type in [constants.MODEL_ISING, constants.MODEL_QUBO]:
-            self._type = type
+    def __init__(self, mtype=""):
+        if mtype in [constants.MODEL_ISING, constants.MODEL_QUBO]:
+            self._mtype = mtype
         else:
-            raise ValueError("'type' must be one of {}.".format([constants.MODEL_ISING, constants.MODEL_QUBO]))
+            raise ValueError("'mtype' must be one of {}.".format([constants.MODEL_ISING, constants.MODEL_QUBO]))
 
         # Note: Cannot rename to 'variables' because we already have 'variables' method.
         self._variables = {}
@@ -31,8 +31,8 @@ class AbstractModel(BaseMixin):
         }
         self._offset = 0.0
 
-    def get_type(self):
-        return self._type
+    def get_mtype(self):
+        return self._mtype
 
     ################################
     # Built-in functions

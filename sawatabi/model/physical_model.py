@@ -19,8 +19,8 @@ from sawatabi.model.abstract_model import AbstractModel
 
 
 class PhysicalModel(AbstractModel):
-    def __init__(self, type=""):
-        super().__init__(type)
+    def __init__(self, mtype=""):
+        super().__init__(mtype)
 
     ################################
     # Interaction
@@ -35,7 +35,7 @@ class PhysicalModel(AbstractModel):
 
     def __repr__(self):
         s = "PhysicalModel({"
-        s += "'type': '" + str(self._type) + "', "
+        s += "'mtype': '" + str(self._mtype) + "', "
         s += "'interactions': " + str(self._interactions) + "})"
         return s
 
@@ -44,7 +44,7 @@ class PhysicalModel(AbstractModel):
         s.append("┏" + ("━" * 64))
         s.append("┃ PHYSICAL MODEL")
         s.append("┣" + ("━" * 64))
-        s.append("┣━ type: " + str(self._type))
+        s.append("┣━ mtype: " + str(self._mtype))
         s.append("┣━ interactions:")
         s.append("┃  linear:")
         s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_BODY_LINEAR]), length=4))

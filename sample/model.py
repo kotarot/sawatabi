@@ -34,7 +34,7 @@ def model_pyqubo():
 
     print("\n=== model (pyqubo) ===")
     x = pyqubo.Array.create("x", shape=(2, 3), vartype="SPIN")
-    model = sawatabi.model.LogicalModel(type="ising")
+    model = sawatabi.model.LogicalModel(mtype="ising")
     model.variables(x)
     print("\nCheck the variables below.")
     print(model)
@@ -42,7 +42,7 @@ def model_pyqubo():
 
 def model_1d():
     print("\n=== model (1d) ===")
-    model = sawatabi.model.LogicalModel(type="ising")
+    model = sawatabi.model.LogicalModel(mtype="ising")
     x = model.variables("x", shape=(2,))
     print("\nSet variables x to shape (2,)")
     print(model)
@@ -78,7 +78,7 @@ def model_1d():
 
 def model_2d():
     print("\n=== model (2d) ===")
-    model = sawatabi.model.LogicalModel(type="ising")
+    model = sawatabi.model.LogicalModel(mtype="ising")
     model.variables("y", shape=(2, 2))
     print("\nSet variables x to shape (2, 2)")
     print(model)
@@ -90,7 +90,7 @@ def model_2d():
 
 def model_constraints():
     print("\n=== model (constraints) ===")
-    model = sawatabi.model.LogicalModel(type="qubo")
+    model = sawatabi.model.LogicalModel(mtype="qubo")
     a = model.variables("a", shape=(3,))
     print("\nSet variables x to shape (3,)")
     print(model)
@@ -106,7 +106,7 @@ def model_constraints():
 
 def model_convert():
     print("\n=== convert ===")
-    model = sawatabi.model.LogicalModel(type="ising")
+    model = sawatabi.model.LogicalModel(mtype="ising")
 
     x = model.variables("x", shape=(1, 2))
     model.add_interaction(x[0, 0], coefficient=10.0)

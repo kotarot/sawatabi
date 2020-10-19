@@ -26,8 +26,8 @@ from sawatabi.utils.time import current_time_ms
 
 
 class LogicalModel(AbstractModel):
-    def __init__(self, type=""):
-        super().__init__(type)
+    def __init__(self, mtype=""):
+        super().__init__(mtype)
         self._constraints = {}
 
     ################################
@@ -37,8 +37,8 @@ class LogicalModel(AbstractModel):
     def variables(self, name, shape=()):
         if isinstance(name, pyqubo.Array):
             flattened = list(Functions._flatten(name.bit_list))
-            if ((self._type == constants.MODEL_ISING) and isinstance(flattened[0], pyqubo.Binary)) or (
-                (self._type == constants.MODEL_QUBO) and isinstance(flattened[0], pyqubo.Spin)
+            if ((self._mtype == constants.MODEL_ISING) and isinstance(flattened[0], pyqubo.Binary)) or (
+                (self._mtype == constants.MODEL_QUBO) and isinstance(flattened[0], pyqubo.Spin)
             ):
                 raise TypeError("Model type and PyQUBO Array type mismatch.")
 
@@ -53,7 +53,7 @@ class LogicalModel(AbstractModel):
         self._check_argument_type("shape", shape, tuple)
         self._check_argument_type_in_tuple("shape", shape, int)
 
-        vartype = self._modeltype_to_vartype(self._type)
+        vartype = self._modeltype_to_vartype(self._mtype)
 
         self._variables[name] = pyqubo.Array.create(name, shape=shape, vartype=vartype)
         return self._variables[name]
@@ -68,7 +68,7 @@ class LogicalModel(AbstractModel):
 
         # tuple elementwise addition
         new_shape = tuple(map(sum, zip(self._variables[name].shape, shape)))
-        vartype = self._modeltype_to_vartype(self._type)
+        vartype = self._modeltype_to_vartype(self._mtype)
 
         self._variables[name] = pyqubo.Array.create(name, shape=new_shape, vartype=vartype)
         return self._variables[name]
@@ -274,7 +274,7 @@ class LogicalModel(AbstractModel):
         # - resolve constraints
         # - resolve placeholder
 
-        physical = PhysicalModel(type=self._type)
+        physical = PhysicalModel(mtype=self._mtype)
 
         for k, v in self._interactions[constants.INTERACTION_BODY_LINEAR].items():
             physical.add_interaction(
@@ -287,7 +287,7 @@ class LogicalModel(AbstractModel):
 
         return physical
 
-    def convert_type(self):
+    def convert_mtype(self):
         """
         Converts the model to a QUBO model if the current model type is Ising, and vice versa.
         """
@@ -369,7 +369,7 @@ class LogicalModel(AbstractModel):
 
     def __repr__(self):
         s = "LogicalModel({"
-        s += "'type': '" + str(self._type) + "', "
+        s += "'mtype': '" + str(self._mtype) + "', "
         s += "'variables': " + self.remove_leading_spaces(str(self._variables)) + ", "
         s += "'interactions': " + str(self._interactions) + ", "
         s += "'constraints': " + str(self._constraints) + "})"
@@ -380,7 +380,7 @@ class LogicalModel(AbstractModel):
         s.append("┏" + ("━" * 64))
         s.append("┃ LOGICAL MODEL")
         s.append("┣" + ("━" * 64))
-        s.append("┣━ type: " + str(self._type))
+        s.append("┣━ mtype: " + str(self._mtype))
         s.append("┣━ variables: " + str(list(self._variables.keys())))
         for name, vars in self._variables.items():
             s.append("┃  name: " + name)

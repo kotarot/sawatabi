@@ -21,7 +21,7 @@ from sawatabi.model import LogicalModel
 
 @pytest.fixture
 def model():
-    return LogicalModel(type="ising")
+    return LogicalModel(mtype="ising")
 
 
 ################################
@@ -29,22 +29,22 @@ def model():
 ################################
 
 
-@pytest.mark.parametrize("type", ["ising", "qubo"])
-def test_logical_model_constructor(type):
-    model = LogicalModel(type=type)
-    assert model.get_type() == type
-    assert model._type == type
+@pytest.mark.parametrize("mtype", ["ising", "qubo"])
+def test_logical_model_constructor(mtype):
+    model = LogicalModel(mtype=mtype)
+    assert model.get_mtype() == mtype
+    assert model._mtype == mtype
 
 
-def test_logical_model_invalid_type(model):
+def test_logical_model_invalid_mtype(model):
     with pytest.raises(ValueError):
         LogicalModel()
 
     with pytest.raises(ValueError):
-        LogicalModel(type="invalidtype")
+        LogicalModel(mtype="invalidtype")
 
     with pytest.raises(ValueError):
-        LogicalModel(type=12345)
+        LogicalModel(mtype=12345)
 
 
 ################################
@@ -54,7 +54,7 @@ def test_logical_model_invalid_type(model):
 
 @pytest.mark.parametrize("shape", [(2,), (3, 4), (5, 6, 7)])
 def test_logical_model_variables(shape):
-    model = LogicalModel(type="ising")
+    model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=shape)
 
     assert len(model.get_variables()) == 1
@@ -68,7 +68,7 @@ def test_logical_model_variables(shape):
 
 @pytest.mark.parametrize("shape", [(2,), (3, 4), (5, 6, 7)])
 def test_logical_model_multi_variables(shape):
-    model = LogicalModel(type="qubo")
+    model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=shape)
     assert len(model.get_variables()) == 1
     assert "x" in model.get_variables()
@@ -98,15 +98,15 @@ def test_logical_model_multi_variables(shape):
     ],
 )
 def test_logical_model_variables_invalid(name, shape):
-    model = LogicalModel(type="ising")
+    model = LogicalModel(mtype="ising")
     with pytest.raises(TypeError):
         model.variables(name, shape=shape)
 
 
-@pytest.mark.parametrize("vartype,modeltype", [("SPIN", "ising"), ("BINARY", "qubo")])
-def test_logical_model_variables_from_pyqubo(vartype, modeltype):
+@pytest.mark.parametrize("vartype,mtype", [("SPIN", "ising"), ("BINARY", "qubo")])
+def test_logical_model_variables_from_pyqubo(vartype, mtype):
     x = pyqubo.Array.create("x", shape=(2, 3), vartype=vartype)
-    model = LogicalModel(type=modeltype)
+    model = LogicalModel(mtype=mtype)
     x_when_applied = model.variables(x)
     x_from_model = model.get_variables_by_name("x")
     assert id(x) == id(x_when_applied)
@@ -115,10 +115,10 @@ def test_logical_model_variables_from_pyqubo(vartype, modeltype):
     assert x == x_from_model
 
 
-@pytest.mark.parametrize("vartype,modeltype", [("SPIN", "qubo"), ("BINARY", "ising")])
-def test_logical_model_variables_from_pyqubo_mismatch(vartype, modeltype):
+@pytest.mark.parametrize("vartype,mtype", [("SPIN", "qubo"), ("BINARY", "ising")])
+def test_logical_model_variables_from_pyqubo_mismatch(vartype, mtype):
     x = pyqubo.Array.create("x", shape=(2, 3), vartype=vartype)
-    model = LogicalModel(type=modeltype)
+    model = LogicalModel(mtype=mtype)
     with pytest.raises(TypeError):
         model.variables(x)
 
@@ -464,15 +464,15 @@ def test_logical_model_dependency_constraint(model):
 ################################
 
 
-@pytest.mark.parametrize("type", ["ising", "qubo"])
-def test_logical_model_convert(type):
-    model = LogicalModel(type=type)
+@pytest.mark.parametrize("mtype", ["ising", "qubo"])
+def test_logical_model_convert(mtype):
+    model = LogicalModel(mtype=mtype)
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction((x[0], x[1]), coefficient=-1.0)
 
     physical = model.convert_to_physical()
-    assert physical.get_type() == type
+    assert physical.get_mtype() == mtype
     assert len(physical._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
     assert len(physical._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
     assert physical._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"] == 1.0
@@ -493,12 +493,12 @@ def test_logical_model_convert_with_placeholder(model):
 
 
 def test_logical_model_utils(model):
-    other_model = LogicalModel(type="ising")
+    other_model = LogicalModel(mtype="ising")
     with pytest.raises(NotImplementedError):
         model.merge(other_model)
 
     with pytest.raises(NotImplementedError):
-        model.convert_type()
+        model.convert_mtype()
 
 
 ################################
@@ -509,7 +509,7 @@ def test_logical_model_utils(model):
 def test_logical_model_repr(model):
     assert isinstance(model.__repr__(), str)
     assert "LogicalModel({" in model.__repr__()
-    assert "type" in model.__repr__()
+    assert "mtype" in model.__repr__()
     assert "variables" in model.__repr__()
     assert "interactions" in model.__repr__()
     assert "constraints" in model.__repr__()
@@ -518,7 +518,7 @@ def test_logical_model_repr(model):
 def test_logical_model_str(model):
     assert isinstance(model.__str__(), str)
     assert "LOGICAL MODEL" in model.__str__()
-    assert "type" in model.__str__()
+    assert "mtype" in model.__str__()
     assert "variables" in model.__str__()
     assert "interactions" in model.__str__()
     assert "linear" in model.__str__()

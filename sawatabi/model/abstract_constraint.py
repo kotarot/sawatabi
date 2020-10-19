@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from sawatabi.base_mixin import BaseMixin
 
-class AbstractConstraint:
+
+class AbstractConstraint(BaseMixin):
     def __init__(self, scale=1.0, label="", variables=[]):
         self._scale = scale
         self._label = label
