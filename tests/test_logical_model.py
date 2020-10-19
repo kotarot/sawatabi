@@ -162,9 +162,7 @@ def test_logical_model_add(model):
     assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["coefficient"] == 3.0
     assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["attributes"]["foo"] == "bar"
 
-    res = model.add_interaction(
-        (x[0, 0], x[1, 1]), coefficient=-4.0, timestamp=1234567890123
-    )
+    res = model.add_interaction((x[0, 0], x[1, 1]), coefficient=-4.0, timestamp=1234567890123)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 3
     assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
     assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][res["name"]]["coefficient"] == -4.0

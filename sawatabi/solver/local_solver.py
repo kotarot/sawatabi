@@ -55,9 +55,9 @@ class LocalSolver:
         print(bqm)
 
         # dimod's brute force solver
-        #sampleset = dimod.ExactSolver().sample(bqm)
-        #print("\n")
-        #print(sampleset)
+        # sampleset = dimod.ExactSolver().sample(bqm)
+        # print("\n")
+        # print(sampleset)
 
         # SA
         sampler = neal.SimulatedAnnealingSampler()

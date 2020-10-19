@@ -20,11 +20,7 @@ class AbstractModel:
         if type in [constants.MODEL_ISING, constants.MODEL_QUBO]:
             self._type = type
         else:
-            raise ValueError(
-                "'type' must be one of {}.".format(
-                    [constants.MODEL_ISING, constants.MODEL_QUBO]
-                )
-            )
+            raise ValueError("'type' must be one of {}.".format([constants.MODEL_ISING, constants.MODEL_QUBO]))
 
         # Note: Cannot rename to 'variables' because we already have 'variables' method.
         self._variables = {}

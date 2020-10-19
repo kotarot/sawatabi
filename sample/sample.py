@@ -133,9 +133,7 @@ def sample_neal():
 
     # BQM
     # bqm = dimod.BinaryQuadraticModel({0: -1, 1: 1}, {(0, 1): 2}, 0.0, dimod.BINARY)
-    bqm = dimod.BinaryQuadraticModel(
-        {"x[0]": 1, "x[1]": 0}, {("x[0]", "x[1]"): 2}, 0.0, dimod.SPIN
-    )
+    bqm = dimod.BinaryQuadraticModel({"x[0]": 1, "x[1]": 0}, {("x[0]", "x[1]"): 2}, 0.0, dimod.SPIN)
 
     # dimod's brute force solver
     sampleset = dimod.ExactSolver().sample(bqm)

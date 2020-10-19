@@ -85,9 +85,7 @@ class LogicalModel(AbstractModel):
                 raise TypeError("The length of a tuple 'target' must be two.")
             for i in target:
                 if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
-                    raise TypeError(
-                        "All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'."
-                    )
+                    raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
             body = constants.INTERACTION_BODY_QUADRATIC
         else:
             raise TypeError("Invalid 'target'.")
@@ -112,12 +110,8 @@ class LogicalModel(AbstractModel):
     def variables(self, name, shape=()):
         if isinstance(name, pyqubo.Array):
             flattened = list(Functions._flatten(name.bit_list))
-            if (
-                (self._type == constants.MODEL_ISING)
-                and isinstance(flattened[0], pyqubo.Binary)
-            ) or (
-                (self._type == constants.MODEL_QUBO)
-                and isinstance(flattened[0], pyqubo.Spin)
+            if ((self._type == constants.MODEL_ISING) and isinstance(flattened[0], pyqubo.Binary)) or (
+                (self._type == constants.MODEL_QUBO) and isinstance(flattened[0], pyqubo.Spin)
             ):
                 raise TypeError("Model type and PyQUBO Array type mismatch.")
 
@@ -143,17 +137,13 @@ class LogicalModel(AbstractModel):
         self._check_argument_for_shape(shape)
 
         if name not in self._variables:
-            raise KeyError(
-                "Variables name '{}' is not defined in the model.".format(name)
-            )
+            raise KeyError("Variables name '{}' is not defined in the model.".format(name))
 
         # tuple elementwise addition
         new_shape = tuple(map(sum, zip(self._variables[name].shape, shape)))
         vartype = self._modeltype_to_vartype(self._type)
 
-        self._variables[name] = pyqubo.Array.create(
-            name, shape=new_shape, vartype=vartype
-        )
+        self._variables[name] = pyqubo.Array.create(name, shape=new_shape, vartype=vartype)
         return self._variables[name]
 
     ################################
@@ -222,9 +212,7 @@ class LogicalModel(AbstractModel):
         if (not target) and (not name):
             raise ValueError("Either 'target' or 'name' must be specified.")
         if target and name:
-            raise ValueError(
-                "Both 'target' and 'name' cannot be specified simultaneously."
-            )
+            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
 
         self._check_argument_type("coefficient", coefficient, numbers.Number)
         self._check_argument_type("scale", scale, numbers.Number)
@@ -246,9 +234,7 @@ class LogicalModel(AbstractModel):
 
         if new_name not in self._interactions[body]:
             raise KeyError(
-                "An interaction named '{}' does not exist yet. Need to be added before updating.".format(
-                    new_name
-                )
+                "An interaction named '{}' does not exist yet. Need to be added before updating.".format(new_name)
             )
 
         # TODO: Need to change only updated values.
@@ -288,10 +274,7 @@ class LogicalModel(AbstractModel):
     ################################
 
     def from_pyqubo(self, expression):
-        if not (
-            isinstance(expression, pyqubo.Express)
-            or isinstance(expression, pyqubo.Model)
-        ):
+        if not (isinstance(expression, pyqubo.Express) or isinstance(expression, pyqubo.Model)):
             raise TypeError(
                 "'expression' must be a PyQUBO Expression (pyqubo.Express) or a PyQUBO Model (pyqubo.Model)."
             )
@@ -301,12 +284,8 @@ class LogicalModel(AbstractModel):
     # Constraints
     ################################
 
-    def n_hot_constraint(
-        self, target, n=1, scale=1.0, label=constants.DEFAULT_LABEL_N_HOT
-    ):
-        self._check_argument_type(
-            "target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary)
-        )
+    def n_hot_constraint(self, target, n=1, scale=1.0, label=constants.DEFAULT_LABEL_N_HOT):
+        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
         self._check_argument_type("n", n, int)
         self._check_argument_type("scale", scale, numbers.Number)
         self._check_argument_type("label", label, str)
@@ -345,9 +324,13 @@ class LogicalModel(AbstractModel):
         physical = PhysicalModel(type=self._type)
 
         for k, v in self._interactions[constants.INTERACTION_BODY_LINEAR].items():
-            physical.add_interaction(k, body=constants.INTERACTION_BODY_LINEAR, coefficient=float(v["coefficient"] * v["scale"]))
+            physical.add_interaction(
+                k, body=constants.INTERACTION_BODY_LINEAR, coefficient=float(v["coefficient"] * v["scale"])
+            )
         for k, v in self._interactions[constants.INTERACTION_BODY_QUADRATIC].items():
-            physical.add_interaction(k, body=constants.INTERACTION_BODY_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"]))
+            physical.add_interaction(
+                k, body=constants.INTERACTION_BODY_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"])
+            )
 
         return physical
 
