@@ -15,7 +15,7 @@
 import sawatabi
 
 
-def sample_neal():
+def neal():
     import dimod
     import neal
 
@@ -35,30 +35,30 @@ def sample_neal():
     print(sampleset)
 
 
-def sample_solver():
+def solver():
     print("\n=== solver ===")
     model = sawatabi.model.LogicalModel(type="ising")
 
+    print("\nSet shape to (1, 2)")
     x = model.variables("x", shape=(1, 2))
     model.add_interaction(x[0, 0], coefficient=10.0)
     model.add_interaction((x[0, 0], x[0, 1]), coefficient=1.0)
-    print("\n")
     print(model)
 
+    print("\nAdd shape by (1, 0)")
     x = model.append("x", shape=(1, 0))
     model.add_interaction((x[0, 1], x[1, 0]), coefficient=-2.0)
     model.add_interaction((x[1, 0], x[1, 1]), coefficient=3.0)
-    print("\n")
     print(model)
 
+    print("\nAdd shape by (1, 0)")
     x = model.append("x", shape=(1, 0))
     model.add_interaction((x[1, 1], x[2, 0]), coefficient=-4.0)
     model.add_interaction((x[2, 0], x[2, 1]), coefficient=5.0)
-    print("\n")
     print(model)
 
+    print("\nPhysical model")
     physical_model = model.convert_to_physical()
-    print("\n")
     print(physical_model)
 
     solver = sawatabi.solver.LocalSolver()
@@ -68,8 +68,8 @@ def sample_solver():
 
 
 def main():
-    sample_neal()
-    sample_solver()
+    neal()
+    solver()
 
 
 if __name__ == "__main__":
