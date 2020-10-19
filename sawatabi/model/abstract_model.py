@@ -26,9 +26,10 @@ class AbstractModel(BaseMixin):
         # Note: Cannot rename to 'variables' because we already have 'variables' method.
         self._variables = {}
         self._interactions = {
-            1: {},  # linear (1-body)
-            2: {},  # quadratic (2-body)
+            constants.INTERACTION_BODY_LINEAR: {},  # linear (1-body)
+            constants.INTERACTION_BODY_QUADRATIC: {},  # quadratic (2-body)
         }
+        self._offset = 0.0
 
     def get_type(self):
         return self._type
@@ -46,9 +47,9 @@ class AbstractModel(BaseMixin):
     @staticmethod
     def remove_leading_spaces(lines):
         lines = lines.split("\n")
-        return " ".join([l.lstrip() for l in lines])
+        return " ".join([ln.lstrip() for ln in lines])
 
     @staticmethod
     def append_prefix(lines, length):
         lines = lines.split("\n")
-        return "\n".join(["┃" + (" " * length) + l for l in lines])
+        return "\n".join(["┃" + (" " * length) + ln for ln in lines])

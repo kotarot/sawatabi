@@ -464,7 +464,30 @@ def test_logical_model_dependency_constraint(model):
 ################################
 
 
-def test_logical_model_convert(model):
+@pytest.mark.parametrize("type", ["ising", "qubo"])
+def test_logical_model_convert(type):
+    model = LogicalModel(type=type)
+    x = model.variables("x", shape=(2,))
+    model.add_interaction(x[0], coefficient=1.0)
+    model.add_interaction((x[0], x[1]), coefficient=-1.0)
+
+    physical = model.convert_to_physical()
+    assert physical.get_type() == type
+    assert len(physical._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(physical._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert physical._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"] == 1.0
+    assert physical._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[0]", "x[1]")] == -1.0
+
+
+def test_logical_model_convert_with_doubled_interactions(model):
+    pass
+
+
+def test_logical_model_convert_with_constraints(model):
+    pass
+
+
+def test_logical_model_convert_with_placeholder(model):
     placeholder = {"a": 10.0}
     model.convert_to_physical(placeholder=placeholder)
 

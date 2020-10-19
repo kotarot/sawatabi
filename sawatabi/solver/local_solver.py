@@ -21,8 +21,8 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 
 
 class LocalSolver(AbstractSolver):
-    def __init__(self):
-        pass
+    def __init__(self, exact=False):
+        self._exact = exact
 
     def solve(self, model):
         self._check_argument_type("model", model, PhysicalModel)
@@ -37,19 +37,15 @@ class LocalSolver(AbstractSolver):
             vartype = dimod.SPIN
         elif model.get_type() == constants.MODEL_QUBO:
             vartype = dimod.BINARY
-        bqm = dimod.BinaryQuadraticModel(linear, quadratic, 0.0, vartype)
-        print("\n")
-        print(bqm)
+        bqm = dimod.BinaryQuadraticModel(linear, quadratic, model._offset, vartype)
 
-        # dimod's brute force solver
-        # sampleset = dimod.ExactSolver().sample(bqm)
-        # print("\n")
-        # print(sampleset)
+        if self._exact:
+            # dimod's brute force solver
+            sampleset = dimod.ExactSolver().sample(bqm)
 
-        # SA
-        sampler = neal.SimulatedAnnealingSampler()
-        sampleset = sampler.sample(bqm)
-        print("\n")
-        print(sampleset)
+        else:
+            # Simulated annealing (SA)
+            sampler = neal.SimulatedAnnealingSampler()
+            sampleset = sampler.sample(bqm)
 
         return sampleset

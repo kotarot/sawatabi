@@ -15,26 +15,6 @@
 import sawatabi
 
 
-def neal():
-    import dimod
-    import neal
-
-    print("\n=== neal (sample) ===\n")
-
-    # BQM
-    # bqm = dimod.BinaryQuadraticModel({0: -1, 1: 1}, {(0, 1): 2}, 0.0, dimod.BINARY)
-    bqm = dimod.BinaryQuadraticModel({"x[0]": 1, "x[1]": 0}, {("x[0]", "x[1]"): 2}, 0.0, dimod.SPIN)
-
-    # dimod's brute force solver
-    sampleset = dimod.ExactSolver().sample(bqm)
-    print(sampleset)
-
-    # SA
-    sampler = neal.SimulatedAnnealingSampler()
-    sampleset = sampler.sample(bqm)
-    print(sampleset)
-
-
 def solver():
     print("\n=== solver ===")
     model = sawatabi.model.LogicalModel(type="ising")
@@ -58,17 +38,22 @@ def solver():
     print(model)
 
     print("\nPhysical model")
-    physical_model = model.convert_to_physical()
-    print(physical_model)
+    physical = model.convert_to_physical()
+    print(physical)
 
-    solver = sawatabi.solver.LocalSolver()
-    resultset = solver.solve(physical_model)
-    print("\n")
+    solver = sawatabi.solver.LocalSolver(exact=False)
+    resultset = solver.solve(physical)
+    print("\nresultset")
     print(resultset)
+    print("\nresultset.info")
+    print(resultset.info)
+    print("\nresultset.variables")
+    print(resultset.variables)
+    print("\nresultset.record")
+    print(resultset.record)
 
 
 def main():
-    neal()
     solver()
 
 
