@@ -22,7 +22,7 @@ class BaseMixin:
     @staticmethod
     def _get_artitle(name):
         article = ""
-        if name[0] in ["a", "e", "i", "o", "u"]:
+        if name[0].lower() in ["a", "e", "i", "o", "u"]:
             article = "an"
         else:
             article = "a"

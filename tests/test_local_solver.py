@@ -93,3 +93,18 @@ def test_local_solver_sa_qubo():
     assert np.array_equal(resultset.record[0][0], [0, 1])
     assert resultset.record[0][1] == -2.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
+
+
+def test_local_solver_logical_model():
+    model = LogicalModel(mtype="ising")
+    solver = LocalSolver()
+    with pytest.raises(TypeError):
+        solver.solve(model)
+
+
+def test_local_solver_empty_model():
+    model = LogicalModel(mtype="ising")
+    physical = model.convert_to_physical()
+    solver = LocalSolver()
+    with pytest.raises(ValueError):
+        solver.solve(physical)

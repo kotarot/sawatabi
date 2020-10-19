@@ -27,6 +27,15 @@ class LocalSolver(AbstractSolver):
     def solve(self, model):
         self._check_argument_type("model", model, PhysicalModel)
 
+        if (
+            len(model._interactions[constants.INTERACTION_LINEAR]) == 0
+            and len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
+        ):
+            raise ValueError("Model cannot be empty.")
+
+        # Signs for BQM are opposite from our definition.
+        # - BQM:  H =   sum( J_{ij} * x_i * x_j ) + sum( h_{i} * x_i )
+        # - Ours: H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
         linear, quadratic = {}, {}
         for k, v in model._interactions[constants.INTERACTION_LINEAR].items():
             linear[k] = -1.0 * v
