@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from sawatabi.base_mixin import BaseMixin
 
-class AbstractSolver:
+
+class AbstractSolver(BaseMixin):
     def __init__(self):
         pass
 

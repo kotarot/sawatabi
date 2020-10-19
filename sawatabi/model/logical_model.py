@@ -31,79 +31,6 @@ class LogicalModel(AbstractModel):
         self._constraints = {}
 
     ################################
-    # Private static methods
-    ################################
-
-    @staticmethod
-    def _check_argument_type(name, value, type):
-        if not isinstance(value, type):
-            if isinstance(type, tuple):
-                typestr = [t.__name__ for t in type]
-                article = "one of"
-            else:
-                typestr = type.__name__
-                if typestr[0] in ["a", "e", "i", "o", "u"]:
-                    article = "an"
-                else:
-                    article = "a"
-            raise TypeError("'{}' must be {} {}.".format(name, article, typestr))
-
-    @staticmethod
-    def _check_argument_for_shape(shape):
-        if len(shape) == 0:
-            raise TypeError("'shape' must not be an empty tuple.")
-        for i in shape:
-            if not isinstance(i, int):
-                raise TypeError("All elements of 'shape' must be an integer.")
-
-    @staticmethod
-    def _modeltype_to_vartype(modeltype):
-        if modeltype == constants.MODEL_ISING:
-            vartype = "SPIN"
-        elif modeltype == constants.MODEL_QUBO:
-            vartype = "BINARY"
-        else:
-            raise ValueError("Invalid 'modeltype'")
-        return vartype
-
-    @staticmethod
-    def _vartype_to_modeltype(vartype):
-        if vartype == "SPIN":
-            modeltype = constants.MODEL_ISING
-        elif vartype == "BINARY":
-            modeltype = constants.MODEL_QUBO
-        else:
-            raise ValueError("Invalid 'vartype'")
-        return modeltype
-
-    @staticmethod
-    def _get_interaction_body_from_target(target):
-        if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
-            body = constants.INTERACTION_BODY_LINEAR
-        elif isinstance(target, tuple):
-            if len(target) != 2:
-                raise TypeError("The length of a tuple 'target' must be two.")
-            for i in target:
-                if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
-                    raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
-            body = constants.INTERACTION_BODY_QUADRATIC
-        else:
-            raise TypeError("Invalid 'target'.")
-        return body
-
-    @staticmethod
-    def _get_default_name_of_interaction(interaction_body, target):
-        if interaction_body == constants.INTERACTION_BODY_LINEAR:
-            name = target.label
-        elif interaction_body == constants.INTERACTION_BODY_QUADRATIC:
-            # Tuple elements to dictionary order
-            if target[0].label < target[1].label:
-                name = (target[0].label, target[1].label)
-            else:
-                name = (target[1].label, target[0].label)
-        return name
-
-    ################################
     # Variables
     ################################
 
@@ -124,7 +51,7 @@ class LogicalModel(AbstractModel):
 
         self._check_argument_type("name", name, str)
         self._check_argument_type("shape", shape, tuple)
-        self._check_argument_for_shape(shape)
+        self._check_argument_type_in_tuple("shape", shape, int)
 
         vartype = self._modeltype_to_vartype(self._type)
 
@@ -134,7 +61,7 @@ class LogicalModel(AbstractModel):
     def append(self, name, shape=()):
         self._check_argument_type("name", name, str)
         self._check_argument_type("shape", shape, tuple)
-        self._check_argument_for_shape(shape)
+        self._check_argument_type_in_tuple("shape", shape, int)
 
         if name not in self._variables:
             raise KeyError("Variables name '{}' is not defined in the model.".format(name))
@@ -250,6 +177,37 @@ class LogicalModel(AbstractModel):
         return update_object
 
     ################################
+    # Helper methods for add and update
+    ################################
+
+    @staticmethod
+    def _get_interaction_body_from_target(target):
+        if isinstance(target, (pyqubo.Spin, pyqubo.Binary)):
+            body = constants.INTERACTION_BODY_LINEAR
+        elif isinstance(target, tuple):
+            if len(target) != 2:
+                raise TypeError("The length of a tuple 'target' must be two.")
+            for i in target:
+                if not isinstance(i, (pyqubo.Spin, pyqubo.Binary)):
+                    raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
+            body = constants.INTERACTION_BODY_QUADRATIC
+        else:
+            raise TypeError("Invalid 'target'.")
+        return body
+
+    @staticmethod
+    def _get_default_name_of_interaction(interaction_body, target):
+        if interaction_body == constants.INTERACTION_BODY_LINEAR:
+            name = target.label
+        elif interaction_body == constants.INTERACTION_BODY_QUADRATIC:
+            # Tuple elements to dictionary order
+            if target[0].label < target[1].label:
+                name = (target[0].label, target[1].label)
+            else:
+                name = (target[1].label, target[0].label)
+        return name
+
+    ################################
     # Remove
     ################################
 
@@ -298,13 +256,7 @@ class LogicalModel(AbstractModel):
                 self._constraints[label] = NHotConstraint(n, scale, label)
             self._constraints[label].add(t.label)
 
-    def dependency_constraint(
-        self,
-        target_src,
-        target_dst,
-        scale=1.0,
-        label=constants.DEFAULT_LABEL_DEPENDENCY,
-    ):
+    def dependency_constraint(self, target_src, target_dst, scale=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
         self._check_argument_type("scale", scale, numbers.Number)
         self._check_argument_type("label", label, str)
         raise NotImplementedError

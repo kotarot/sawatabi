@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import sawatabi.constants as constants
+from sawatabi.base_mixin import BaseMixin
 
 
-class AbstractModel:
+class AbstractModel(BaseMixin):
     def __init__(self, type=""):
         if type in [constants.MODEL_ISING, constants.MODEL_QUBO]:
             self._type = type

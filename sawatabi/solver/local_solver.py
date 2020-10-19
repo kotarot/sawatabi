@@ -17,25 +17,12 @@ import neal
 
 import sawatabi.constants as constants
 from sawatabi.model.physical_model import PhysicalModel
+from sawatabi.solver.abstract_solver import AbstractSolver
 
 
-class LocalSolver:
+class LocalSolver(AbstractSolver):
     def __init__(self):
         pass
-
-    @staticmethod
-    def _check_argument_type(name, value, type):
-        if not isinstance(value, type):
-            if isinstance(type, tuple):
-                typestr = [t.__name__ for t in type]
-                article = "one of"
-            else:
-                typestr = type.__name__
-                if typestr[0] in ["a", "e", "i", "o", "u"]:
-                    article = "an"
-                else:
-                    article = "a"
-            raise TypeError("'{}' must be {} {}.".format(name, article, typestr))
 
     def solve(self, model):
         self._check_argument_type("model", model, PhysicalModel)

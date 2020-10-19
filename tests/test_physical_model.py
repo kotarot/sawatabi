@@ -51,3 +51,5 @@ def test_physical_model_str(model):
     assert "PHYSICAL MODEL" in model.__str__()
     assert "type" in model.__str__()
     assert "interactions" in model.__str__()
+    assert "linear" in model.__str__()
+    assert "quadratic" in model.__str__()

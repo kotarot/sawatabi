@@ -498,4 +498,6 @@ def test_logical_model_str(model):
     assert "type" in model.__str__()
     assert "variables" in model.__str__()
     assert "interactions" in model.__str__()
+    assert "linear" in model.__str__()
+    assert "quadratic" in model.__str__()
     assert "constraints" in model.__str__()
