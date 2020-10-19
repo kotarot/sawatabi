@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.solver.local_solver import LocalSolver
 
-__all__ = ["LocalSolver"]
+class AbstractSolver:
+    def __init__(self):
+        pass
+
+    def solve(self, model):
+        raise NotImplementedError.new("#{self.class}##{__method__} must be implemented.")
