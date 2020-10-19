@@ -147,26 +147,38 @@ def test_logical_model_add(model):
     res = model.add_interaction(x[0, 0], coefficient=1.0)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
     assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
-    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["coefficient"] == 1.0
-    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["scale"] == 1.0
+    assert res["name"] == "x[0][0]"
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0][0]"]["coefficient"] == 1.0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0][0]"]["scale"] == 1.0
 
     res = model.add_interaction(x[0, 1], coefficient=2.0, scale=0.1)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 2
     assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
-    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["coefficient"] == 2.0
-    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["scale"] == 0.1
+    assert res["name"] == "x[0][1]"
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0][1]"]["coefficient"] == 2.0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0][1]"]["scale"] == 0.1
 
     res = model.add_interaction(x[1, 0], coefficient=3.0, attributes={"foo": "bar"})
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 3
     assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
-    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["coefficient"] == 3.0
-    assert model._interactions[constants.INTERACTION_BODY_LINEAR][res["name"]]["attributes"]["foo"] == "bar"
+    assert res["name"] == "x[1][0]"
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[1][0]"]["coefficient"] == 3.0
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[1][0]"]["attributes"]["foo"] == "bar"
 
-    res = model.add_interaction((x[0, 0], x[1, 1]), coefficient=-4.0, timestamp=1234567890123)
+    res = model.add_interaction((x[0, 0], x[0, 1]), coefficient=-4.0, timestamp=1234567890123)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 3
     assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
-    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][res["name"]]["coefficient"] == -4.0
-    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][res["name"]]["timestamp"] == 1234567890123
+    assert res["name"] == "('x[0][0]', 'x[0][1]')"
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[0][0]", "x[0][1]")]["coefficient"] == -4.0
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[0][0]", "x[0][1]")]["timestamp"] == 1234567890123
+
+    # Check key order
+    res = model.add_interaction((x[1, 1], x[1, 0]), coefficient=-4.0, timestamp=1234567890123)
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 3
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 2
+    assert res["name"] == "('x[1][0]', 'x[1][1]')"
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[1][0]", "x[1][1]")]["coefficient"] == -4.0
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[1][0]", "x[1][1]")]["timestamp"] == 1234567890123
 
 
 def test_logical_model_add_invalid(model):
@@ -206,27 +218,79 @@ def test_logical_model_add_invalid(model):
 
 
 def test_logical_model_update(model):
-    x = model.variables("x", shape=(1,))
+    x = model.variables("x", shape=(2,))
 
+    # initialize
     model.add_interaction(x[0], coefficient=1.0)
+    model.add_interaction((x[0], x[1]), coefficient=2.0)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
-    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
     assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 1.0
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 2.0
 
+    # update by a variable
     model.update_interaction(x[0], coefficient=10.0)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
-    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
     assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 10.0
 
+    # update by a target
     model.update_interaction(target=x[0], coefficient=100.0)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
-    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
     assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 100.0
 
+    # update by a name
     model.update_interaction(name="x[0]", coefficient=1000.0)
     assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
-    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 0
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
     assert model._interactions[constants.INTERACTION_BODY_LINEAR]["x[0]"]["coefficient"] == 1000.0
+
+    # update by a pair of variables
+    model.update_interaction(target=(x[0], x[1]), coefficient=20.0)
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 20.0
+
+    # update by a pair of variables (reversed order)
+    model.update_interaction(target=(x[1], x[0]), coefficient=200.0)
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 200.0
+
+    # update by a name
+    model.update_interaction(name=("x[0]", "x[1]"), coefficient=2000.0)
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][("x[0]", "x[1]")]["coefficient"] == 2000.0
+
+
+def test_logical_model_update_by_a_custom_key(model):
+    y = model.variables("y", shape=(2,))
+    n1 = "custom interaction 1"
+    n2 = "custom interaction 2"
+    n3 = "custom interaction 3"
+
+    # initialize
+    model.add_interaction(y[0], coefficient=-1.0, name=n1)
+    model.add_interaction((y[0], y[1]), coefficient=-2.0, name=n2)
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][n1]["coefficient"] == -1.0
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][n2]["coefficient"] == -2.0
+
+    model.update_interaction(name=n1, coefficient=-10.0)
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_BODY_LINEAR][n1]["coefficient"] == -10.0
+
+    model.update_interaction(name=n2, coefficient=-20.0)
+    assert len(model._interactions[constants.INTERACTION_BODY_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_BODY_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_BODY_QUADRATIC][n2]["coefficient"] == -20.0
+
+    with pytest.raises(KeyError):
+        model.update_interaction(name=n3, coefficient=-30.0)
 
 
 def test_logical_model_update_invalid(model):

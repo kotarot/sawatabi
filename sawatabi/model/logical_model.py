@@ -177,17 +177,17 @@ class LogicalModel(AbstractModel):
         self._check_argument_type("attributes", attributes, dict)
         self._check_argument_type("timestamp", timestamp, int)
 
+        body = self._get_interaction_body_from_target(target)
         if name:
             # Already given the specific name
             self._check_argument_type("name", name, str)
             new_name = name
         else:
             # Will be automatically named by the default name
-            body = self._get_interaction_body_from_target(target)
             new_name = self._get_default_name_of_interaction(body, target)
 
         add_object = {
-            "name": new_name,
+            "name": str(new_name),
             "coefficient": coefficient,
             "scale": scale,
             "attributes": attributes,
@@ -219,9 +219,10 @@ class LogicalModel(AbstractModel):
         self._check_argument_type("attributes", attributes, dict)
         self._check_argument_type("timestamp", timestamp, int)
 
+        body = None
         if name:
             # Already given the specific name
-            self._check_argument_type("name", name, str)
+            self._check_argument_type("name", name, (str, tuple))
             new_name = name
             for b in [constants.INTERACTION_BODY_LINEAR, constants.INTERACTION_BODY_QUADRATIC]:
                 if name in self._interactions[b]:
@@ -232,14 +233,14 @@ class LogicalModel(AbstractModel):
             body = self._get_interaction_body_from_target(target)
             new_name = self._get_default_name_of_interaction(body, target)
 
-        if new_name not in self._interactions[body]:
+        if (body is None) or (new_name not in self._interactions[body]):
             raise KeyError(
                 "An interaction named '{}' does not exist yet. Need to be added before updating.".format(new_name)
             )
 
         # TODO: Need to change only updated values.
         update_object = {
-            "name": new_name,
+            "name": str(new_name),
             "coefficient": coefficient,
             "scale": scale,
             "attributes": attributes,
