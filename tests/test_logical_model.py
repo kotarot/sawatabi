@@ -69,7 +69,7 @@ def test_logical_model_variables(shape):
 @pytest.mark.parametrize("shape", [(2,), (3, 4), (5, 6, 7)])
 def test_logical_model_multi_variables(shape):
     model = LogicalModel(mtype="qubo")
-    x = model.variables("x", shape=shape)
+    x = model.variables("x", shape)
     assert len(model.get_variables()) == 1
     assert "x" in model.get_variables()
     assert "y" not in model.get_variables()
@@ -198,7 +198,7 @@ def test_logical_model_add(model):
     assert model._interactions[constants.INTERACTION_QUADRATIC]["x[1][0]*x[1][1]"]["timestamp"] == 1234567890123
 
 
-def test_logical_model_add_invalid(model):
+def test_logical_model_add_invalid_arguments(model):
     x = model.variables("x", shape=(3,))
 
     with pytest.raises(ValueError):
@@ -227,6 +227,32 @@ def test_logical_model_add_invalid(model):
 
     with pytest.raises(TypeError):
         model.add_interaction(x[0], timestamp="invalid type")
+
+
+def test_logical_model_add_duplicate(model):
+    x = model.variables("x", shape=(2,))
+
+    res = model.add_interaction(x[0], coefficient=1.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
+    assert res["name"] == "x[0]"
+
+    res = model.add_interaction(x[0], name="my name", coefficient=1.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 2
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
+    assert res["name"] == "my name"
+
+
+def test_logical_model_add_duplicate_invalid(model):
+    x = model.variables("x", shape=(2,))
+    model.add_interaction(x[0], coefficient=1.0)
+    model.add_interaction(x[1], name="my name", coefficient=1.0)
+
+    with pytest.raises(ValueError):
+        model.add_interaction(x[0], coefficient=2.0)
+
+    with pytest.raises(ValueError):
+        model.add_interaction(x[1], name="my name", coefficient=2.0)
 
 
 ################################
@@ -511,7 +537,17 @@ def test_logical_model_convert(mtype):
 
 
 def test_logical_model_convert_with_doubled_interactions(model):
-    pass
+    x = model.variables("x", shape=(2,))
+    model.add_interaction(x[0], coefficient=2.0, scale=0.5)
+    model.add_interaction(x[0], name="additional x[0]", coefficient=-2.0)
+    model.add_interaction((x[0], x[1]), coefficient=-2.0, scale=0.5)
+    model.add_interaction((x[0], x[1]), name="additional x[0]*x[1]", coefficient=2.0)
+
+    physical = model.convert_to_physical()
+    assert len(physical._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(physical._interactions[constants.INTERACTION_QUADRATIC]) == 1
+    assert physical._interactions[constants.INTERACTION_LINEAR]["x[0]"] == -1.0
+    assert physical._interactions[constants.INTERACTION_QUADRATIC][("x[0]", "x[1]")] == 1.0
 
 
 def test_logical_model_convert_with_constraints(model):

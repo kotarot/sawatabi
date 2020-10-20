@@ -115,6 +115,11 @@ class LogicalModel(AbstractModel):
             # Automatically named by the default name
             internal_name = interaction_info["name"]
 
+        if internal_name in self._interactions[body]:
+            raise ValueError(
+                "An interaction named '{}' already exists. Cannot add the same name.".format(internal_name)
+            )
+
         add_object = {
             "name": internal_name,
             "key": interaction_info["key"],
@@ -282,20 +287,29 @@ class LogicalModel(AbstractModel):
 
     def convert_to_physical(self, placeholder={}):
         # TODO:
-        # - deal with multiple interactions
         # - resolve constraints
         # - resolve placeholder
 
         physical = PhysicalModel(mtype=self._mtype)
 
+        linear, quadratic = {}, {}
+        # group by key
         for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
-            physical.add_interaction(
-                v["key"], body=constants.INTERACTION_LINEAR, coefficient=float(v["coefficient"] * v["scale"])
-            )
+            if v["key"] in linear:
+                linear[v["key"]] += float(v["coefficient"] * v["scale"])
+            else:
+                linear[v["key"]] = float(v["coefficient"] * v["scale"])
         for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
-            physical.add_interaction(
-                v["key"], body=constants.INTERACTION_QUADRATIC, coefficient=float(v["coefficient"] * v["scale"])
-            )
+            if v["key"] in quadratic:
+                quadratic[v["key"]] += float(v["coefficient"] * v["scale"])
+            else:
+                quadratic[v["key"]] = float(v["coefficient"] * v["scale"])
+
+        # set to physical
+        for k, v in linear.items():
+            physical.add_interaction(k, body=constants.INTERACTION_LINEAR, coefficient=v)
+        for k, v in quadratic.items():
+            physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
 
         return physical
 
