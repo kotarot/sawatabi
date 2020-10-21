@@ -31,20 +31,6 @@ class NHotConstraint(AbstractConstraint):
         super().__init__(scale, label, variables)
         self._n = n
 
-    @staticmethod
-    def _check_argument_type(name, value, type):
-        if not isinstance(value, type):
-            if isinstance(type, tuple):
-                typestr = [t.__name__ for t in type]
-                article = "one of"
-            else:
-                typestr = type.__name__
-                if typestr[0] in ["a", "e", "i", "o", "u"]:
-                    article = "an"
-                else:
-                    article = "a"
-            raise TypeError("'{}' must be {} {}.".format(name, article, typestr))
-
     def add(self, variable):
         self._check_argument_type("variable", variable, (str, list))
         if isinstance(variable, str):

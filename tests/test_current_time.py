@@ -25,9 +25,7 @@ def test_current_time():
     # Check the time approximately
 
     # sec
-    numpy.testing.assert_approx_equal(
-        actual=sawatabi.utils.current_time(), desired=current_time, significant=9
-    )
+    numpy.testing.assert_approx_equal(actual=sawatabi.utils.current_time(), desired=current_time, significant=9)
 
     # milli sec
     numpy.testing.assert_approx_equal(
