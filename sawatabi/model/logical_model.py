@@ -193,7 +193,44 @@ class LogicalModel(AbstractModel):
         return self._interactions[body][internal_name]
 
     ################################
-    # Helper methods for add and update
+    # Remove
+    ################################
+
+    def remove_interaction(self, target=None, name=""):
+        if (not target) and (not name):
+            raise ValueError("Either 'target' or 'name' must be specified.")
+        if target and name:
+            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
+
+        if target is not None:
+            interaction_info = self._get_interaction_info_from_target(target)
+
+        body = None
+        if name:
+            # Already given the specific name
+            self._check_argument_type("name", name, (str, tuple))
+            internal_name = name
+            for b in [constants.INTERACTION_LINEAR, constants.INTERACTION_QUADRATIC]:
+                if name in self._interactions[b]:
+                    body = b
+                    break
+        else:
+            # Will be automatically named by the default name
+            body = interaction_info["body"]
+            internal_name = interaction_info["name"]
+
+        if (body is None) or (internal_name not in self._interactions[body]):
+            raise KeyError(
+                "An interaction named '{}' does not exist yet. Need to be added before updating.".format(internal_name)
+            )
+
+        # remove
+        interaction = self._interactions[body].pop(internal_name)
+
+        return interaction
+
+    ################################
+    # Helper methods for add, update, and remove
     ################################
 
     @staticmethod
@@ -223,13 +260,6 @@ class LogicalModel(AbstractModel):
         else:
             raise TypeError("Invalid 'target'.")
         return {"body": body, "interacts": interacts, "key": key, "name": name}
-
-    ################################
-    # Remove
-    ################################
-
-    def remove_interaction(self):
-        raise NotImplementedError
 
     ################################
     # Erase

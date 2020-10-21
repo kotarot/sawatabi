@@ -390,9 +390,61 @@ def test_logical_model_update_invalid(model):
 ################################
 
 
-def test_logical_model_remove(model):
-    with pytest.raises(NotImplementedError):
+def test_logical_model_remove_by_target(model):
+    x = model.variables("x", shape=(2,))
+
+    # initialize
+    model.add_interaction(x[0], coefficient=1.0)
+    model.add_interaction(x[1], coefficient=10.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 2
+
+    # remove
+    res = model.remove_interaction(x[0])
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert res["name"] == "x[0]"
+    assert res["key"] == "x[0]"
+    assert res["coefficient"] == 1.0
+
+    res = model.remove_interaction(name="x[1]")
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 0
+    assert res["name"] == "x[1]"
+    assert res["key"] == "x[1]"
+    assert res["coefficient"] == 10.0
+
+
+def test_logical_model_remove_by_name(model):
+    x = model.variables("x", shape=(2,))
+
+    # initialize
+    model.add_interaction(x[0], "my name", coefficient=1.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+
+    # remove
+    model.remove_interaction(name="my name")
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 0
+
+
+def test_logical_model_remove_invalid(model):
+    x = model.variables("x", shape=(3,))
+    model.add_interaction(x[0], coefficient=1.0)
+
+    with pytest.raises(ValueError):
         model.remove_interaction()
+
+    with pytest.raises(ValueError):
+        model.remove_interaction(x[0], name="x[0]")
+
+    with pytest.raises(KeyError):
+        model.remove_interaction(x[1])
+
+    with pytest.raises(TypeError):
+        model.remove_interaction("invalid type")
+
+    with pytest.raises(TypeError):
+        model.update_interaction((x[0], x[1], x[2]))
+
+    with pytest.raises(TypeError):
+        model.update_interaction(("a", "b"))
 
 
 ################################
