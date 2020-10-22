@@ -410,11 +410,20 @@ class LogicalModel(AbstractModel):
 
         return physical
 
-    def convert_mtype(self):
+    def _convert_mtype(self):
         """
         Converts the model to a QUBO model if the current model type is Ising, and vice versa.
         """
         raise NotImplementedError
+
+    def to_ising(self):
+        print(self._mtype)
+        if self._mtype != constants.MODEL_ISING:
+            self._convert_mtype()
+
+    def to_qubo(self):
+        if self._mtype != constants.MODEL_QUBO:
+            self._convert_mtype()
 
     ################################
     # Getters

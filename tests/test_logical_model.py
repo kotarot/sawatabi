@@ -751,13 +751,34 @@ def test_logical_model_convert_with_placeholder(model):
     # TODO
 
 
-def test_logical_model_utils(model):
+def test_logical_model_utils_ising():
+    model = LogicalModel(mtype="ising")
     other_model = LogicalModel(mtype="ising")
     with pytest.raises(NotImplementedError):
         model.merge(other_model)
 
     with pytest.raises(NotImplementedError):
-        model.convert_mtype()
+        model._convert_mtype()
+
+    model.to_ising()
+
+    with pytest.raises(NotImplementedError):
+        model.to_qubo()
+
+
+def test_logical_model_utils_qubo():
+    model = LogicalModel(mtype="qubo")
+    other_model = LogicalModel(mtype="qubo")
+    with pytest.raises(NotImplementedError):
+        model.merge(other_model)
+
+    with pytest.raises(NotImplementedError):
+        model._convert_mtype()
+
+    with pytest.raises(NotImplementedError):
+        model.to_ising()
+
+    model.to_qubo()
 
 
 ################################
