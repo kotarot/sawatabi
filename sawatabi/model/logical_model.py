@@ -29,6 +29,7 @@ class LogicalModel(AbstractModel):
     def __init__(self, mtype=""):
         super().__init__(mtype)
         self._constraints = {}
+        self._previous_physical_model = None
 
     ################################
     # Variables
@@ -116,10 +117,15 @@ class LogicalModel(AbstractModel):
             internal_name = interaction_info["name"]
 
         if internal_name in self._interactions[body]:
-            raise ValueError(
-                "An interaction named '{}' already exists. Cannot add the same name.".format(internal_name)
-            )
+            if not self._interactions[body][internal_name]["removed"]:
+                raise ValueError(
+                    "An interaction named '{}' already exists. Cannot add the same name.".format(internal_name)
+                )
+            else:
+                raise ValueError("An interaction named '{}' is already removed.".format(internal_name))
 
+        # Note: dirty flag (= modification flag) means this interaction has not converted to a physical model yet.
+        # dirty flag will be False when the interaction is written to a physical model.
         add_object = {
             "name": internal_name,
             "key": interaction_info["key"],
@@ -128,6 +134,8 @@ class LogicalModel(AbstractModel):
             "scale": scale,
             "attributes": attributes,
             "timestamp": timestamp,
+            "dirty": True,
+            "removed": False,
         }
         self._interactions[body][internal_name] = add_object
         return add_object
@@ -180,8 +188,10 @@ class LogicalModel(AbstractModel):
             raise KeyError(
                 "An interaction named '{}' does not exist yet. Need to be added before updating.".format(internal_name)
             )
+        if self._interactions[body][internal_name]["removed"]:
+            raise ValueError("An interaction named '{}' is already removed.".format(internal_name))
 
-        # update if the value was given
+        # update only properties which is given by arguments
         if coefficient is not None:
             self._interactions[body][internal_name]["coefficient"] = coefficient
         if scale is not None:
@@ -189,11 +199,51 @@ class LogicalModel(AbstractModel):
         if attributes is not None:
             self._interactions[body][internal_name]["attributes"] = attributes
         self._interactions[body][internal_name]["timestamp"] = timestamp
+        self._interactions[body][internal_name]["dirty"] = True
+        assert not self._interactions[body][internal_name]["removed"]
 
         return self._interactions[body][internal_name]
 
     ################################
-    # Helper methods for add and update
+    # Remove
+    ################################
+
+    def remove_interaction(self, target=None, name=""):
+        if (not target) and (not name):
+            raise ValueError("Either 'target' or 'name' must be specified.")
+        if target and name:
+            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
+
+        if target is not None:
+            interaction_info = self._get_interaction_info_from_target(target)
+
+        body = None
+        if name:
+            # Already given the specific name
+            self._check_argument_type("name", name, (str, tuple))
+            internal_name = name
+            for b in [constants.INTERACTION_LINEAR, constants.INTERACTION_QUADRATIC]:
+                if name in self._interactions[b]:
+                    body = b
+                    break
+        else:
+            # Will be automatically named by the default name
+            body = interaction_info["body"]
+            internal_name = interaction_info["name"]
+
+        if (body is None) or (internal_name not in self._interactions[body]):
+            raise KeyError(
+                "An interaction named '{}' does not exist yet. Need to be added before updating.".format(internal_name)
+            )
+
+        # logically remove
+        # This will be physically removed when it's converted to a physical model.
+        self._interactions[body][internal_name]["removed"] = True
+
+        return self._interactions[body][internal_name]
+
+    ################################
+    # Helper methods for add, update, and remove
     ################################
 
     @staticmethod
@@ -225,13 +275,6 @@ class LogicalModel(AbstractModel):
         return {"body": body, "interacts": interacts, "key": key, "name": name}
 
     ################################
-    # Remove
-    ################################
-
-    def remove_interaction(self):
-        raise NotImplementedError
-
-    ################################
     # Erase
     ################################
 
@@ -260,21 +303,61 @@ class LogicalModel(AbstractModel):
     # Constraints
     ################################
 
-    def n_hot_constraint(self, target, n=1, scale=1.0, label=constants.DEFAULT_LABEL_N_HOT):
+    def n_hot_constraint(self, target, n=1, strength=1.0, label=constants.DEFAULT_LABEL_N_HOT):
         self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
         self._check_argument_type("n", n, int)
-        self._check_argument_type("scale", scale, numbers.Number)
+        self._check_argument_type("strength", strength, numbers.Number)
         self._check_argument_type("label", label, str)
 
         if not isinstance(target, pyqubo.Array):
             target = [target]
+        if label not in self._constraints:
+            self._constraints[label] = NHotConstraint(n, strength, label)
+        original_variables = self._constraints[label]._variables
+        added_variables = set()
         for t in target:
-            if label not in self._constraints:
-                self._constraints[label] = NHotConstraint(n, scale, label)
-            self._constraints[label].add(t.label)
+            added_variables = added_variables.union(set([t]))
+            self._constraints[label].add(set([t]))
 
-    def dependency_constraint(self, target_src, target_dst, scale=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
-        self._check_argument_type("scale", scale, numbers.Number)
+        additional_variables = added_variables - original_variables
+        if self._mtype == constants.MODEL_QUBO:
+            for avar in additional_variables:
+                coeff = -1.0 * strength * (1 - 2 * n)
+                self.add_interaction(avar, name="{} ({})".format(avar.label, label), coefficient=coeff)
+                for adj in additional_variables:
+                    if avar.label < adj.label:
+                        coeff = -2.0 * strength
+                        self.add_interaction(
+                            (avar, adj), name="{}*{} ({})".format(avar.label, adj.label, label), coefficient=coeff
+                        )
+                for adj in original_variables:
+                    coeff = -2.0 * strength
+                    self.add_interaction(
+                        (avar, adj), name="{}*{} ({})".format(avar.label, adj.label, label), coefficient=coeff
+                    )
+
+        elif self._mtype == constants.MODEL_ISING:
+            num_variables = len(original_variables) + len(additional_variables)
+            for ovar in original_variables:
+                coeff = -1.0 * strength * (num_variables - 2 * n)
+                self.update_interaction(name="{} ({})".format(ovar.label, label), coefficient=coeff)
+            for avar in additional_variables:
+                coeff = -1.0 * strength * (num_variables - 2 * n)
+                self.add_interaction(avar, name="{} ({})".format(avar.label, label), coefficient=coeff)
+                for adj in additional_variables:
+                    if avar.label < adj.label:
+                        coeff = -1.0 * strength
+                        self.add_interaction(
+                            (avar, adj), name="{}*{} ({})".format(avar.label, adj.label, label), coefficient=coeff
+                        )
+                for adj in original_variables:
+                    coeff = -1.0 * strength
+                    self.add_interaction(
+                        (avar, adj), name="{}*{} ({})".format(avar.label, adj.label, label), coefficient=coeff
+                    )
+
+    def dependency_constraint(self, target_src, target_dst, strength=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
+        self._check_argument_type("strength", strength, numbers.Number)
         self._check_argument_type("label", label, str)
         raise NotImplementedError
 
@@ -285,25 +368,44 @@ class LogicalModel(AbstractModel):
     def merge(self, other):
         raise NotImplementedError
 
-    def convert_to_physical(self, placeholder={}):
+    def to_physical(self, placeholder={}):
         # TODO:
-        # - resolve constraints
         # - resolve placeholder
 
         physical = PhysicalModel(mtype=self._mtype)
 
         linear, quadratic = {}, {}
+        will_remove_linear, will_remove_quadratic = [], []
+
         # group by key
         for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
-            if v["key"] in linear:
-                linear[v["key"]] += float(v["coefficient"] * v["scale"])
+            if not v["removed"]:
+                # TODO: Calc difference from previous physical model by referencing dirty flags.
+                if v["dirty"]:
+                    self._interactions[constants.INTERACTION_LINEAR][k]["dirty"] = False
+                if v["key"] in linear:
+                    linear[v["key"]] += float(v["coefficient"] * v["scale"])
+                else:
+                    linear[v["key"]] = float(v["coefficient"] * v["scale"])
             else:
-                linear[v["key"]] = float(v["coefficient"] * v["scale"])
+                will_remove_linear.append(k)
         for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
-            if v["key"] in quadratic:
-                quadratic[v["key"]] += float(v["coefficient"] * v["scale"])
+            if not v["removed"]:
+                # TODO: Calc difference from previous physical model by referencing dirty flags.
+                if v["dirty"]:
+                    self._interactions[constants.INTERACTION_QUADRATIC][k]["dirty"] = False
+                if v["key"] in quadratic:
+                    quadratic[v["key"]] += float(v["coefficient"] * v["scale"])
+                else:
+                    quadratic[v["key"]] = float(v["coefficient"] * v["scale"])
             else:
-                quadratic[v["key"]] = float(v["coefficient"] * v["scale"])
+                will_remove_quadratic.append(k)
+
+        # remove logically removed interactions
+        for k in will_remove_linear:
+            self._interactions[constants.INTERACTION_LINEAR].pop(k)
+        for k in will_remove_quadratic:
+            self._interactions[constants.INTERACTION_QUADRATIC].pop(k)
 
         # set to physical
         for k, v in linear.items():
@@ -311,13 +413,25 @@ class LogicalModel(AbstractModel):
         for k, v in quadratic.items():
             physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
 
+        # save the last physical model
+        self._previous_physical_model = physical
+
         return physical
 
-    def convert_mtype(self):
+    def _convert_mtype(self):
         """
         Converts the model to a QUBO model if the current model type is Ising, and vice versa.
         """
         raise NotImplementedError
+
+    def to_ising(self):
+        print(self._mtype)
+        if self._mtype != constants.MODEL_ISING:
+            self._convert_mtype()
+
+    def to_qubo(self):
+        if self._mtype != constants.MODEL_QUBO:
+            self._convert_mtype()
 
     ################################
     # Getters
