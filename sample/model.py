@@ -120,7 +120,7 @@ def model_convert():
     print("\nExpand variables x by shape (1, 0) and add interactions.")
     print(model)
 
-    physical_model = model.convert_to_physical()
+    physical_model = model.to_physical()
     print("\nConvert to Physical model.")
     print(physical_model)
 

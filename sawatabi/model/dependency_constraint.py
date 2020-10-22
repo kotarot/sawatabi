@@ -16,5 +16,5 @@ from sawatabi.model.abstract_constraint import AbstractConstraint
 
 
 class DependencyConstraint(AbstractConstraint):
-    def __init__(self, scale=1.0, label="", variables=[]):
-        super().__init__(scale, label, variables)
+    def __init__(self, strength=1.0, label="", variables=[]):
+        super().__init__(strength, label, variables)
