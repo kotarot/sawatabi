@@ -95,14 +95,44 @@ def test_local_solver_sa_qubo():
     assert resultset.record[0][2] == 1  # num of occurrences
 
 
-def test_local_solver_logical_model():
+@pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 400)])
+def test_local_solver_n_hot_ising(n, s):
+    # n out of s spins should be +1
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(s,))
+    model.n_hot_constraint(x, n=n)
+    physical = model.to_physical()
+    solver = LocalSolver()
+    resultset = solver.solve(physical)
+
+    result = np.array(resultset.record[0][0])
+    assert np.count_nonzero(result == 1) == n
+    assert np.count_nonzero(result == -1) == s - n
+
+
+@pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 400)])
+def test_local_solver_n_hot_qubo(n, s):
+    # n out of s variables should be 1
+    model = LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(s,))
+    model.n_hot_constraint(x, n=n)
+    physical = model.to_physical()
+    solver = LocalSolver()
+    resultset = solver.solve(physical)
+
+    result = np.array(resultset.record[0][0])
+    assert np.count_nonzero(result == 1) == n
+    assert np.count_nonzero(result == 0) == s - n
+
+
+def test_local_solver_with_logical_model_fails():
     model = LogicalModel(mtype="ising")
     solver = LocalSolver()
     with pytest.raises(TypeError):
         solver.solve(model)
 
 
-def test_local_solver_empty_model():
+def test_local_solver_with_empty_model_fails():
     model = LogicalModel(mtype="ising")
     physical = model.to_physical()
     solver = LocalSolver()
