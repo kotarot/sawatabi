@@ -42,14 +42,14 @@ def test_physical_model_constructor(mtype):
 def test_physical_model_repr(model):
     assert isinstance(model.__repr__(), str)
     assert "PhysicalModel({" in model.__repr__()
-    assert "mtype" in model.__repr__()
-    assert "interactions" in model.__repr__()
+    assert "'mtype':" in model.__repr__()
+    assert "'interactions':" in model.__repr__()
 
 
 def test_physical_model_str(model):
     assert isinstance(model.__str__(), str)
     assert "PHYSICAL MODEL" in model.__str__()
-    assert "mtype" in model.__str__()
-    assert "interactions" in model.__str__()
-    assert "linear" in model.__str__()
-    assert "quadratic" in model.__str__()
+    assert "mtype:" in model.__str__()
+    assert "interactions:" in model.__str__()
+    assert "linear:" in model.__str__()
+    assert "quadratic:" in model.__str__()

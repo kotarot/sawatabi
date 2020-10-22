@@ -24,46 +24,54 @@ from sawatabi.model import NHotConstraint
 def test_n_hot_constraint():
     c = NHotConstraint()
     assert c._n == 1
-    assert c._scale == 1.0
+    assert c._strength == 1.0
     assert c._label == ""
-    assert c._variables == []
+    assert c._variables == set()
 
-    c.add("x0")
-    assert c._variables == ["x0"]
+    c.add(set(["x0"]))
+    assert c._variables == set(["x0"])
     assert len(c._variables) == 1
 
-    c.add(["x1", "x2"])
-    assert c._variables == ["x0", "x1", "x2"]
+    c.add(set(["x1", "x2"]))
+    assert c._variables == set(["x0", "x1", "x2"])
     assert len(c._variables) == 3
 
-    assert c.get() == ["x0", "x1", "x2"]
+    c.add(set(["x0"]))
+    assert c._variables == set(["x0", "x1", "x2"])
+    assert len(c._variables) == 3
+
+    c.add(set(["x0", "x1"]))
+    assert c._variables == set(["x0", "x1", "x2"])
+    assert len(c._variables) == 3
+
+    assert c.get() == set(["x0", "x1", "x2"])
     assert len(c.get()) == 3
 
 
 def test_n_hot_constraint_constructors():
     c1 = NHotConstraint(n=2)
     assert c1._n == 2
-    assert c1._scale == 1.0
+    assert c1._strength == 1.0
     assert c1._label == ""
-    assert c1._variables == []
+    assert c1._variables == set()
 
-    c2 = NHotConstraint(scale=20)
+    c2 = NHotConstraint(strength=20)
     assert c2._n == 1
-    assert c2._scale == 20.0
+    assert c2._strength == 20.0
     assert c2._label == ""
-    assert c2._variables == []
+    assert c2._variables == set()
 
     c3 = NHotConstraint(label="my label")
     assert c3._n == 1
-    assert c3._scale == 1.0
+    assert c3._strength == 1.0
     assert c3._label == "my label"
-    assert c3._variables == []
+    assert c3._variables == set()
 
-    c4 = NHotConstraint(variables=["a", "b", "c"])
+    c4 = NHotConstraint(variables=set(["a", "b", "c"]))
     assert c4._n == 1
-    assert c4._scale == 1.0
+    assert c4._strength == 1.0
     assert c4._label == ""
-    assert c4._variables == ["a", "b", "c"]
+    assert c4._variables == set(["a", "b", "c"])
 
 
 @pytest.mark.parametrize("n", [-10, 0])
@@ -80,7 +88,7 @@ def test_n_hot_constraint_typeerror():
         NHotConstraint(n=1.0)
 
     with pytest.raises(TypeError):
-        NHotConstraint(scale="invalid type")
+        NHotConstraint(strength="invalid type")
 
     with pytest.raises(TypeError):
         NHotConstraint(label=12345)
@@ -88,5 +96,30 @@ def test_n_hot_constraint_typeerror():
     with pytest.raises(TypeError):
         NHotConstraint(variables="invalid type")
 
+    # TODO: This error should be raises, but not implemented yet.
     # with pytest.raises(TypeError):
-    #     NHotConstraint(variables=[1, 2, 3])
+    #     NHotConstraint(variables=set([1, 2, 3]))
+
+
+################################
+# Built-in functions
+################################
+
+
+def test_logical_model_repr():
+    c = NHotConstraint()
+    assert isinstance(c.__repr__(), str)
+    assert "NHotConstraint({" in c.__repr__()
+    assert "'n':" in c.__repr__()
+    assert "'strength':" in c.__repr__()
+    assert "'label'" in c.__repr__()
+    assert "'variables'" in c.__repr__()
+
+
+def test_logical_model_str():
+    c = NHotConstraint()
+    assert isinstance(c.__str__(), str)
+    assert "'n':" in c.__str__()
+    assert "'strength':" in c.__str__()
+    assert "'label'" in c.__str__()
+    assert "'variables'" in c.__str__()

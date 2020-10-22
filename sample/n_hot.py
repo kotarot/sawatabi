@@ -159,7 +159,7 @@ def n_hot_from_scratch_3_of_1_ising():
     model.add_interaction((x[0], x[2]), coefficient=-2.0)
     model.add_interaction((x[1], x[2]), coefficient=-2.0)
     # linear
-    coeff = 2 * (3 - 2 * 1)
+    coeff = 2.0 * (3 - 2 * 1)
     model.add_interaction(x[0], coefficient=-coeff)
     model.add_interaction(x[1], coefficient=-coeff)
     model.add_interaction(x[2], coefficient=-coeff)
