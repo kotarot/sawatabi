@@ -620,7 +620,7 @@ def test_logical_model_convert(mtype):
     assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["dirty"] == True
     assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["dirty"] == True
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     assert physical.get_mtype() == mtype
     assert len(physical._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(physical._interactions[constants.INTERACTION_QUADRATIC]) == 1
@@ -641,7 +641,7 @@ def test_logical_model_convert_with_doubled_interactions(model):
     assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["dirty"] == True
     assert model._interactions[constants.INTERACTION_QUADRATIC]["additional x[0]*x[1]"]["dirty"] == True
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     assert len(physical._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(physical._interactions[constants.INTERACTION_QUADRATIC]) == 1
     assert physical._interactions[constants.INTERACTION_LINEAR]["x[0]"] == -1.0
@@ -667,7 +667,7 @@ def test_logical_model_convert_with_remove(model):
     assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["removed"] == False
     assert model._interactions[constants.INTERACTION_LINEAR]["x[1]"]["removed"] == True
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     assert len(physical._interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(physical._interactions[constants.INTERACTION_QUADRATIC]) == 0
 
@@ -682,7 +682,7 @@ def test_logical_model_convert_with_n_hot_constraint_qubo(n, s):
     model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(s,))
     model.n_hot_constraint(x, n=n)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
 
     for i in range(s):
         assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == 2 * n - 1.0
@@ -700,7 +700,7 @@ def test_logical_model_convert_with_n_hot_constraint_ising(n, s):
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(s,))
     model.n_hot_constraint(x, n=n)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
 
     for i in range(s):
         assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == -1.0 * (s - 2 * n)
@@ -718,7 +718,7 @@ def test_logical_model_convert_with_n_hot_constraint_randomly_qubo(model_qubo):
     model_qubo.n_hot_constraint(x[1], n=1, strength=10)
     model_qubo.n_hot_constraint(x[2], n=1, strength=10)
     model_qubo.n_hot_constraint(x, n=1, strength=10)
-    physical = model_qubo.convert_to_physical()
+    physical = model_qubo.to_physical()
 
     for i in range(3):
         assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == 10.0
@@ -730,13 +730,13 @@ def test_logical_model_convert_with_n_hot_constraint_randomly_qubo(model_qubo):
 def test_logical_model_convert_with_n_hot_constraint_randomly_ising(model):
     x = model.variables("x", shape=(4,))
     model.n_hot_constraint(x[(slice(0, 2),)], n=1)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     model.n_hot_constraint(x[1], n=1)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     model.n_hot_constraint(x[2], n=1)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     model.n_hot_constraint(x, n=1)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
 
     for i in range(3):
         assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == -2.0
@@ -747,7 +747,7 @@ def test_logical_model_convert_with_n_hot_constraint_randomly_ising(model):
 
 def test_logical_model_convert_with_placeholder(model):
     placeholder = {"a": 10.0}
-    model.convert_to_physical(placeholder=placeholder)
+    model.to_physical(placeholder=placeholder)
     # TODO
 
 

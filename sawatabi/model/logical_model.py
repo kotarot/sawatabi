@@ -360,7 +360,7 @@ class LogicalModel(AbstractModel):
     def merge(self, other):
         raise NotImplementedError
 
-    def convert_to_physical(self, placeholder={}):
+    def to_physical(self, placeholder={}):
         # TODO:
         # - resolve placeholder
 

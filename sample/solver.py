@@ -38,7 +38,7 @@ def solver():
     print(model)
 
     print("\nPhysical model")
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     print(physical)
 
     solver = sawatabi.solver.LocalSolver(exact=False)

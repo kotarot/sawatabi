@@ -25,7 +25,7 @@ def test_local_solver_exact_ising():
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
     model.add_interaction((s[0], s[1]), coefficient=-3.0)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = LocalSolver(exact=True)
     resultset = solver.solve(physical)
 
@@ -44,7 +44,7 @@ def test_local_solver_exact_qubo():
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = LocalSolver(exact=True)
     resultset = solver.solve(physical)
 
@@ -63,7 +63,7 @@ def test_local_solver_sa_ising():
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
     model.add_interaction((s[0], s[1]), coefficient=-3.0)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = LocalSolver()
     resultset = solver.solve(physical)
 
@@ -82,7 +82,7 @@ def test_local_solver_sa_qubo():
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = LocalSolver(exact=False)
     resultset = solver.solve(physical)
 
@@ -104,7 +104,7 @@ def test_local_solver_logical_model():
 
 def test_local_solver_empty_model():
     model = LogicalModel(mtype="ising")
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = LocalSolver()
     with pytest.raises(ValueError):
         solver.solve(physical)

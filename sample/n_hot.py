@@ -28,7 +28,7 @@ def n_hot_from_scratch_2_of_1_qubo():
     model.add_interaction(x[1], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -50,7 +50,7 @@ def n_hot_from_scratch_3_of_1_qubo():
     model.add_interaction(x[2], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -72,7 +72,7 @@ def n_hot_from_scratch_3_of_2_qubo():
     model.add_interaction(x[2], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -98,7 +98,7 @@ def n_hot_from_scratch_4_of_1_qubo():
     model.add_interaction(x[3], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -124,7 +124,7 @@ def n_hot_from_scratch_4_of_2_qubo():
     model.add_interaction(x[3], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -143,7 +143,7 @@ def n_hot_from_scratch_2_of_1_ising():
     model.add_interaction(x[1], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -165,7 +165,7 @@ def n_hot_from_scratch_3_of_1_ising():
     model.add_interaction(x[2], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -187,7 +187,7 @@ def n_hot_from_scratch_3_of_2_ising():
     model.add_interaction(x[2], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -213,7 +213,7 @@ def n_hot_from_scratch_4_of_1_ising():
     model.add_interaction(x[3], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
@@ -239,7 +239,7 @@ def n_hot_from_scratch_4_of_2_ising():
     model.add_interaction(x[3], coefficient=-coeff)
     print(model)
 
-    physical = model.convert_to_physical()
+    physical = model.to_physical()
     solver = sawatabi.solver.LocalSolver(exact=True)
     resultset = solver.solve(physical)
     print(resultset)
