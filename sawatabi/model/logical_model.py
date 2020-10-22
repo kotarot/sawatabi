@@ -200,7 +200,7 @@ class LogicalModel(AbstractModel):
             self._interactions[body][internal_name]["attributes"] = attributes
         self._interactions[body][internal_name]["timestamp"] = timestamp
         self._interactions[body][internal_name]["dirty"] = True
-        assert self._interactions[body][internal_name]["removed"] == False
+        assert not self._interactions[body][internal_name]["removed"]
 
         return self._interactions[body][internal_name]
 
