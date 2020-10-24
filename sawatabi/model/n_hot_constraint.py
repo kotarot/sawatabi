@@ -40,7 +40,7 @@ class NHotConstraint(AbstractConstraint):
         return self._variables
 
     def __repr__(self):
-        return "NHotConstraint({})".format(self.__str__())
+        return f"NHotConstraint({self.__str__()})"
 
     def __str__(self):
         data = {
