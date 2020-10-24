@@ -65,7 +65,7 @@ def test_local_solver_sa_ising():
     model.add_interaction((s[0], s[1]), coefficient=-3.0)
     physical = model.to_physical()
     solver = LocalSolver()
-    resultset = solver.solve(physical)
+    resultset = solver.solve(physical, seed=12345)
 
     assert resultset.variables == ["s[0]", "s[1]"]
     assert len(resultset.record) == 1
@@ -84,7 +84,7 @@ def test_local_solver_sa_qubo():
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
     physical = model.to_physical()
     solver = LocalSolver(exact=False)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(physical, seed=12345)
 
     assert resultset.variables == ["x[0]", "x[1]"]
     assert len(resultset.record) == 1
@@ -103,7 +103,7 @@ def test_local_solver_n_hot_ising(n, s):
     model.n_hot_constraint(x, n=n)
     physical = model.to_physical()
     solver = LocalSolver()
-    resultset = solver.solve(physical)
+    resultset = solver.solve(physical, seed=12345)
 
     result = np.array(resultset.record[0][0])
     assert np.count_nonzero(result == 1) == n
@@ -118,7 +118,7 @@ def test_local_solver_n_hot_qubo(n, s):
     model.n_hot_constraint(x, n=n)
     physical = model.to_physical()
     solver = LocalSolver()
-    resultset = solver.solve(physical)
+    resultset = solver.solve(physical, seed=12345)
 
     result = np.array(resultset.record[0][0])
     assert np.count_nonzero(result == 1) == n
@@ -129,7 +129,7 @@ def test_local_solver_with_logical_model_fails():
     model = LogicalModel(mtype="ising")
     solver = LocalSolver()
     with pytest.raises(TypeError):
-        solver.solve(model)
+        solver.solve(model, seed=12345)
 
 
 def test_local_solver_with_empty_model_fails():
@@ -137,4 +137,4 @@ def test_local_solver_with_empty_model_fails():
     physical = model.to_physical()
     solver = LocalSolver()
     with pytest.raises(ValueError):
-        solver.solve(physical)
+        solver.solve(physical, seed=12345)
