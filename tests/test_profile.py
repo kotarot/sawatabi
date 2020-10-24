@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 import random
+
+import pytest
 
 from sawatabi.model import LogicalModel
 from sawatabi.utils.profile import profile
