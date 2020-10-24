@@ -118,9 +118,7 @@ class LogicalModel(AbstractModel):
 
         if internal_name in self._interactions[body]:
             if not self._interactions[body][internal_name]["removed"]:
-                raise ValueError(
-                    f"An interaction named '{internal_name}' already exists. Cannot add the same name."
-                )
+                raise ValueError(f"An interaction named '{internal_name}' already exists. Cannot add the same name.")
             else:
                 raise ValueError(f"An interaction named '{internal_name}' is already removed.")
 
@@ -327,14 +325,10 @@ class LogicalModel(AbstractModel):
                 for adj in additional_variables:
                     if avar.label < adj.label:
                         coeff = -2.0 * strength
-                        self.add_interaction(
-                            (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
-                        )
+                        self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
                 for adj in original_variables:
                     coeff = -2.0 * strength
-                    self.add_interaction(
-                        (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
-                    )
+                    self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
 
         elif self._mtype == constants.MODEL_ISING:
             num_variables = len(original_variables) + len(additional_variables)
@@ -347,14 +341,10 @@ class LogicalModel(AbstractModel):
                 for adj in additional_variables:
                     if avar.label < adj.label:
                         coeff = -1.0 * strength
-                        self.add_interaction(
-                            (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
-                        )
+                        self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
                 for adj in original_variables:
                     coeff = -1.0 * strength
-                    self.add_interaction(
-                        (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
-                    )
+                    self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
 
     def dependency_constraint(self, target_src, target_dst, strength=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
         self._check_argument_type("strength", strength, numbers.Number)
