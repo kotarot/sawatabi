@@ -16,10 +16,9 @@ from functools import wraps
 import time
 
 
-def profile(func) :
+def profile(func):
     @wraps(func)
-
-    def profile_time(*args, **kargs) :
+    def profile_time(*args, **kargs):
         start_time = time.time()
         start_counter = time.perf_counter()
 
