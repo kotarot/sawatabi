@@ -685,11 +685,11 @@ def test_logical_model_convert_with_n_hot_constraint_qubo(n, s):
     physical = model.to_physical()
 
     for i in range(s):
-        assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == 2 * n - 1.0
+        assert physical._interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == 2 * n - 1.0
     for i in range(s):
         for j in range(s):
-            l1 = "x[{}]".format(i)
-            l2 = "x[{}]".format(j)
+            l1 = f"x[{i}]"
+            l2 = f"x[{j}]"
             if l1 < l2:
                 assert physical._interactions[constants.INTERACTION_QUADRATIC][(l1, l2)] == -2.0
 
@@ -703,11 +703,11 @@ def test_logical_model_convert_with_n_hot_constraint_ising(n, s):
     physical = model.to_physical()
 
     for i in range(s):
-        assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == -1.0 * (s - 2 * n)
+        assert physical._interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == -1.0 * (s - 2 * n)
     for i in range(s):
         for j in range(s):
-            l1 = "x[{}]".format(i)
-            l2 = "x[{}]".format(j)
+            l1 = f"x[{i}]"
+            l2 = f"x[{j}]"
             if l1 < l2:
                 assert physical._interactions[constants.INTERACTION_QUADRATIC][(l1, l2)] == -1.0
 
@@ -721,12 +721,10 @@ def test_logical_model_convert_with_n_hot_constraint_randomly_qubo(model_qubo):
     physical = model_qubo.to_physical()
 
     for i in range(3):
-        assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == 10.0
+        assert physical._interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == 10.0
     for i in range(2):
         for j in range(i + 1, 3):
-            assert (
-                physical._interactions[constants.INTERACTION_QUADRATIC][("x[{}]".format(i), "x[{}]".format(j))] == -20.0
-            )
+            assert physical._interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -20.0
 
 
 def test_logical_model_convert_with_n_hot_constraint_randomly_ising(model):
@@ -741,12 +739,10 @@ def test_logical_model_convert_with_n_hot_constraint_randomly_ising(model):
     physical = model.to_physical()
 
     for i in range(3):
-        assert physical._interactions[constants.INTERACTION_LINEAR]["x[{}]".format(i)] == -2.0
+        assert physical._interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == -2.0
     for i in range(2):
         for j in range(i + 1, 3):
-            assert (
-                physical._interactions[constants.INTERACTION_QUADRATIC][("x[{}]".format(i), "x[{}]".format(j))] == -1.0
-            )
+            assert physical._interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -1.0
 
 
 def test_logical_model_convert_with_placeholder(model):

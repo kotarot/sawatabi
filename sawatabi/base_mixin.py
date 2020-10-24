@@ -37,17 +37,17 @@ class BaseMixin:
             else:
                 typestr = atype.__name__
                 article = BaseMixin._get_artitle(typestr)
-            raise TypeError("'{}' must be {} {}.".format(name, article, typestr))
+            raise TypeError(f"'{name}' must be {article} {typestr}.")
 
     @staticmethod
     def _check_argument_type_in_tuple(name, values, atype):
         if len(values) == 0:
-            raise TypeError("'{}' must not be an empty tuple.".format(name))
+            raise TypeError(f"'{name}' must not be an empty tuple.")
         for v in values:
             if not isinstance(v, atype):
                 typestr = atype.__name__
                 article = BaseMixin._get_artitle(typestr)
-                raise TypeError("All elements in '{}' must be {} {}.".format(name, article, typestr))
+                raise TypeError(f"All elements in '{name}' must be {article} {typestr}.")
 
     @staticmethod
     def _modeltype_to_vartype(mtype):
