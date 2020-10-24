@@ -12,20 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.utils.functions import Functions
-from sawatabi.utils.time import (
-    current_time,
-    current_time_ms,
-    current_time_us,
-    current_time_ns,
-)
-from sawatabi.utils.profile import profile
+from functools import wraps
+import time
 
-__all__ = [
-    "current_time",
-    "current_time_ms",
-    "current_time_us",
-    "current_time_ns",
-    "Functions",
-    "profile",
-]
+
+def profile(func) :
+    @wraps(func)
+
+    def profile_time(*args, **kargs) :
+        start_time = time.time()
+        start_counter = time.perf_counter()
+
+        func_return = func(*args, **kargs)
+
+        elapsed_sec = time.time() - start_time
+        elapsed_counter = time.perf_counter() - start_counter
+
+        return {
+            "return": func_return,
+            "profile": {
+                "function_name": func.__name__,
+                "elapsed_sec": elapsed_sec,
+                "elapsed_counter": elapsed_counter,
+            },
+        }
+
+    return profile_time
