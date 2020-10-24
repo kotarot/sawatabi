@@ -24,7 +24,7 @@ class LocalSolver(AbstractSolver):
     def __init__(self, exact=False):
         self._exact = exact
 
-    def solve(self, model):
+    def solve(self, model, seed=None):
         self._check_argument_type("model", model, PhysicalModel)
 
         if (
@@ -55,6 +55,7 @@ class LocalSolver(AbstractSolver):
         else:
             # Simulated annealing (SA)
             sampler = neal.SimulatedAnnealingSampler()
-            sampleset = sampler.sample(bqm)
+            # TODO: Deal with other SA parameters
+            sampleset = sampler.sample(bqm, seed=seed)
 
         return sampleset
