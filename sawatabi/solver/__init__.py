@@ -13,5 +13,6 @@
 # limitations under the License.
 
 from sawatabi.solver.local_solver import LocalSolver
+from sawatabi.solver.dwave_solver import DWaveSolver
 
-__all__ = ["LocalSolver"]
+__all__ = ["LocalSolver", "DWaveSolver"]
