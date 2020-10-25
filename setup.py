@@ -45,6 +45,8 @@ setup(
     license="Apache 2.0",
     install_requires=[
         "pyqubo>=0.4.0,<1.0.0",
+        "dwave-system>=1.2.1,<2.0.0",
+        "dwave-cloud-client>=0.8.1,<1.0.0",
         "dwave-neal>=0.5.6,<1.0.0",
         "apache-beam>=2.24.0,<3.0.0",
         "apache-beam[interactive]>=2.24.0,<3.0.0",
