@@ -12,6 +12,39 @@
 
 :warning: **This project is work in progress** :warning:
 
+## Usage
+
+### For Users
+
+```
+pip install sawatabi
+```
+
+### If you use the D-Wave solver
+
+Set up a config using dwave-cloud-client:
+```
+$ dwave config create
+Configuration file not found; the default location is: /path/to/your/location/dwave.conf
+Configuration file path [/path/to/your/location/dwave.conf]:
+Configuration file path does not exist. Create it? [y/N]: y
+Profile (create new) [prod]: dev
+API endpoint URL [skip]: xxxxxxxxxxxxxxxx
+Authentication token [skip]: xxxxxxxxxxxxxxxx
+Default client class [skip]:
+Default solver [skip]: Advantage_system1.1
+Configuration saved.
+```
+
+### For Developers
+
+```
+python -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -e ".[dev]"
+```
+
 ## Acknowledgement
 
 This work is supported by the MITOU Target program from Information-technology Promotion Agency, Japan (IPA).
