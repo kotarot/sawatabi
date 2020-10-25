@@ -14,6 +14,7 @@
 
 import itertools
 import random
+
 from dwave.cloud import Client
 from dwave.system.composites import EmbeddingComposite
 from dwave.system.samplers import DWaveSampler
