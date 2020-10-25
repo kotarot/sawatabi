@@ -109,6 +109,10 @@ def test_local_solver_n_hot_ising(n, s):
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == -1) == s - n
 
+    # Execution time should be within 1 sec.
+    assert resultset.info["timing"]["elapsed_sec"] <= 1.0
+    assert resultset.info["timing"]["elapsed_counter"] <= 1.0
+
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 400)])
 def test_local_solver_n_hot_qubo(n, s):
@@ -123,6 +127,10 @@ def test_local_solver_n_hot_qubo(n, s):
     result = np.array(resultset.record[0][0])
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == 0) == s - n
+
+    # Execution time should be within 1 sec.
+    assert resultset.info["timing"]["elapsed_sec"] <= 1.0
+    assert resultset.info["timing"]["elapsed_counter"] <= 1.0
 
 
 def test_local_solver_with_logical_model_fails():

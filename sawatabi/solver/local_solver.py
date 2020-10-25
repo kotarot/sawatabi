@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
+
 import dimod
 import neal
 
@@ -49,6 +51,9 @@ class LocalSolver(AbstractSolver):
             vartype = dimod.BINARY
         bqm = dimod.BinaryQuadraticModel(linear, quadratic, model._offset, vartype)
 
+        start_time = time.time()
+        start_counter = time.perf_counter()
+
         if self._exact:
             # dimod's brute force solver
             sampleset = dimod.ExactSolver().sample(bqm)
@@ -58,5 +63,13 @@ class LocalSolver(AbstractSolver):
             sampler = neal.SimulatedAnnealingSampler()
             # TODO: Deal with other SA parameters
             sampleset = sampler.sample(bqm, num_reads=num_reads, num_sweeps=num_sweeps, seed=seed)
+
+        # Update the timing
+        elapsed_sec = time.time() - start_time
+        elapsed_counter = time.perf_counter() - start_counter
+        sampleset.info["timing"] = {
+            "elapsed_sec": elapsed_sec,
+            "elapsed_counter": elapsed_counter,
+        }
 
         return sampleset
