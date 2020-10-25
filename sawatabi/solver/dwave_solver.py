@@ -13,19 +13,19 @@
 # limitations under the License.
 
 import dimod
-import neal
+from dwave.system.composites import EmbeddingComposite
+from dwave.system.samplers import DWaveSampler
 
 import sawatabi.constants as constants
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.solver.abstract_solver import AbstractSolver
 
 
-class LocalSolver(AbstractSolver):
-    def __init__(self, exact=False):
-        self._exact = exact
+class DWaveSolver(AbstractSolver):
+    def __init__(self):
         super().__init__()
 
-    def solve(self, model, num_reads=1, num_sweeps=1000, seed=None):
+    def solve(self, model, seed=None, chain_strength=2, num_reads=1000):
         self._check_argument_type("model", model, PhysicalModel)
 
         if (
@@ -49,14 +49,7 @@ class LocalSolver(AbstractSolver):
             vartype = dimod.BINARY
         bqm = dimod.BinaryQuadraticModel(linear, quadratic, model._offset, vartype)
 
-        if self._exact:
-            # dimod's brute force solver
-            sampleset = dimod.ExactSolver().sample(bqm)
-
-        else:
-            # Simulated annealing (SA)
-            sampler = neal.SimulatedAnnealingSampler()
-            # TODO: Deal with other SA parameters
-            sampleset = sampler.sample(bqm, num_reads=num_reads, num_sweeps=num_sweeps, seed=seed)
+        solver = EmbeddingComposite(DWaveSampler())
+        sampleset = solver.sample(bqm, chain_strength=chain_strength, num_reads=num_reads)
 
         return sampleset
