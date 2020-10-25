@@ -66,7 +66,7 @@ def dwave_sample():
 
 def dwave_with_embedding():
     solver = EmbeddingComposite(DWaveSampler())
-    sampleset = solver.sample_ising({'a': -10}, {('a', 'b'): 10})
+    sampleset = solver.sample_ising({"a": -10}, {("a", "b"): 10})
     print("sampleset:")
     print(sampleset)
     print("sampleset.record:")
