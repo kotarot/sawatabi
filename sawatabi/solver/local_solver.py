@@ -23,8 +23,9 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 class LocalSolver(AbstractSolver):
     def __init__(self, exact=False):
         self._exact = exact
+        super().__init__()
 
-    def solve(self, model, seed=None):
+    def solve(self, model, num_reads=1, num_sweeps=1000, seed=None):
         self._check_argument_type("model", model, PhysicalModel)
 
         if (
@@ -56,6 +57,6 @@ class LocalSolver(AbstractSolver):
             # Simulated annealing (SA)
             sampler = neal.SimulatedAnnealingSampler()
             # TODO: Deal with other SA parameters
-            sampleset = sampler.sample(bqm, seed=seed)
+            sampleset = sampler.sample(bqm, num_reads=num_reads, num_sweeps=num_sweeps, seed=seed)
 
         return sampleset
