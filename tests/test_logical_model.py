@@ -458,13 +458,70 @@ def test_logical_model_remove_invalid(model):
 
 
 ################################
-# Erase
+# Delete
 ################################
 
 
-def test_logical_model_erase(model):
-    with pytest.raises(NotImplementedError):
-        model.erase_variable()
+def test_logical_model_delete(model):
+    x = model.variables("x", shape=(2, 3, 4))
+    y = model.variables("y", shape=(5, 6))  # noqa: F841
+
+    model.add_interaction(x[0, 0, 0], coefficient=1.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
+    model.add_interaction((x[0, 0, 0], x[0, 0, 1]), coefficient=2.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
+
+    assert model.get_size() == 2 * 3 * 4 + 5 * 6
+    assert model.get_deleted_size() == 0
+    assert model.get_all_size() == 2 * 3 * 4 + 5 * 6
+
+    # Set dirty flags for interactions releted to the deleting variable
+    model.delete_variable(x[0, 0, 0])
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
+
+    assert model.get_size() == 2 * 3 * 4 + 5 * 6 - 1
+    assert model.get_deleted_size() == 1
+    assert model.get_all_size() == 2 * 3 * 4 + 5 * 6
+
+    # Convert physical to resolve dirty
+    model.to_physical()
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 0
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
+
+    assert model.get_size() == 2 * 3 * 4 + 5 * 6 - 1
+    assert model.get_deleted_size() == 1
+    assert model.get_all_size() == 2 * 3 * 4 + 5 * 6
+
+
+def test_logical_model_delete_dealing_with_nhot_constraints_qubo():
+    model = LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(4,))
+    default_label = "Default N-hot Constraint"
+
+    model.n_hot_constraint(x, n=1, strength=1.0)
+    assert len(model.get_constraints()) == 1
+    assert default_label in model.get_constraints()
+    assert model.get_constraints_by_label(default_label)._n == 1
+    assert len(model.get_constraints_by_label(default_label)._variables) == 4
+
+    model.delete_variable(x[0])
+    print(model)
+    assert len(model.get_constraints()) == 1
+    assert default_label in model.get_constraints()
+    assert model.get_constraints_by_label(default_label)._n == 1
+    assert len(model.get_constraints_by_label(default_label)._variables) == 3
+    assert model._interactions[constants.INTERACTION_LINEAR][f"x[1] ({default_label})"]["coefficient"] == 1.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC][f"x[1]*x[2] ({default_label})"]["coefficient"] == -2.0
+
+
+def test_logical_model_delete_invalid_argument(model):
+    with pytest.raises(TypeError):
+        model.delete_variable()
+    with pytest.raises(TypeError):
+        model.delete_variable("invalid type")
 
 
 ################################

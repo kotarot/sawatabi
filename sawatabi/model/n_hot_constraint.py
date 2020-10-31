@@ -28,7 +28,9 @@ class NHotConstraint(AbstractConstraint):
             # to avoid to share the identical set between different Constraint classes...
             variables = set()
         self._check_argument_type("variables", variables, set)
+
         super().__init__(strength, label, variables)
+        self._constraint_type = "NHotConstraint"
         self._n = n
 
     def add(self, variable):
@@ -44,6 +46,7 @@ class NHotConstraint(AbstractConstraint):
 
     def __str__(self):
         data = {
+            "constraint_type": self._constraint_type,
             "n": self._n,
             "strength": self._strength,
             "label": self._label,

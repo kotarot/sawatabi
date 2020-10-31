@@ -17,6 +17,7 @@ from sawatabi.base_mixin import BaseMixin
 
 class AbstractConstraint(BaseMixin):
     def __init__(self, strength=1.0, label="", variables=set()):
+        self._constraint_type = None
         self._strength = strength
         self._label = label
         self._variables = variables

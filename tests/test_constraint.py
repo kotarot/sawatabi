@@ -23,6 +23,7 @@ from sawatabi.model import NHotConstraint
 
 def test_n_hot_constraint():
     c = NHotConstraint()
+    assert c._constraint_type == "NHotConstraint"
     assert c._n == 1
     assert c._strength == 1.0
     assert c._label == ""
@@ -110,6 +111,7 @@ def test_logical_model_repr():
     c = NHotConstraint()
     assert isinstance(c.__repr__(), str)
     assert "NHotConstraint({" in c.__repr__()
+    assert "'constraint_type':" in c.__repr__()
     assert "'n':" in c.__repr__()
     assert "'strength':" in c.__repr__()
     assert "'label'" in c.__repr__()
@@ -119,6 +121,7 @@ def test_logical_model_repr():
 def test_logical_model_str():
     c = NHotConstraint()
     assert isinstance(c.__str__(), str)
+    assert "'constraint_type':" in c.__str__()
     assert "'n':" in c.__str__()
     assert "'strength':" in c.__str__()
     assert "'label'" in c.__str__()
