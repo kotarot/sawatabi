@@ -12,9 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.solver.sawatabi_sample_set import SawatabiSampleSet
-from sawatabi.solver.local_solver import LocalSolver
-from sawatabi.solver.dwave_solver import DWaveSolver
-from sawatabi.solver.optigan_solver import OptiganSolver
+import pytest
 
-__all__ = ["SawatabiSampleSet", "LocalSolver", "DWaveSolver", "OptiganSolver"]
+from sawatabi.model import LogicalModel
+from sawatabi.solver import DWaveSolver
+
+
+def test_dwave_solver_with_logical_model_fails():
+    model = LogicalModel(mtype="ising")
+    solver = DWaveSolver()
+    with pytest.raises(TypeError):
+        solver.solve(model)
+
+
+def test_dwave_solver_with_empty_model_fails():
+    model = LogicalModel(mtype="ising")
+    physical = model.to_physical()
+    solver = DWaveSolver()
+    with pytest.raises(ValueError):
+        solver.solve(physical)
