@@ -75,6 +75,10 @@ def model_1d():
     print("\nSet interactions.")
     print(model)
 
+    model.delete_variable(x[0])
+    print("\nErased x[0].")
+    print(model)
+
 
 def model_2d():
     print("\n=== model (2d) ===")
@@ -101,6 +105,10 @@ def model_constraints():
 
     model.n_hot_constraint(a[2], n=1, label="my constraint 1")
     print("\nSet the one-hot constraint to a[2]")
+    print(model)
+
+    model.delete_variable(a[0])
+    print("\nErased a[0].")
     print(model)
 
 
