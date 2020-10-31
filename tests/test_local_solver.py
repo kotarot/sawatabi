@@ -133,6 +133,39 @@ def test_local_solver_n_hot_qubo(n, s):
     assert resultset.info["timing"]["elapsed_counter"] <= 5.0
 
 
+@pytest.mark.parametrize("n,s,i", [(1, 4, 0), (1, 4, 1), (1, 4, 2), (1, 4, 3), (2, 10, 5)])
+def test_local_solver_n_hot_ising_with_deleting(n, s, i):
+    # n out of (s - 1) variables should be 1
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(s,))
+    model.n_hot_constraint(x, n=n)
+    model.delete_variable(x[i])
+    physical = model.to_physical()
+    solver = LocalSolver()
+    resultset = solver.solve(physical, seed=12345)
+
+    result = np.array(resultset.record[0][0])
+    assert np.count_nonzero(result == 1) == n
+    assert np.count_nonzero(result == -1) == s - n - 1
+
+
+@pytest.mark.parametrize("n,s,i,j", [(1, 4, 0, 1), (1, 4, 2, 3), (2, 10, 5, 6)])
+def test_local_solver_n_hot_qubo_with_deleting(n, s, i, j):
+    # n out of (s - 2) variables should be 1
+    model = LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(s,))
+    model.n_hot_constraint(x, n=n)
+    model.delete_variable(x[i])
+    model.delete_variable(x[j])
+    physical = model.to_physical()
+    solver = LocalSolver()
+    resultset = solver.solve(physical, seed=12345)
+
+    result = np.array(resultset.record[0][0])
+    assert np.count_nonzero(result == 1) == n
+    assert np.count_nonzero(result == 0) == s - n - 2
+
+
 def test_local_solver_with_logical_model_fails():
     model = LogicalModel(mtype="ising")
     solver = LocalSolver()

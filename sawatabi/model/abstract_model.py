@@ -29,7 +29,10 @@ class AbstractModel(BaseMixin):
             constants.INTERACTION_LINEAR: {},  # linear (1-body)
             constants.INTERACTION_QUADRATIC: {},  # quadratic (2-body)
         }
+
         self._offset = 0.0
+        self._deleted = []
+        self._fixed = []
 
     def get_mtype(self):
         return self._mtype

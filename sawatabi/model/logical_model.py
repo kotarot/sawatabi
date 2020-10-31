@@ -84,6 +84,18 @@ class LogicalModel(AbstractModel):
     def select_interaction(self):
         raise NotImplementedError
 
+    def select_interaction_tmp(self, target):
+        # TODO: This is a temporal implementation.
+        # Refactor this using pandas later.
+        selected = []
+        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
+            if v["interacts"] == target:
+                selected.append(v["name"])
+        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
+            if (v["interacts"][0] == target) or (v["interacts"][1] == target):
+                selected.append(v["name"])
+        return selected
+
     ################################
     # Add
     ################################
@@ -237,6 +249,7 @@ class LogicalModel(AbstractModel):
         # logically remove
         # This will be physically removed when it's converted to a physical model.
         self._interactions[body][internal_name]["removed"] = True
+        self._interactions[body][internal_name]["dirty"] = True
 
         return self._interactions[body][internal_name]
 
@@ -273,11 +286,26 @@ class LogicalModel(AbstractModel):
         return {"body": body, "interacts": interacts, "key": key, "name": name}
 
     ################################
-    # Erase
+    # Delete
     ################################
 
-    def erase_variable(self):
-        raise NotImplementedError
+    def delete_variable(self, target):
+        if not target:
+            raise ValueError("'target' must be specified.")
+        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
+
+        # TODO: Delete variable physically
+        self._deleted.append(target)
+
+        # Deal with constraints
+        for k, v in self.get_constraints().items():
+            if v._constraint_type == "NHotConstraint":
+                self.n_hot_constraint(target, n=v._n, strength=v._strength, label=v._label, delete_flag=True)
+
+        # Remove related interations
+        removed = self.select_interaction_tmp(target)
+        for r in removed:
+            self.remove_interaction(name=r)
 
     ################################
     # Fix
@@ -301,7 +329,7 @@ class LogicalModel(AbstractModel):
     # Constraints
     ################################
 
-    def n_hot_constraint(self, target, n=1, strength=1.0, label=constants.DEFAULT_LABEL_N_HOT):
+    def n_hot_constraint(self, target, n=1, strength=1.0, label=constants.DEFAULT_LABEL_N_HOT, delete_flag=False):
         self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
         self._check_argument_type("n", n, int)
         self._check_argument_type("strength", strength, numbers.Number)
@@ -317,34 +345,55 @@ class LogicalModel(AbstractModel):
             added_variables = added_variables.union(set([t]))
             self._constraints[label].add(set([t]))
 
-        additional_variables = added_variables - original_variables
-        if self._mtype == constants.MODEL_QUBO:
-            for avar in additional_variables:
-                coeff = -1.0 * strength * (1 - 2 * n)
-                self.add_interaction(avar, name=f"{avar.label} ({label})", coefficient=coeff)
-                for adj in additional_variables:
-                    if avar.label < adj.label:
+        # If delete_flag is set, the target variable will be deleted from the constraint.
+        if delete_flag:
+            remaining_variables = original_variables - added_variables
+            self._constraints[label]._variables -= added_variables
+            if self._mtype == constants.MODEL_QUBO:
+                # Do nothing for QUBO model (only remove adjacent interactions)
+                pass
+            elif self._mtype == constants.MODEL_ISING:
+                # For Ising model, all linear interactions of variables for the constraint are taken care.
+                num_variables = len(remaining_variables)
+                for rvar in remaining_variables:
+                    coeff = -1.0 * strength * (num_variables - 2 * n)
+                    self.update_interaction(name=f"{rvar.label} ({label})", coefficient=coeff)
+
+        else:
+            additional_variables = added_variables - original_variables
+            if self._mtype == constants.MODEL_QUBO:
+                # For QUBO model, only interactions of additinal variables are taken care.
+                for avar in additional_variables:
+                    coeff = -1.0 * strength * (1 - 2 * n)
+                    self.add_interaction(avar, name=f"{avar.label} ({label})", coefficient=coeff)
+                    for adj in additional_variables:
+                        if avar.label < adj.label:
+                            coeff = -2.0 * strength
+                            self.add_interaction(
+                                (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
+                            )
+                    for adj in original_variables:
                         coeff = -2.0 * strength
                         self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
-                for adj in original_variables:
-                    coeff = -2.0 * strength
-                    self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
 
-        elif self._mtype == constants.MODEL_ISING:
-            num_variables = len(original_variables) + len(additional_variables)
-            for ovar in original_variables:
-                coeff = -1.0 * strength * (num_variables - 2 * n)
-                self.update_interaction(name=f"{ovar.label} ({label})", coefficient=coeff)
-            for avar in additional_variables:
-                coeff = -1.0 * strength * (num_variables - 2 * n)
-                self.add_interaction(avar, name=f"{avar.label} ({label})", coefficient=coeff)
-                for adj in additional_variables:
-                    if avar.label < adj.label:
+            elif self._mtype == constants.MODEL_ISING:
+                # For Ising model, all interactions of variables for the constraint are taken care.
+                num_variables = len(original_variables) + len(additional_variables)
+                for ovar in original_variables:
+                    coeff = -1.0 * strength * (num_variables - 2 * n)
+                    self.update_interaction(name=f"{ovar.label} ({label})", coefficient=coeff)
+                for avar in additional_variables:
+                    coeff = -1.0 * strength * (num_variables - 2 * n)
+                    self.add_interaction(avar, name=f"{avar.label} ({label})", coefficient=coeff)
+                    for adj in additional_variables:
+                        if avar.label < adj.label:
+                            coeff = -1.0 * strength
+                            self.add_interaction(
+                                (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
+                            )
+                    for adj in original_variables:
                         coeff = -1.0 * strength
                         self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
-                for adj in original_variables:
-                    coeff = -1.0 * strength
-                    self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
 
     def dependency_constraint(self, target_src, target_dst, strength=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
         self._check_argument_type("strength", strength, numbers.Number)
@@ -439,35 +488,47 @@ class LogicalModel(AbstractModel):
         """
         return self._variables[name]
 
+    def get_deleted_array(self):
+        """
+        Returns a list of variables which are deleted.
+        """
+        return self._deleted
+
     def get_fixed_array(self):
         """
         Returns a list of variables which are fixed.
         """
-        raise NotImplementedError
+        return self._fixed
 
     def get_size(self):
         """
         Returns the number of all alive variables (i.e., variables which are not removed or fixed).
         """
-        raise NotImplementedError
+        return self.get_all_size() - self.get_deleted_size() - self.get_fixed_size()
 
-    def get_removed_size(self):
+    def get_deleted_size(self):
         """
-        Returns the number of variables which are removed.
+        Returns the number of variables which are deleted.
         """
-        raise NotImplementedError
+        return len(self._deleted)
 
     def get_fixed_size(self):
         """
         Returns the number of variables which are fixed.
         """
-        raise NotImplementedError
+        return len(self._fixed)
 
     def get_all_size(self):
         """
         Return the number of all variables including removed or fixed.
         """
-        raise NotImplementedError
+        all_size = 0
+        for _, variables in self.get_variables().items():
+            size = 1
+            for s in variables.shape:
+                size *= s
+            all_size += size
+        return all_size
 
     def get_attributes(self, target):
         """
