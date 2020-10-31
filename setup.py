@@ -44,6 +44,7 @@ setup(
     version=version,
     license="Apache 2.0",
     install_requires=[
+        "PyYAML>=5.3.1,<6.0.0",
         "pyqubo>=0.4.0,<1.0.0",
         "dwave-system>=1.2.1,<2.0.0",
         "dwave-cloud-client>=0.8.1,<1.0.0",

@@ -17,7 +17,7 @@ import sawatabi
 
 def solver_local():
     print("\n=== solver (local) ===")
-    physical = _create_model()
+    physical = _create_ising_model()
 
     solver = sawatabi.solver.LocalSolver(exact=False)
     resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
@@ -27,7 +27,7 @@ def solver_local():
 
 def solver_dwave():
     print("\n=== solver (dwave) ===")
-    physical = _create_model()
+    physical = _create_ising_model()
 
     solver = sawatabi.solver.DWaveSolver()
     resultset = solver.solve(physical, chain_strength=2, num_reads=10)
@@ -35,7 +35,17 @@ def solver_dwave():
     _show_resultset(resultset)
 
 
-def _create_model():
+def solver_optigan():
+    print("\n=== solver (optigan) ===")
+    physical = _create_qubo_model()
+
+    solver = sawatabi.solver.OptiganSolver()
+    resultset = solver.solve(physical, timeout=1000, duplicate=True)
+
+    _show_resultset(resultset)
+
+
+def _create_ising_model():
     model = sawatabi.model.LogicalModel(mtype="ising")
 
     print("\nSet shape to (1, 2)")
@@ -63,6 +73,22 @@ def _create_model():
     return physical
 
 
+def _create_qubo_model():
+    model = sawatabi.model.LogicalModel(mtype="qubo")
+
+    # print("\nOne-hot constraint for an array of (4,)")
+    a = model.variables("a", shape=(4,))
+    # model.add_interaction(a[0], coefficient=10.0)
+    model.n_hot_constraint(a, n=1)
+    # print(model)
+
+    # print("\nPhysical model")
+    physical = model.to_physical()
+    # print(physical)
+
+    return physical
+
+
 def _show_resultset(resultset):
     print("\nresultset")
     print(resultset)
@@ -83,6 +109,7 @@ def _show_resultset(resultset):
 def main():
     solver_local()
     solver_dwave()
+    solver_optigan()
 
 
 if __name__ == "__main__":

@@ -36,6 +36,15 @@ Default solver [skip]: Advantage_system1.1
 Configuration saved.
 ```
 
+### If you use the Fixstars GPU solver (Optigan)
+
+Set up a API Token in `~/.optigan.yml`:
+```
+api:
+    host: optigan.example.com
+    token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
 ### For Developers
 
 ```
