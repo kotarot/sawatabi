@@ -17,7 +17,6 @@ import pytest
 
 import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
-from sawatabi.utils.functions import Functions
 
 
 @pytest.fixture
@@ -115,15 +114,26 @@ def test_logical_model_variables_comma(model):
         model.variables("x*y", shape=(2, 2))
 
 
-@pytest.mark.parametrize("initial_shape,additional_shape", [((2,), (1,)), ((44, 33), (22, 11))])
-def test_logical_model_variables_append(initial_shape, additional_shape):
+@pytest.mark.parametrize(
+    "initial_shape,additional_shape,expected_shape", [((2,), (1,), (3,)), ((44, 33), (22, 11), (66, 44))]
+)
+def test_logical_model_variables_append(initial_shape, additional_shape, expected_shape):
     model = LogicalModel(mtype="ising")
     model.variables("x", shape=initial_shape)
     assert "x" in model.get_variables()
     assert model.get_variables_by_name("x").shape == initial_shape
 
     model.append("x", shape=additional_shape)
-    assert model.get_variables_by_name("x").shape == Functions.elementwise_add(initial_shape, additional_shape)
+    assert model.get_variables_by_name("x").shape == expected_shape
+
+
+@pytest.mark.parametrize("shape", [(2,), (33, 44)])
+def test_logical_model_variables_append_without_initialize(shape):
+    model = LogicalModel(mtype="ising")
+    # The following operation will be successful with a UserWarning.
+    model.append("x", shape=shape)
+    assert "x" in model.get_variables()
+    assert model.get_variables_by_name("x").shape == shape
 
 
 @pytest.mark.parametrize("vartype,mtype", [("SPIN", "ising"), ("BINARY", "qubo")])

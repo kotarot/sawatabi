@@ -14,6 +14,7 @@
 
 import numbers
 import pprint
+import warnings
 
 import pyqubo
 
@@ -65,7 +66,11 @@ class LogicalModel(AbstractModel):
         self._check_argument_type_in_tuple("shape", shape, int)
 
         if name not in self._variables:
-            raise KeyError(f"Variables name '{name}' is not defined in the model.")
+            # raise KeyError(f"Variables name '{name}' is not defined in the model.")
+            warnings.warn(
+                f"Variables name '{name}' is not defined in the model, but will be created instead of append."
+            )
+            return self.variables(name, shape)
 
         # tuple elementwise addition
         new_shape = Functions.elementwise_add(self._variables[name].shape, shape)
