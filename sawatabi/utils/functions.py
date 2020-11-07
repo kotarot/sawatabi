@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import operator
+
 
 class Functions:
     @classmethod
@@ -21,3 +23,21 @@ class Functions:
                 yield from cls._flatten(element)
             else:
                 yield element
+
+    @classmethod
+    def elementwise_add(cls, a, b):
+        if isinstance(a, tuple) and isinstance(b, tuple):
+            return tuple(map(operator.add, a, b))
+        elif isinstance(a, list) and isinstance(b, list):
+            return list(map(operator.add, a, b))
+        else:
+            raise TypeError("a and b must be the same type and must be one of [tuple, list].")
+
+    @classmethod
+    def elementwise_sub(cls, a, b):
+        if isinstance(a, tuple) and isinstance(b, tuple):
+            return tuple(map(operator.sub, a, b))
+        elif isinstance(a, list) and isinstance(b, list):
+            return list(map(operator.sub, a, b))
+        else:
+            raise TypeError("a and b must be the same type and must be one of [tuple, list].")
