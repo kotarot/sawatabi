@@ -51,7 +51,12 @@ api:
 python -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip install -e ".[dev]"
+pip install -e ".[dev,notebook]"
+```
+
+To start a jupyter notebook server:
+```
+./venv/bin/jupyter notebook
 ```
 
 ## Acknowledgement

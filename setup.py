@@ -60,6 +60,13 @@ setup(
             "flake8>=3.8.4,<4.0.0",
             "isort>=5.6.4,<6.0.0",
         ],
+        "notebook": [
+            # Jupyter notebook
+            "notebook>=6.1.5,<7.0.0",
+            "ipykernel>=5.3.4,<6.0.0",
+            "ipywidgets>=7.5.1,<8.0.0",
+            "jupyterlab>=2.2.9,<3.0.0",
+        ],
     },
     author="Kotaro Terada, Shingo Furuyama, Junya Usui, and Kazuki Ono",
     author_email="kotarot@apache.org",
