@@ -17,6 +17,7 @@ import pytest
 
 import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
+from sawatabi.utils.functions import Functions
 
 
 @pytest.fixture
@@ -112,6 +113,17 @@ def test_logical_model_variables_comma(model):
     # We cannot name variables whose name contains a comma
     with pytest.raises(AssertionError):
         model.variables("x*y", shape=(2, 2))
+
+
+@pytest.mark.parametrize("initial_shape,additional_shape", [((2,), (1,)), ((44, 33), (22, 11))])
+def test_logical_model_variables_append(initial_shape, additional_shape):
+    model = LogicalModel(mtype="ising")
+    model.variables("x", shape=initial_shape)
+    assert "x" in model.get_variables()
+    assert model.get_variables_by_name("x").shape == initial_shape
+
+    model.append("x", shape=additional_shape)
+    assert model.get_variables_by_name("x").shape == Functions.elementwise_add(initial_shape, additional_shape)
 
 
 @pytest.mark.parametrize("vartype,mtype", [("SPIN", "ising"), ("BINARY", "qubo")])

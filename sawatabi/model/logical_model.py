@@ -68,7 +68,7 @@ class LogicalModel(AbstractModel):
             raise KeyError(f"Variables name '{name}' is not defined in the model.")
 
         # tuple elementwise addition
-        new_shape = tuple(map(sum, zip(self._variables[name].shape, shape)))
+        new_shape = Functions.elementwise_add(self._variables[name].shape, shape)
         vartype = self._modeltype_to_vartype(self._mtype)
 
         self._variables[name] = pyqubo.Array.create(name, shape=new_shape, vartype=vartype)
