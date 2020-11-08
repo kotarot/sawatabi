@@ -377,6 +377,29 @@ def test_logical_model_update_by_custom_names(model):
         model.update_interaction(name=n3, coefficient=-30.0)
 
 
+def test_logical_model_update_without_initialize(model):
+    # The following operation will be successful with a UserWarning.
+    x = model.variables("x", shape=(3,))
+
+    res = model.update_interaction(x[0], coefficient=11.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["coefficient"] == 11.0
+    assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["scale"] == 1.0
+    assert res["name"] == "x[0]"
+    assert res["key"] == ("x[0]")
+    assert res["interacts"] == (x[0])
+
+    res = model.update_interaction((x[0], x[1]), coefficient=22.0, scale=33.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["coefficient"] == 22.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["scale"] == 33.0
+    assert res["name"] == "x[0]*x[1]"
+    assert res["key"] == ("x[0]", "x[1]")
+    assert res["interacts"] == (x[0], x[1])
+
+
 def test_logical_model_update_invalid(model):
     x = model.variables("x", shape=(3,))
     model.add_interaction(x[0], coefficient=1.0)
@@ -388,7 +411,7 @@ def test_logical_model_update_invalid(model):
         model.update_interaction(x[0], name="x[0]")
 
     with pytest.raises(KeyError):
-        model.update_interaction(x[1], coefficient=1.0)
+        model.update_interaction(name="x[1]", coefficient=1.0)
 
     with pytest.raises(TypeError):
         model.update_interaction("invalid type", coefficient=1.0)
