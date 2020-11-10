@@ -44,6 +44,7 @@ setup(
     version=version,
     license="Apache 2.0",
     install_requires=[
+        "pandas>=1.1.4,<2.0.0",
         "PyYAML>=5.3.1,<6.0.0",
         "pyqubo>=0.4.0,<1.0.0",
         "dwave-system>=1.2.1,<2.0.0",
@@ -66,6 +67,14 @@ setup(
             "ipykernel>=5.3.4,<6.0.0",
             "ipywidgets>=7.5.1,<8.0.0",
             "jupyterlab>=2.2.9,<3.0.0",
+            # Data processing
+            "numpy>=1.19.4,<2.0.0",
+            "scipy>=1.5.4,<2.0.0",
+            "scikit-learn>=0.23.2,<1.0.0",
+            # For visualization
+            "matplotlib>=3.3.2,<4.0.0",
+            "plotly>=4.12.0,<5.0.0",
+            "seaborn>=0.11.0,<1.0.0",
         ],
     },
     author="Kotaro Terada, Shingo Furuyama, Junya Usui, and Kazuki Ono",
