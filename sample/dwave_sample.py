@@ -21,6 +21,8 @@ from dwave.system.samplers import DWaveSampler
 
 
 def dwave_sample():
+    print("\n=== dwave_sample ===\n")
+
     # Connect using the default or environment connection information
     with Client.from_config() as client:
 
@@ -65,9 +67,43 @@ def dwave_sample():
             print("timing:", computation.timing)
 
 
-def dwave_with_embedding():
-    solver = EmbeddingComposite(DWaveSampler())
-    sampleset = solver.sample_ising({"a": -10}, {("a", "b"): 10})
+def _create_ising_model():
+    # Optimal solution of this ising model:
+    #   - Spins a, z: +1
+    #   - The others: -1
+    #   - Energy = -320.0
+    ising_linear = {"a": -20}
+    ising_quadratic = {
+        ("a", "b"): 10,
+        ("a", "c"): 11,
+        ("a", "d"): 12,
+        ("a", "e"): 13,
+        ("a", "f"): 14,
+        ("a", "g"): 10,
+        ("a", "h"): 11,
+        ("a", "i"): 12,
+        ("a", "j"): 13,
+        ("a", "k"): 14,
+        ("a", "l"): 10,
+        ("a", "m"): 11,
+        ("a", "n"): 12,
+        ("a", "o"): 13,
+        ("a", "p"): 14,
+        ("a", "q"): 10,
+        ("a", "r"): 11,
+        ("a", "s"): 12,
+        ("a", "t"): 13,
+        ("a", "u"): 14,
+        ("a", "v"): 10,
+        ("a", "w"): 11,
+        ("a", "x"): 12,
+        ("a", "y"): 13,
+        ("a", "z"): -14,
+    }
+    return ising_linear, ising_quadratic
+
+
+def _print_sampleset(sampleset):
     print("sampleset:")
     print(sampleset)
     print("sampleset.record:")
@@ -82,11 +118,49 @@ def dwave_with_embedding():
     print(sampleset.first)
     print("sampleset.samples():")
     print([sample for sample in sampleset.samples()])
+    print("")
+
+
+def dwave_with_embedding():
+    print("\n=== dwave_with_embedding ===\n")
+
+    solver = EmbeddingComposite(DWaveSampler(solver="Advantage_system1.1"))
+    ising_linear, ising_quadratic = _create_ising_model()
+    sampleset = solver.sample_ising(ising_linear, ising_quadratic)
+    _print_sampleset(sampleset)
+
+
+def dwave_scheduling_options():
+    print("\n=== dwave_scheduling_options ===\n")
+
+    solver = EmbeddingComposite(DWaveSampler(solver="Advantage_system1.1"))
+    ising_linear, ising_quadratic = _create_ising_model()
+
+    # Normal Annealing
+    sampleset = solver.sample_ising(
+        ising_linear, ising_quadratic, chain_strength=2.0, answer_mode="histogram", num_reads=10, annealing_time=320
+    )
+    _print_sampleset(sampleset)
+
+    # Reverse Annealing
+    initial_state = dict(zip(sampleset.variables, sampleset.record[0].sample))
+    sampleset = solver.sample_ising(
+        ising_linear,
+        ising_quadratic,
+        chain_strength=2.0,
+        answer_mode="histogram",
+        num_reads=10,
+        anneal_schedule=[(0, 1), (160, 0.2), (320, 1)],
+        initial_state=initial_state,
+        reinitialize_state=False,
+    )
+    _print_sampleset(sampleset)
 
 
 def main():
     dwave_sample()
     dwave_with_embedding()
+    dwave_scheduling_options()
 
 
 if __name__ == "__main__":

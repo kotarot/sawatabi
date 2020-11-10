@@ -22,10 +22,11 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 
 
 class DWaveSolver(AbstractSolver):
-    def __init__(self):
+    def __init__(self, solver="Advantage_system1.1"):
         super().__init__()
+        self._solver = solver
 
-    def solve(self, model, seed=None, chain_strength=2, num_reads=1000):
+    def solve(self, model, seed=None, chain_strength=2.0, annealing_time=20, num_reads=1000, answer_mode="histogram"):
         self._check_argument_type("model", model, PhysicalModel)
 
         if (
@@ -49,7 +50,10 @@ class DWaveSolver(AbstractSolver):
             vartype = dimod.BINARY
         bqm = dimod.BinaryQuadraticModel(linear, quadratic, model._offset, vartype)
 
-        solver = EmbeddingComposite(DWaveSampler())
-        sampleset = solver.sample(bqm, chain_strength=chain_strength, num_reads=num_reads)
+        # TODO: Deal with reverse annealing.
+        solver = EmbeddingComposite(DWaveSampler(solver=self._solver))
+        sampleset = solver.sample(
+            bqm, chain_strength=chain_strength, annealing_time=20, num_reads=num_reads, answer_mode=answer_mode
+        )
 
         return sampleset
