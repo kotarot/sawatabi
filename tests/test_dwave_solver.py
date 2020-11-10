@@ -18,6 +18,11 @@ from sawatabi.model import LogicalModel
 from sawatabi.solver import DWaveSolver
 
 
+def test_dwave_default_solver_name():
+    solver = DWaveSolver()
+    assert solver._solver == "Advantage_system1.1"
+
+
 def test_dwave_solver_with_logical_model_fails():
     model = LogicalModel(mtype="ising")
     solver = DWaveSolver()

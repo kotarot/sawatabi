@@ -14,6 +14,7 @@
 
 import numbers
 import pprint
+import warnings
 
 import pyqubo
 
@@ -65,10 +66,14 @@ class LogicalModel(AbstractModel):
         self._check_argument_type_in_tuple("shape", shape, int)
 
         if name not in self._variables:
-            raise KeyError(f"Variables name '{name}' is not defined in the model.")
+            # raise KeyError(f"Variables name '{name}' is not defined in the model.")
+            warnings.warn(
+                f"Variables name '{name}' is not defined in the model, but will be created instead of appending it."
+            )
+            return self.variables(name, shape)
 
         # tuple elementwise addition
-        new_shape = tuple(map(sum, zip(self._variables[name].shape, shape)))
+        new_shape = Functions.elementwise_add(self._variables[name].shape, shape)
         vartype = self._modeltype_to_vartype(self._mtype)
 
         self._variables[name] = pyqubo.Array.create(name, shape=new_shape, vartype=vartype)
@@ -195,9 +200,19 @@ class LogicalModel(AbstractModel):
             internal_name = interaction_info["name"]
 
         if (body is None) or (internal_name not in self._interactions[body]):
-            raise KeyError(
-                f"An interaction named '{internal_name}' does not exist yet. Need to be added before updating."
-            )
+            if target is not None:
+                warnings.warn(
+                    f"An interaction named '{internal_name}' does not exist yet in the model,"
+                    " but will be added instead of updating it."
+                )
+                _coefficient = 0.0 if coefficient is None else coefficient
+                _scale = 1.0 if scale is None else scale
+                return self.add_interaction(target=target, coefficient=_coefficient, scale=_scale, timestamp=timestamp)
+            else:
+                raise KeyError(
+                    f"An interaction named '{internal_name}' does not exist yet in the model."
+                    " Need to be added before updating."
+                )
         if self._interactions[body][internal_name]["removed"]:
             raise ValueError(f"An interaction named '{internal_name}' is already removed.")
 

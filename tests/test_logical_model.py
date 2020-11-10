@@ -114,6 +114,28 @@ def test_logical_model_variables_comma(model):
         model.variables("x*y", shape=(2, 2))
 
 
+@pytest.mark.parametrize(
+    "initial_shape,additional_shape,expected_shape", [((2,), (1,), (3,)), ((44, 33), (22, 11), (66, 44))]
+)
+def test_logical_model_variables_append(initial_shape, additional_shape, expected_shape):
+    model = LogicalModel(mtype="ising")
+    model.variables("x", shape=initial_shape)
+    assert "x" in model.get_variables()
+    assert model.get_variables_by_name("x").shape == initial_shape
+
+    model.append("x", shape=additional_shape)
+    assert model.get_variables_by_name("x").shape == expected_shape
+
+
+@pytest.mark.parametrize("shape", [(2,), (33, 44)])
+def test_logical_model_variables_append_without_initialize(shape):
+    model = LogicalModel(mtype="ising")
+    # The following operation will be successful with a UserWarning.
+    model.append("x", shape=shape)
+    assert "x" in model.get_variables()
+    assert model.get_variables_by_name("x").shape == shape
+
+
 @pytest.mark.parametrize("vartype,mtype", [("SPIN", "ising"), ("BINARY", "qubo")])
 def test_logical_model_variables_from_pyqubo(vartype, mtype):
     x = pyqubo.Array.create("x", shape=(2, 3), vartype=vartype)
@@ -355,6 +377,29 @@ def test_logical_model_update_by_custom_names(model):
         model.update_interaction(name=n3, coefficient=-30.0)
 
 
+def test_logical_model_update_without_initialize(model):
+    # The following operation will be successful with a UserWarning.
+    x = model.variables("x", shape=(3,))
+
+    res = model.update_interaction(x[0], coefficient=11.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
+    assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["coefficient"] == 11.0
+    assert model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["scale"] == 1.0
+    assert res["name"] == "x[0]"
+    assert res["key"] == ("x[0]")
+    assert res["interacts"] == (x[0])
+
+    res = model.update_interaction((x[0], x[1]), coefficient=22.0, scale=33.0)
+    assert len(model._interactions[constants.INTERACTION_LINEAR]) == 1
+    assert len(model._interactions[constants.INTERACTION_QUADRATIC]) == 1
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["coefficient"] == 22.0
+    assert model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["scale"] == 33.0
+    assert res["name"] == "x[0]*x[1]"
+    assert res["key"] == ("x[0]", "x[1]")
+    assert res["interacts"] == (x[0], x[1])
+
+
 def test_logical_model_update_invalid(model):
     x = model.variables("x", shape=(3,))
     model.add_interaction(x[0], coefficient=1.0)
@@ -366,7 +411,7 @@ def test_logical_model_update_invalid(model):
         model.update_interaction(x[0], name="x[0]")
 
     with pytest.raises(KeyError):
-        model.update_interaction(x[1], coefficient=1.0)
+        model.update_interaction(name="x[1]", coefficient=1.0)
 
     with pytest.raises(TypeError):
         model.update_interaction("invalid type", coefficient=1.0)

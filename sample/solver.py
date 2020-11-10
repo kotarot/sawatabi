@@ -15,14 +15,24 @@
 import sawatabi
 
 
-def solver_local():
-    print("\n=== solver (local) ===")
+def solver_local_ising():
+    print("\n=== solver (local ising) ===")
     physical = _create_ising_model()
 
     solver = sawatabi.solver.LocalSolver(exact=False)
     resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
 
-    _show_resultset(resultset)
+    _print_resultset(resultset)
+
+
+def solver_local_qubo():
+    print("\n=== solver (local qubo) ===")
+    physical = _create_qubo_model()
+
+    solver = sawatabi.solver.LocalSolver(exact=False)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
+
+    _print_resultset(resultset)
 
 
 def solver_dwave():
@@ -32,7 +42,17 @@ def solver_dwave():
     solver = sawatabi.solver.DWaveSolver()
     resultset = solver.solve(physical, chain_strength=2, num_reads=10)
 
-    _show_resultset(resultset)
+    _print_resultset(resultset)
+
+
+def solver_dwave_long_schedule():
+    print("\n=== solver (dwave long schedule) ===")
+    physical = _create_ising_model()
+
+    solver = sawatabi.solver.DWaveSolver(solver="Advantage_system1.1")
+    resultset = solver.solve(physical, chain_strength=2, annealing_time=1000, num_reads=1000)
+
+    _print_resultset(resultset)
 
 
 def solver_optigan():
@@ -42,38 +62,46 @@ def solver_optigan():
     solver = sawatabi.solver.OptiganSolver()
     resultset = solver.solve(physical, timeout=1000, duplicate=True)
 
-    _show_resultset(resultset)
+    _print_resultset(resultset)
 
 
 def _create_ising_model():
+    # Optimal solution of this ising model:
+    #   - x[1][0] and x[1][1]: -1
+    #   - The others: +1
+    #   - Energy = -16.0
     model = sawatabi.model.LogicalModel(mtype="ising")
 
-    print("\nSet shape to (1, 2)")
+    # print("\nSet shape to (1, 2)")
     x = model.variables("x", shape=(1, 2))
     model.add_interaction(x[0, 0], coefficient=1.0)
     model.add_interaction((x[0, 0], x[0, 1]), coefficient=1.0)
-    print(model)
+    # print(model)
 
-    print("\nAdd shape by (1, 0)")
+    # print("\nAdd shape by (1, 0)")
     x = model.append("x", shape=(1, 0))
     model.add_interaction((x[0, 1], x[1, 0]), coefficient=-2.0)
     model.add_interaction((x[1, 0], x[1, 1]), coefficient=3.0)
-    print(model)
+    # print(model)
 
-    print("\nAdd shape by (1, 0)")
+    # print("\nAdd shape by (1, 0)")
     x = model.append("x", shape=(1, 0))
     model.add_interaction((x[1, 1], x[2, 0]), coefficient=-4.0)
     model.add_interaction((x[2, 0], x[2, 1]), coefficient=5.0)
-    print(model)
+    # print(model)
 
-    print("\nPhysical model")
+    # print("\nPhysical model")
     physical = model.to_physical()
-    print(physical)
+    # print(physical)
 
     return physical
 
 
 def _create_qubo_model():
+    # Optimal solution of this qubo model:
+    #   - Only one of the variables: 1
+    #   - The others: 0
+    #   - Energy = -1.0
     model = sawatabi.model.LogicalModel(mtype="qubo")
 
     # print("\nOne-hot constraint for an array of (4,)")
@@ -89,7 +117,7 @@ def _create_qubo_model():
     return physical
 
 
-def _show_resultset(resultset):
+def _print_resultset(resultset):
     print("\nresultset")
     print(resultset)
     print("\nresultset.info")
@@ -107,8 +135,10 @@ def _show_resultset(resultset):
 
 
 def main():
-    solver_local()
+    solver_local_ising()
+    solver_local_qubo()
     solver_dwave()
+    solver_dwave_long_schedule()
     solver_optigan()
 
 
