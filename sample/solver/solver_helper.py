@@ -15,56 +15,6 @@
 import sawatabi
 
 
-def solver_local_ising():
-    print("\n=== solver (local ising) ===")
-    physical = _create_ising_model()
-
-    solver = sawatabi.solver.LocalSolver(exact=False)
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
-
-    _print_resultset(resultset)
-
-
-def solver_local_qubo():
-    print("\n=== solver (local qubo) ===")
-    physical = _create_qubo_model()
-
-    solver = sawatabi.solver.LocalSolver(exact=False)
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
-
-    _print_resultset(resultset)
-
-
-def solver_dwave():
-    print("\n=== solver (dwave) ===")
-    physical = _create_ising_model()
-
-    solver = sawatabi.solver.DWaveSolver()
-    resultset = solver.solve(physical, chain_strength=2, num_reads=10)
-
-    _print_resultset(resultset)
-
-
-def solver_dwave_long_schedule():
-    print("\n=== solver (dwave long schedule) ===")
-    physical = _create_ising_model()
-
-    solver = sawatabi.solver.DWaveSolver(solver="Advantage_system1.1")
-    resultset = solver.solve(physical, chain_strength=2, annealing_time=1000, num_reads=1000)
-
-    _print_resultset(resultset)
-
-
-def solver_optigan():
-    print("\n=== solver (optigan) ===")
-    physical = _create_qubo_model()
-
-    solver = sawatabi.solver.OptiganSolver()
-    resultset = solver.solve(physical, timeout=1000, duplicate=True)
-
-    _print_resultset(resultset)
-
-
 def _create_ising_model():
     # Optimal solution of this ising model:
     #   - x[1][0] and x[1][1]: -1
@@ -132,15 +82,3 @@ def _print_resultset(resultset):
     print(resultset.first)
     print("\nresultset.samples():")
     print([sample for sample in resultset.samples()])
-
-
-def main():
-    solver_local_ising()
-    solver_local_qubo()
-    solver_dwave()
-    solver_dwave_long_schedule()
-    solver_optigan()
-
-
-if __name__ == "__main__":
-    main()
