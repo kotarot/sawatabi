@@ -31,8 +31,8 @@ class AbstractModel(BaseMixin):
         }
 
         self._offset = 0.0
-        self._deleted = []
-        self._fixed = []
+        self._deleted = {}
+        self._fixed = {}
 
     def get_mtype(self):
         return self._mtype
