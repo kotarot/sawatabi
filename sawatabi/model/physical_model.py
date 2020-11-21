@@ -14,6 +14,8 @@
 
 import pprint
 
+import dimod
+
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
 
@@ -21,6 +23,8 @@ from sawatabi.model.abstract_model import AbstractModel
 class PhysicalModel(AbstractModel):
     def __init__(self, mtype=""):
         super().__init__(mtype)
+        self._label_to_index = {}
+        self._index_to_label = {}
 
     ################################
     # Interaction
@@ -28,6 +32,45 @@ class PhysicalModel(AbstractModel):
 
     def add_interaction(self, name, body, coefficient):
         self._interactions[body][name] = coefficient
+
+    ################################
+    # Converts to another model
+    ################################
+
+    def to_bqm(self):
+        # Signs for BQM are opposite from our (sawatabi's) definition.
+        # - BQM:      H =   sum( J_{ij} * x_i * x_j ) + sum( h_{i} * x_i )
+        # - Sawatabi: H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
+        linear, quadratic = {}, {}
+        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
+            linear[k] = -1.0 * v
+        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
+            quadratic[k] = -1.0 * v
+
+        if self.get_mtype() == constants.MODEL_ISING:
+            vartype = dimod.SPIN
+        elif self.get_mtype() == constants.MODEL_QUBO:
+            vartype = dimod.BINARY
+        bqm = dimod.BinaryQuadraticModel(linear, quadratic, self._offset, vartype)
+
+        return bqm
+
+    def to_polynomial(self):
+        # For optigan, a variable identifier must be an integer.
+        # Names for variables in the physical model is string, we need to convert them.
+        #
+        # Signs for Optigan are opposite from our (sawatabi's) definition.
+        # - Optigan:  H =   sum( Q_{ij} * x_i * x_j ) + sum( Q_{i, i} * x_i )
+        # - Sawatabi: H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
+        polynomial = []
+        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
+            index = self._label_to_index[k]
+            polynomial.append([index, index, -1.0 * v])
+        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
+            index = [self._label_to_index[k[0]], self._label_to_index[k[1]]]
+            polynomial.append([index[0], index[1], -1.0 * v])
+
+        return polynomial
 
     ################################
     # Built-in functions

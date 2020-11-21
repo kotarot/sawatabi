@@ -714,7 +714,7 @@ def test_logical_model_dependency_constraint(model):
 
 
 @pytest.mark.parametrize("mtype", ["ising", "qubo"])
-def test_logical_model_convert(mtype):
+def test_logical_model_to_physical(mtype):
     model = LogicalModel(mtype=mtype)
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=1.0)
@@ -731,8 +731,15 @@ def test_logical_model_convert(mtype):
     assert not model._interactions[constants.INTERACTION_LINEAR]["x[0]"]["dirty"]
     assert not model._interactions[constants.INTERACTION_QUADRATIC]["x[0]*x[1]"]["dirty"]
 
+    assert physical._label_to_index["x[0]"] == 0
+    assert physical._label_to_index["x[1]"] == 1
+    assert len(physical._label_to_index) == 2
+    assert physical._index_to_label[0] == "x[0]"
+    assert physical._index_to_label[1] == "x[1]"
+    assert len(physical._index_to_label) == 2
 
-def test_logical_model_convert_with_doubled_interactions(model):
+
+def test_logical_model_to_physical_with_doubled_interactions(model):
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=2.0, scale=0.5)
     model.add_interaction(x[0], name="additional x[0]", coefficient=-2.0)
@@ -754,7 +761,7 @@ def test_logical_model_convert_with_doubled_interactions(model):
     assert not model._interactions[constants.INTERACTION_QUADRATIC]["additional x[0]*x[1]"]["dirty"]
 
 
-def test_logical_model_convert_with_remove(model):
+def test_logical_model_to_physical_with_remove(model):
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=1.0)
@@ -779,7 +786,7 @@ def test_logical_model_convert_with_remove(model):
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 400)])
-def test_logical_model_convert_with_n_hot_constraint_qubo(n, s):
+def test_logical_model_to_physical_with_n_hot_constraint_qubo(n, s):
     # n out of s variables should be 1
     model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(s,))
@@ -797,7 +804,7 @@ def test_logical_model_convert_with_n_hot_constraint_qubo(n, s):
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 400)])
-def test_logical_model_convert_with_n_hot_constraint_ising(n, s):
+def test_logical_model_to_physical_with_n_hot_constraint_ising(n, s):
     # n out of s spins should be +1
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(s,))
@@ -814,7 +821,7 @@ def test_logical_model_convert_with_n_hot_constraint_ising(n, s):
                 assert physical._interactions[constants.INTERACTION_QUADRATIC][(l1, l2)] == -1.0
 
 
-def test_logical_model_convert_with_n_hot_constraint_randomly_qubo(model_qubo):
+def test_logical_model_to_physical_with_n_hot_constraint_randomly_qubo(model_qubo):
     x = model_qubo.variables("x", shape=(4,))
     model_qubo.n_hot_constraint(x[(slice(0, 2),)], n=1, strength=10)
     model_qubo.n_hot_constraint(x[1], n=1, strength=10)
@@ -829,7 +836,7 @@ def test_logical_model_convert_with_n_hot_constraint_randomly_qubo(model_qubo):
             assert physical._interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -20.0
 
 
-def test_logical_model_convert_with_n_hot_constraint_randomly_ising(model):
+def test_logical_model_to_physical_with_n_hot_constraint_randomly_ising(model):
     x = model.variables("x", shape=(4,))
     model.n_hot_constraint(x[(slice(0, 2),)], n=1)
     physical = model.to_physical()
@@ -847,10 +854,33 @@ def test_logical_model_convert_with_n_hot_constraint_randomly_ising(model):
             assert physical._interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -1.0
 
 
-def test_logical_model_convert_with_placeholder(model):
+def test_logical_model_to_physical_with_placeholder(model):
     placeholder = {"a": 10.0}
     model.to_physical(placeholder=placeholder)
     # TODO
+
+
+def test_logical_model_to_physical_with_deleted_variables(model):
+    x = model.variables("x", shape=(3,))
+    y = model.variables("y", shape=(2, 2))  # noqa: F841
+    model.delete_variable(x[0])
+    physical = model.to_physical()
+
+    assert physical._label_to_index["x[1]"] == 0
+    assert physical._label_to_index["x[2]"] == 1
+    assert physical._label_to_index["y[0][0]"] == 2
+    assert physical._label_to_index["y[0][1]"] == 3
+    assert physical._label_to_index["y[1][0]"] == 4
+    assert physical._label_to_index["y[1][1]"] == 5
+    assert len(physical._label_to_index) == 6
+
+    assert physical._index_to_label[0] == "x[1]"
+    assert physical._index_to_label[1] == "x[2]"
+    assert physical._index_to_label[2] == "y[0][0]"
+    assert physical._index_to_label[3] == "y[0][1]"
+    assert physical._index_to_label[4] == "y[1][0]"
+    assert physical._index_to_label[5] == "y[1][1]"
+    assert len(physical._index_to_label) == 6
 
 
 def test_logical_model_utils_ising():

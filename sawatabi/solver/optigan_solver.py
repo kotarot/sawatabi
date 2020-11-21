@@ -51,36 +51,8 @@ class OptiganSolver(AbstractSolver):
         if model.get_mtype() == constants.MODEL_ISING:
             raise ValueError("Ising model is not supported yet.")
 
-        # For optigan, a variable identifier must be an integer.
-        # Names for variables in the physical model is string, we need to convert them.
-        #
-        # Signs for Optigan are opposite from our definition.
-        # - Optigan:  H =   sum( Q_{ij} * x_i * x_j ) + sum( Q_{i, i} * x_i )
-        # - Ours:     H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
-        polynomial = []
-        map_label_to_index = {}
-        map_index_to_label = []
-        current_max_index = 0
-        for k, v in model._interactions[constants.INTERACTION_LINEAR].items():
-            if k in map_label_to_index:
-                index = map_label_to_index[k]
-            else:
-                map_label_to_index[k] = current_max_index
-                map_index_to_label.append(k)
-                index = current_max_index
-                current_max_index += 1
-            polynomial.append([index, index, -1.0 * v])
-        for k, v in model._interactions[constants.INTERACTION_QUADRATIC].items():
-            index = [None, None]
-            for i in range(2):
-                if k[i] in map_label_to_index:
-                    index[i] = map_label_to_index[k[i]]
-                else:
-                    map_label_to_index[k[i]] = current_max_index
-                    map_index_to_label.append(k[i])
-                    index[i] = current_max_index
-                    current_max_index += 1
-            polynomial.append([index[0], index[1], -1.0 * v])
+        # Converts to polynomial (model representation for Optigan)
+        polynomial = model.to_polynomial()
 
         config = self.get_config()
         endpoint = "http://{}/solve".format(config["api"]["host"])
@@ -124,7 +96,7 @@ class OptiganSolver(AbstractSolver):
         # Create a sampleset object for return
         sampleset = SawatabiSampleSet()
         sampleset.info = result
-        sampleset.variables = map_index_to_label
+        sampleset.variables = list(model._index_to_label.values())
         for i, spins in enumerate(result["spins"]):
             sampleset.add_record(spins, result["energies"][i])
 

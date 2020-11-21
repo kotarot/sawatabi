@@ -14,12 +14,23 @@
 
 import pytest
 
-from sawatabi.model import PhysicalModel
+from sawatabi.model import LogicalModel, PhysicalModel
+
+
+@pytest.fixture
+def simple_model():
+    return PhysicalModel(mtype="ising")
 
 
 @pytest.fixture
 def model():
-    return PhysicalModel(mtype="ising")
+    model = LogicalModel(mtype="ising")
+    x = model.variables(name="x", shape=(3,))
+    model.delete_variable(x[0])
+    model.add_interaction(x[1], coefficient=1.0)
+    model.add_interaction(x[2], coefficient=2.0)
+    model.add_interaction((x[1], x[2]), coefficient=3.0)
+    return model.to_physical()
 
 
 ################################
@@ -35,21 +46,51 @@ def test_physical_model_constructor(mtype):
 
 
 ################################
+# Converts to another model
+################################
+
+
+def test_convert_to_bqm(model):
+    bqm = model.to_bqm()
+    bqm_ising = bqm.to_ising()
+    # linear
+    assert bqm_ising[0]["x[1]"] == -1.0
+    assert bqm_ising[0]["x[2]"] == -2.0
+    # quadratic
+    assert bqm_ising[1][("x[1]", "x[2]")] == -3.0
+    # offset
+    assert bqm_ising[2] == 0.0
+
+
+def test_convert_to_polynomial(model):
+    assert model._label_to_index["x[1]"] == 0
+    assert model._label_to_index["x[2]"] == 1
+    assert model._index_to_label[0] == "x[1]"
+    assert model._index_to_label[1] == "x[2]"
+
+    polynomial = model.to_polynomial()
+    assert [0, 0, -1.0] in polynomial
+    assert [1, 1, -2.0] in polynomial
+    assert [0, 1, -3.0] in polynomial
+    assert len(polynomial) == 3
+
+
+################################
 # Built-in functions
 ################################
 
 
-def test_physical_model_repr(model):
-    assert isinstance(model.__repr__(), str)
-    assert "PhysicalModel({" in model.__repr__()
-    assert "'mtype':" in model.__repr__()
-    assert "'interactions':" in model.__repr__()
+def test_physical_model_repr(simple_model):
+    assert isinstance(simple_model.__repr__(), str)
+    assert "PhysicalModel({" in simple_model.__repr__()
+    assert "'mtype':" in simple_model.__repr__()
+    assert "'interactions':" in simple_model.__repr__()
 
 
-def test_physical_model_str(model):
-    assert isinstance(model.__str__(), str)
-    assert "PHYSICAL MODEL" in model.__str__()
-    assert "mtype:" in model.__str__()
-    assert "interactions:" in model.__str__()
-    assert "linear:" in model.__str__()
-    assert "quadratic:" in model.__str__()
+def test_physical_model_str(simple_model):
+    assert isinstance(simple_model.__str__(), str)
+    assert "PHYSICAL MODEL" in simple_model.__str__()
+    assert "mtype:" in simple_model.__str__()
+    assert "interactions:" in simple_model.__str__()
+    assert "linear:" in simple_model.__str__()
+    assert "quadratic:" in simple_model.__str__()
