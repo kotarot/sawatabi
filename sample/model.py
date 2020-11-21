@@ -15,20 +15,6 @@
 import sawatabi
 
 
-def version():
-    print("\n=== version ===\n")
-    print("version:", sawatabi.version())
-    print("version_info:", sawatabi.version_info())
-
-
-def current_time():
-    print("\n=== current time ===\n")
-    print("sec:", sawatabi.utils.current_time())
-    print("ms: ", sawatabi.utils.current_time_ms())
-    print("us: ", sawatabi.utils.current_time_us())
-    print("ns: ", sawatabi.utils.current_time_ns())
-
-
 def model_pyqubo():
     import pyqubo
 
@@ -134,8 +120,6 @@ def model_convert():
 
 
 def main():
-    version()
-    current_time()
     model_pyqubo()
     model_1d()
     model_2d()
