@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Copyright 2020 Kotaro Terada, Shingo Furuyama, Junya Usui, and Kazuki Ono
+# Copyright 2020 Kotaro Terada
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ setup(
             "seaborn>=0.11.0,<1.0.0",
         ],
     },
-    author="Kotaro Terada, Shingo Furuyama, Junya Usui, and Kazuki Ono",
+    author="Kotaro Terada",
     author_email="kotarot@apache.org",
     url="https://github.com/kotarot/sawatabi",
     description="sawatabi.",
