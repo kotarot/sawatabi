@@ -310,7 +310,7 @@ class LogicalModel(AbstractModel):
         self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
 
         # TODO: Delete variable physically
-        self._deleted.append(target)
+        self._deleted[target.label] = True
 
         # Deal with constraints
         for k, v in self.get_constraints().items():
@@ -431,6 +431,16 @@ class LogicalModel(AbstractModel):
         linear, quadratic = {}, {}
         will_remove_linear, will_remove_quadratic = [], []
 
+        # label_to_index / index_to_label
+        current_index = 0
+        for val in self._variables.values():
+            flattened = list(Functions._flatten(val.bit_list))
+            for v in flattened:
+                if v.label not in self._deleted:
+                    physical._label_to_index[v.label] = current_index
+                    physical._index_to_label[current_index] = v.label
+                    current_index += 1
+
         # group by key
         for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
             if not v["removed"]:
@@ -507,13 +517,13 @@ class LogicalModel(AbstractModel):
         """
         Returns a list of variables which are deleted.
         """
-        return self._deleted
+        return list(self._deleted.keys())
 
     def get_fixed_array(self):
         """
         Returns a list of variables which are fixed.
         """
-        return self._fixed
+        return list(self._fixed.keys())
 
     def get_size(self):
         """

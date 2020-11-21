@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import dimod
 from dwave.system.composites import EmbeddingComposite
 from dwave.system.samplers import DWaveSampler
 
@@ -35,20 +34,8 @@ class DWaveSolver(AbstractSolver):
         ):
             raise ValueError("Model cannot be empty.")
 
-        # Signs for BQM are opposite from our definition.
-        # - BQM:  H =   sum( J_{ij} * x_i * x_j ) + sum( h_{i} * x_i )
-        # - Ours: H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
-        linear, quadratic = {}, {}
-        for k, v in model._interactions[constants.INTERACTION_LINEAR].items():
-            linear[k] = -1.0 * v
-        for k, v in model._interactions[constants.INTERACTION_QUADRATIC].items():
-            quadratic[k] = -1.0 * v
-
-        if model.get_mtype() == constants.MODEL_ISING:
-            vartype = dimod.SPIN
-        elif model.get_mtype() == constants.MODEL_QUBO:
-            vartype = dimod.BINARY
-        bqm = dimod.BinaryQuadraticModel(linear, quadratic, model._offset, vartype)
+        # Converts to BQM (model representation for D-Wave)
+        bqm = model.to_bqm()
 
         # TODO: Deal with reverse annealing.
         solver = EmbeddingComposite(DWaveSampler(solver=self._solver))
