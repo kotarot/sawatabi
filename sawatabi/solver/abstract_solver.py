@@ -20,4 +20,4 @@ class AbstractSolver(BaseMixin):
         pass
 
     def solve(self, model):
-        raise NotImplementedError.new("#{self.class}##{__method__} must be implemented.")
+        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")

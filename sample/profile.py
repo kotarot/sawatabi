@@ -32,7 +32,7 @@ def create_n_variable_random_model(n=4, seed=None):
 
 
 def main():
-    result = create_n_variable_random_model(n=1000, seed=12345)
+    result = create_n_variable_random_model(n=200, seed=12345)
     print(result["profile"])
 
 

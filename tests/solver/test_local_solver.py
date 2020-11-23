@@ -95,7 +95,7 @@ def test_local_solver_sa_qubo():
     assert resultset.record[0][2] == 1  # num of occurrences
 
 
-@pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 400)])
+@pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 100)])
 def test_local_solver_n_hot_ising(n, s):
     # n out of s spins should be +1
     model = LogicalModel(mtype="ising")
@@ -114,7 +114,7 @@ def test_local_solver_n_hot_ising(n, s):
     assert resultset.info["timing"]["elapsed_counter"] <= 5.0
 
 
-@pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 400)])
+@pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 100)])
 def test_local_solver_n_hot_qubo(n, s):
     # n out of s variables should be 1
     model = LogicalModel(mtype="qubo")

@@ -12,11 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.model.abstract_model import AbstractModel
-from sawatabi.model.logical_model import LogicalModel
-from sawatabi.model.physical_model import PhysicalModel
-from sawatabi.model.abstract_constraint import AbstractConstraint
-from sawatabi.model.n_hot_constraint import NHotConstraint
-from sawatabi.model.dependency_constraint import DependencyConstraint
+import sawatabi
 
-__all__ = ["AbstractModel", "LogicalModel", "PhysicalModel", "AbstractConstraint", "NHotConstraint", "DependencyConstraint"]
+
+def n_hot_s_of_n_ising(s, n):
+    print("=== N-hot (s of n) ising ===")
+    print("s =", s)
+    print("n =", n)
+
+    model = sawatabi.model.LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(s,))
+
+    model.n_hot_constraint(x, n=n)
+
+
+def main():
+    n_hot_s_of_n_ising(s=100, n=1)
+
+
+if __name__ == "__main__":
+    main()

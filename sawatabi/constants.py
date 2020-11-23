@@ -23,3 +23,7 @@ INTERACTION_QUADRATIC = 2  # 2-body
 # Default label for Constraints
 DEFAULT_LABEL_N_HOT = "Default N-hot Constraint"
 DEFAULT_LABEL_DEPENDENCY = "Default Dependency Constraint"
+
+# Select format
+SELECT_SERIES = "series"
+SELECT_DICT = "dict"

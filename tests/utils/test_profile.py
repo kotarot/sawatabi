@@ -36,7 +36,7 @@ def _create_n_variable_random_complete_model(n=4, seed=None):
 
 # TODO: Need to improve performance.
 # Creation of a 1000-variable fully-connected ising model should be done within a second.
-@pytest.mark.parametrize("n", [10, 100, 200])
+@pytest.mark.parametrize("n", [10, 100])
 def test_create_n_variable_random_complete_model(n):
     result = _create_n_variable_random_complete_model(n=n, seed=12345)
 
@@ -62,7 +62,7 @@ def _create_nxn_random_lattice_model(n=4, seed=None):
 
 # TODO: Need to improve performance.
 # Creation of a 200x200 lattice ising model should be done within a second.
-@pytest.mark.parametrize("n", [10, 100])
+@pytest.mark.parametrize("n", [10, 50])
 def test_create_nxn_random_lattice_model(n):
     result = _create_nxn_random_lattice_model(n=n, seed=12345)
 

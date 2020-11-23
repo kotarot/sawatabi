@@ -58,11 +58,12 @@ def model_1d():
         timestamp=1234567890123,
     )
     model.update_interaction(x[0], coefficient=1000.0)
+    model.update_interaction(name="x[1]", coefficient=2000.0)
     print("\nSet interactions.")
     print(model)
 
     model.delete_variable(x[0])
-    print("\nErased x[0].")
+    print("\nDeleted x[0].")
     print(model)
 
 
@@ -104,6 +105,7 @@ def model_convert():
 
     x = model.variables("x", shape=(1, 2))
     model.add_interaction(x[0, 0], coefficient=10.0)
+    model.add_interaction(x[0, 1], coefficient=11.0)
     model.add_interaction((x[0, 0], x[0, 1]), coefficient=1.0)
     print("\nSet variables x to shape (1, 2) and add interactions.")
     print(model)
@@ -114,9 +116,35 @@ def model_convert():
     print("\nExpand variables x by shape (1, 0) and add interactions.")
     print(model)
 
+    model.remove_interaction(x[0, 1])
+    print("\nx[0, 1] is removed.")
+    print(model)
+
     physical_model = model.to_physical()
     print("\nConvert to Physical model.")
     print(physical_model)
+
+    print("\nLogical Model.")
+    print(model)
+
+
+def model_select():
+    print("\n=== select ===")
+    model = sawatabi.model.LogicalModel(mtype="ising")
+
+    x = model.variables("x", shape=(2,))
+    model.add_interaction(x[0], coefficient=1.0)
+    model.add_interaction(x[1], coefficient=2.0, attributes={"foo": "bar", "my attribute": "my my my"})
+    model.add_interaction((x[0], x[1]), coefficient=3.0, attributes={"foo": "bar"})
+    print(model)
+
+    res = model.select_interaction("name == 'x[0]'")
+    print("\nSelected x[0].")
+    print(res)
+
+    res = model.select_interaction("`attributes.foo` == 'bar'", fmt="dict")
+    print("\nSelected interactions whose attributes.foo is bar.")
+    print(res)
 
 
 def main():
@@ -125,6 +153,7 @@ def main():
     model_2d()
     model_constraints()
     model_convert()
+    model_select()
 
 
 if __name__ == "__main__":

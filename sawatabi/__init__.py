@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from sawatabi import model, solver, utils
+from sawatabi.base_mixin import BaseMixin
 from sawatabi.version import version, version_info
 
-__all__ = ["model", "solver", "utils", "version", "version_info"]
+__all__ = ["BaseMixin", "model", "solver", "utils", "version", "version_info"]
