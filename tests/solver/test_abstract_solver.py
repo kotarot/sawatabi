@@ -12,12 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.base_mixin import BaseMixin
+import pytest
+
+from sawatabi.model import AbstractModel
+from sawatabi.solver import AbstractSolver
+
+################################
+# Abstract Solver
+################################
 
 
-class AbstractSolver(BaseMixin):
-    def __init__(self):
-        pass
+def test_abstract_solver():
+    solver = AbstractSolver()
+    model = AbstractModel(mtype="ising")
 
-    def solve(self, model):
-        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
+    with pytest.raises(NotImplementedError):
+        solver.solve(model)
