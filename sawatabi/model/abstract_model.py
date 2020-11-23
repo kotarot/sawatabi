@@ -31,10 +31,10 @@ class AbstractModel(BaseMixin):
     ################################
 
     def __repr__(self):
-        raise NotImplementedError.new("#{self.class}##{__method__} must be implemented.")
+        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
 
     def __str__(self):
-        raise NotImplementedError.new("#{self.class}##{__method__} must be implemented.")
+        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
 
     @staticmethod
     def remove_leading_spaces(lines):

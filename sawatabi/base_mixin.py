@@ -20,7 +20,7 @@ class BaseMixin:
         pass
 
     @staticmethod
-    def _get_artitle(name):
+    def _get_article(name):
         article = ""
         if name[0].lower() in ["a", "e", "i", "o", "u"]:
             article = "an"
@@ -36,7 +36,7 @@ class BaseMixin:
                 article = "one of"
             else:
                 typestr = atype.__name__
-                article = BaseMixin._get_artitle(typestr)
+                article = BaseMixin._get_article(typestr)
             raise TypeError(f"'{name}' must be {article} {typestr}.")
 
     @staticmethod
@@ -46,7 +46,7 @@ class BaseMixin:
         for v in values:
             if not isinstance(v, atype):
                 typestr = atype.__name__
-                article = BaseMixin._get_artitle(typestr)
+                article = BaseMixin._get_article(typestr)
                 raise TypeError(f"All elements in '{name}' must be {article} {typestr}.")
 
     @staticmethod

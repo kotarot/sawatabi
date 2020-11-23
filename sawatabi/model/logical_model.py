@@ -22,6 +22,7 @@ import pyqubo
 
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
+from sawatabi.model.dependency_constraint import DependencyConstraint
 from sawatabi.model.n_hot_constraint import NHotConstraint
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.utils.functions import Functions
@@ -448,6 +449,7 @@ class LogicalModel(AbstractModel):
     def dependency_constraint(self, target_src, target_dst, strength=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
         self._check_argument_type("strength", strength, numbers.Number)
         self._check_argument_type("label", label, str)
+        _ = DependencyConstraint()
         raise NotImplementedError
 
     ################################
