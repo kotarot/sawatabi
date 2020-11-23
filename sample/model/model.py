@@ -136,8 +136,15 @@ def model_select():
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0, attributes={"foo": "bar", "my attribute": "my my my"})
     model.add_interaction((x[0], x[1]), coefficient=3.0, attributes={"foo": "bar"})
-
     print(model)
+
+    res = model.select_interaction("name == 'x[0]'")
+    print("\nSelected x[0].")
+    print(res)
+
+    res = model.select_interaction("`attributes.foo` == 'bar'", fmt="dict")
+    print("\nSelected interactions whose attributes.foo is bar.")
+    print(res)
 
 
 def main():
