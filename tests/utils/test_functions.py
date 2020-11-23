@@ -45,9 +45,43 @@ def test_elementwise_sub_list(a, b, y):
     assert x == y
 
 
+@pytest.mark.parametrize("a,b,y", [((2,), (1,), (2,)), ((44, 33), (22, 11), (44, 33)), ((66, 55, 44), (33, 22, 11), (66, 55, 44))])
+def test_elementwise_max_tuple(a, b, y):
+    x = Functions.elementwise_max(a, b)
+    assert type(x) is tuple
+    assert x == y
+
+
+@pytest.mark.parametrize("a,b,y", [([2], [1], [2]), ([44, 33], [22, 11], [44, 33]), ([66, 55, 44], [33, 22, 11], [66, 55, 44])])
+def test_elementwise_max_list(a, b, y):
+    x = Functions.elementwise_max(a, b)
+    assert type(x) is list
+    assert x == y
+
+
+@pytest.mark.parametrize("a,b,y", [((2,), (1,), (1,)), ((44, 33), (22, 11), (22, 11)), ((66, 55, 44), (33, 22, 11), (33, 22, 11))])
+def test_elementwise_min_tuple(a, b, y):
+    x = Functions.elementwise_min(a, b)
+    assert type(x) is tuple
+    assert x == y
+
+
+@pytest.mark.parametrize("a,b,y", [([2], [1], [1]), ([44, 33], [22, 11], [22, 11]), ([66, 55, 44], [33, 22, 11], [33, 22, 11])])
+def test_elementwise_min_list(a, b, y):
+    x = Functions.elementwise_min(a, b)
+    assert type(x) is list
+    assert x == y
+
+
 def test_elementwise_invalid_type():
     with pytest.raises(TypeError):
         Functions.elementwise_add("a", "b")
 
     with pytest.raises(TypeError):
         Functions.elementwise_sub("a", "b")
+
+    with pytest.raises(TypeError):
+        Functions.elementwise_max("a", "b")
+
+    with pytest.raises(TypeError):
+        Functions.elementwise_min("a", "b")
