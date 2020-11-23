@@ -23,6 +23,11 @@ from sawatabi.model.abstract_model import AbstractModel
 class PhysicalModel(AbstractModel):
     def __init__(self, mtype=""):
         super().__init__(mtype)
+        self._raw_interactions = {
+            constants.INTERACTION_LINEAR: {},  # linear (1-body)
+            constants.INTERACTION_QUADRATIC: {},  # quadratic (2-body)
+        }
+        self._offset = 0.0
         self._label_to_index = {}
         self._index_to_label = {}
 
@@ -31,7 +36,7 @@ class PhysicalModel(AbstractModel):
     ################################
 
     def add_interaction(self, name, body, coefficient):
-        self._interactions[body][name] = coefficient
+        self._raw_interactions[body][name] = coefficient
 
     ################################
     # Converts to another model
@@ -42,9 +47,9 @@ class PhysicalModel(AbstractModel):
         # - BQM:      H =   sum( J_{ij} * x_i * x_j ) + sum( h_{i} * x_i )
         # - Sawatabi: H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
         linear, quadratic = {}, {}
-        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
+        for k, v in self._raw_interactions[constants.INTERACTION_LINEAR].items():
             linear[k] = -1.0 * v
-        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
+        for k, v in self._raw_interactions[constants.INTERACTION_QUADRATIC].items():
             quadratic[k] = -1.0 * v
 
         if self.get_mtype() == constants.MODEL_ISING:
@@ -63,10 +68,10 @@ class PhysicalModel(AbstractModel):
         # - Optigan:  H =   sum( Q_{ij} * x_i * x_j ) + sum( Q_{i, i} * x_i )
         # - Sawatabi: H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
         polynomial = []
-        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
+        for k, v in self._raw_interactions[constants.INTERACTION_LINEAR].items():
             index = self._label_to_index[k]
             polynomial.append([index, index, -1.0 * v])
-        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
+        for k, v in self._raw_interactions[constants.INTERACTION_QUADRATIC].items():
             index = [self._label_to_index[k[0]], self._label_to_index[k[1]]]
             polynomial.append([index[0], index[1], -1.0 * v])
 
@@ -79,7 +84,7 @@ class PhysicalModel(AbstractModel):
     def __repr__(self):
         s = "PhysicalModel({"
         s += "'mtype': '" + str(self._mtype) + "', "
-        s += "'interactions': " + str(self._interactions) + "})"
+        s += "'raw_interactions': " + str(self._raw_interactions) + "})"
         return s
 
     def __str__(self):
@@ -88,10 +93,10 @@ class PhysicalModel(AbstractModel):
         s.append("┃ PHYSICAL MODEL")
         s.append("┣" + ("━" * 64))
         s.append("┣━ mtype: " + str(self._mtype))
-        s.append("┣━ interactions:")
+        s.append("┣━ raw_interactions:")
         s.append("┃  linear:")
-        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_LINEAR]), length=4))
+        s.append(self.append_prefix(pprint.pformat(self._raw_interactions[constants.INTERACTION_LINEAR]), length=4))
         s.append("┃  quadratic:")
-        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_QUADRATIC]), length=4))
+        s.append(self.append_prefix(pprint.pformat(self._raw_interactions[constants.INTERACTION_QUADRATIC]), length=4))
         s.append("┗" + ("━" * 64))
         return "\n".join(s)

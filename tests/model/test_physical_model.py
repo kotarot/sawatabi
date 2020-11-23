@@ -85,13 +85,13 @@ def test_physical_model_repr(simple_model):
     assert isinstance(simple_model.__repr__(), str)
     assert "PhysicalModel({" in simple_model.__repr__()
     assert "'mtype':" in simple_model.__repr__()
-    assert "'interactions':" in simple_model.__repr__()
+    assert "'raw_interactions':" in simple_model.__repr__()
 
 
 def test_physical_model_str(simple_model):
     assert isinstance(simple_model.__str__(), str)
     assert "PHYSICAL MODEL" in simple_model.__str__()
     assert "mtype:" in simple_model.__str__()
-    assert "interactions:" in simple_model.__str__()
+    assert "raw_interactions:" in simple_model.__str__()
     assert "linear:" in simple_model.__str__()
     assert "quadratic:" in simple_model.__str__()

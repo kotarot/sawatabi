@@ -23,17 +23,6 @@ class AbstractModel(BaseMixin):
         else:
             raise ValueError("'mtype' must be one of {}.".format([constants.MODEL_ISING, constants.MODEL_QUBO]))
 
-        # Note: Cannot rename to 'variables' because we already have 'variables' method.
-        self._variables = {}
-        self._interactions = {
-            constants.INTERACTION_LINEAR: {},  # linear (1-body)
-            constants.INTERACTION_QUADRATIC: {},  # quadratic (2-body)
-        }
-
-        self._offset = 0.0
-        self._deleted = {}
-        self._fixed = {}
-
     def get_mtype(self):
         return self._mtype
 

@@ -28,7 +28,7 @@ class DWaveSolver(AbstractSolver):
     def solve(self, model, seed=None, chain_strength=2.0, annealing_time=20, num_reads=1000, answer_mode="histogram"):
         self._check_argument_type("model", model, PhysicalModel)
 
-        if len(model._interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0:
+        if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")
 
         # Converts to BQM (model representation for D-Wave)
