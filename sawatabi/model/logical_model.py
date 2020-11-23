@@ -368,7 +368,7 @@ class LogicalModel(AbstractModel):
     # Fix
     ################################
 
-    def fix_variable(self):
+    def fix_variable(self, target, value):
         raise NotImplementedError
 
     ################################

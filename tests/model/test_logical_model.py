@@ -306,6 +306,7 @@ def test_logical_model_add(model):
 
 def test_logical_model_add_invalid_arguments(model):
     x = model.variables("x", shape=(3,))
+    y = model.variables("y", shape=(2,))
 
     with pytest.raises(ValueError):
         model.add_interaction(target=None)
@@ -322,6 +323,7 @@ def test_logical_model_add_invalid_arguments(model):
     with pytest.raises(TypeError):
         model.add_interaction(("a", "b"), coefficient=1.0)
 
+    # Invalid types
     with pytest.raises(TypeError):
         model.add_interaction(x[0], coefficient="invalid type")
 
@@ -333,6 +335,17 @@ def test_logical_model_add_invalid_arguments(model):
 
     with pytest.raises(TypeError):
         model.add_interaction(x[0], timestamp="invalid type")
+
+    # Already added
+    with pytest.raises(ValueError):
+        model.add_interaction(y[0], coefficient=2.0)
+        model.add_interaction(y[0], coefficient=2.0)
+
+    # Already removed
+    with pytest.raises(ValueError):
+        model.add_interaction(y[1], coefficient=2.0)
+        model.remove_interaction(y[1])
+        model.add_interaction(y[1], coefficient=2.0)
 
 
 def test_logical_model_add_duplicate(model):
@@ -394,10 +407,12 @@ def test_logical_model_update(model):
     assert model._interactions[model._interactions["name"] == "x[0]"]["coefficient"].values[0] == 100.0
 
     # update by a name
-    model.update_interaction(name="x[0]", coefficient=1000.0)
+    model.update_interaction(name="x[0]", coefficient=1000.0, scale=2.0, attributes={"foo": "bar"})
     model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
     assert len(model._interactions) == 2
     assert model._interactions[model._interactions["name"] == "x[0]"]["coefficient"].values[0] == 1000.0
+    assert model._interactions[model._interactions["name"] == "x[0]"]["scale"].values[0] == 2.0
+    assert model._interactions[model._interactions["name"] == "x[0]"]["attributes.foo"].values[0] == "bar"
 
     # update by a pair of variables
     model.update_interaction(target=(x[0], x[1]), coefficient=20.0)
@@ -501,17 +516,24 @@ def test_logical_model_update_invalid(model):
     with pytest.raises(TypeError):
         model.update_interaction(("a", "b"), coefficient=1.0)
 
+    # Invalid types
     with pytest.raises(TypeError):
-        model.add_interaction(x[0], coefficient="invalid type")
+        model.update_interaction(x[0], coefficient="invalid type")
 
     with pytest.raises(TypeError):
-        model.add_interaction(x[0], scale="invalid type")
+        model.update_interaction(x[0], scale="invalid type")
 
     with pytest.raises(TypeError):
-        model.add_interaction(x[0], attributes="invalid type")
+        model.update_interaction(x[0], attributes="invalid type")
 
     with pytest.raises(TypeError):
-        model.add_interaction(x[0], timestamp="invalid type")
+        model.update_interaction(x[0], timestamp="invalid type")
+
+    # Already removed
+    with pytest.raises(ValueError):
+        model.add_interaction(x[1], coefficient=2.0)
+        model.remove_interaction(x[1])
+        model.update_interaction(x[1], coefficient=2.0)
 
 
 ################################
@@ -646,8 +668,12 @@ def test_logical_model_delete_dealing_with_nhot_constraints_qubo():
 def test_logical_model_delete_invalid_argument(model):
     with pytest.raises(TypeError):
         model.delete_variable()
+
     with pytest.raises(TypeError):
         model.delete_variable("invalid type")
+
+    with pytest.raises(ValueError):
+        model.delete_variable(target=None)
 
 
 ################################
@@ -656,8 +682,16 @@ def test_logical_model_delete_invalid_argument(model):
 
 
 def test_logical_model_fix(model):
+    x = model.variables("x", shape=(3,))
+    model.add_interaction(x[0], coefficient=10.0)
+    model.add_interaction(x[1], coefficient=20.0)
+    model.add_interaction((x[0], x[1]), coefficient=30.0)
+
     with pytest.raises(NotImplementedError):
-        model.fix_variable()
+        model.fix_variable(x[1], 1)
+
+    with pytest.raises(NotImplementedError):
+        model.fix_variable(target=x[2], value=-1)
 
 
 ################################
@@ -1006,6 +1040,34 @@ def test_logical_model_utils_qubo():
         model.to_ising()
 
     model.to_qubo()
+
+
+################################
+# Getters
+################################
+
+
+def test_logical_model_get_deleted_array(model):
+    x = model.variables("x", shape=(2,))
+    assert len(model.get_deleted_array()) == 0
+    model.delete_variable(target=x[0])
+    assert len(model.get_deleted_array()) == 1
+
+
+def test_logical_model_get_fixed_array(model):
+    x = model.variables("x", shape=(2,))  # noqa: F841
+    assert len(model.get_fixed_array()) == 0
+    # model.fix_variable(target=x[0], value=1)
+    # assert len(model.get_fixed_array()) == 1
+
+
+def test_logical_model_get_attributes(model):
+    x = model.variables("x", shape=(2,))
+    model.add_interaction(x[0], coefficient=10.0, attributes={"foo": "bar"})
+    with pytest.raises(NotImplementedError):
+        model.get_attributes(x[0])
+    with pytest.raises(NotImplementedError):
+        model.get_attribute(x[0], key="foo")
 
 
 ################################
