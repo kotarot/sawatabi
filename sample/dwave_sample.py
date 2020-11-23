@@ -137,9 +137,7 @@ def dwave_scheduling_options():
     ising_linear, ising_quadratic = _create_ising_model()
 
     # Normal Annealing
-    sampleset = solver.sample_ising(
-        ising_linear, ising_quadratic, chain_strength=2.0, answer_mode="histogram", num_reads=10, annealing_time=320
-    )
+    sampleset = solver.sample_ising(ising_linear, ising_quadratic, chain_strength=2.0, answer_mode="histogram", num_reads=10, annealing_time=320)
     _print_sampleset(sampleset)
 
     # Reverse Annealing

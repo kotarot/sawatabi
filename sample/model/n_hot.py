@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Model Types
-MODEL_ISING = "ising"
-MODEL_QUBO = "qubo"
+import sawatabi
 
-# Interaction Body Types
-INTERACTION_LINEAR = 1  # 1-body
-INTERACTION_QUADRATIC = 2  # 2-body
 
-# Default label for Constraints
-DEFAULT_LABEL_N_HOT = "Default N-hot Constraint"
-DEFAULT_LABEL_DEPENDENCY = "Default Dependency Constraint"
+def n_hot_s_of_n_ising(s, n):
+    print("=== N-hot (s of n) ising ===")
+    print("s =", s)
+    print("n =", n)
 
-# Select format
-SELECT_SERIES = "series"
-SELECT_DICT = "dict"
+    model = sawatabi.model.LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(s,))
+
+    model.n_hot_constraint(x, n=n)
+
+
+def main():
+    n_hot_s_of_n_ising(s=100, n=1)
+
+
+if __name__ == "__main__":
+    main()

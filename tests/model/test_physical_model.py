@@ -30,6 +30,7 @@ def model():
     model.add_interaction(x[1], coefficient=1.0)
     model.add_interaction(x[2], coefficient=2.0)
     model.add_interaction((x[1], x[2]), coefficient=3.0)
+    print(model)
     return model.to_physical()
 
 

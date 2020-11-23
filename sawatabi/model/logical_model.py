@@ -16,6 +16,8 @@ import numbers
 import pprint
 import warnings
 
+import numpy as np
+import pandas as pd
 import pyqubo
 
 import sawatabi.constants as constants
@@ -30,6 +32,22 @@ class LogicalModel(AbstractModel):
     def __init__(self, mtype=""):
         super().__init__(mtype)
         self._constraints = {}
+        self._df = None
+        self._df_array = {
+            "body": [],
+            "name": [],
+            "key": [],
+            "key.0": [],
+            "key.1": [],
+            "interacts": [],
+            "coefficient": [],
+            "scale": [],
+            "timestamp": [],
+            "dirty": [],
+            "removed": [],
+        }
+        self._df_attrs = []
+        self._df_length = 0
         self._previous_physical_model = None
 
     ################################
@@ -67,9 +85,7 @@ class LogicalModel(AbstractModel):
 
         if name not in self._variables:
             # raise KeyError(f"Variables name '{name}' is not defined in the model.")
-            warnings.warn(
-                f"Variables name '{name}' is not defined in the model, but will be created instead of appending it."
-            )
+            warnings.warn(f"Variables name '{name}' is not defined in the model, but will be created instead of appending it.")
             return self.variables(name, shape)
 
         # tuple elementwise addition
@@ -83,23 +99,24 @@ class LogicalModel(AbstractModel):
     # Select
     ################################
 
-    def select_variable(self):
-        raise NotImplementedError
+    def select_interaction(self, query, fmt=constants.SELECT_SERIES):
+        self._update_interactions_dataframe_from_arrays()
 
-    def select_interaction(self):
-        raise NotImplementedError
+        searched = self._df.query(query)
 
-    def select_interaction_tmp(self, target):
-        # TODO: This is a temporal implementation.
-        # Refactor this using pandas later.
-        selected = []
-        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
-            if v["interacts"] == target:
-                selected.append(v["name"])
-        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
-            if (v["interacts"][0] == target) or (v["interacts"][1] == target):
-                selected.append(v["name"])
-        return selected
+        if fmt == constants.SELECT_SERIES:
+            return searched
+        elif fmt == constants.SELECT_DICT:
+            return searched.to_dict(orient="index")
+        else:
+            raise ValueError(f"Format '{fmt}' is invalid.")
+
+    def select_interactions_by_variable(self, target):
+        self._update_interactions_dataframe_from_arrays()
+
+        # Find interactions which interacts with the given variable.
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
+        return self._df[(self._df["key.0"] == target.label) | (self._df["key.1"] == target.label)]["name"].values
 
     ################################
     # Add
@@ -133,27 +150,46 @@ class LogicalModel(AbstractModel):
             # Automatically named by the default name
             internal_name = interaction_info["name"]
 
-        if internal_name in self._interactions[body]:
-            if not self._interactions[body][internal_name]["removed"]:
+        if self._has_name(internal_name):
+            if not self._is_removed(internal_name):
                 raise ValueError(f"An interaction named '{internal_name}' already exists. Cannot add the same name.")
             else:
                 raise ValueError(f"An interaction named '{internal_name}' is already removed.")
 
+        if body == 1:
+            keys = (interaction_info["key"], np.nan)
+        elif body == 2:
+            keys = interaction_info["key"]
+
+        # Adding a dict to Pandas DataFrame is slow.
+        # We need to expand the internal arrays and generate a DataFrame based on them.
+        self._df_array["body"].append(body)
+        self._df_array["name"].append(internal_name)
+        self._df_array["key"].append(interaction_info["key"])
+        self._df_array["key.0"].append(keys[0])
+        self._df_array["key.1"].append(keys[1])
+        self._df_array["interacts"].append(interaction_info["interacts"])
+        self._df_array["coefficient"].append(coefficient)
+        self._df_array["scale"].append(scale)
+        self._df_array["timestamp"].append(timestamp)
         # Note: dirty flag (= modification flag) means this interaction has not converted to a physical model yet.
         # dirty flag will be False when the interaction is written to a physical model.
-        add_object = {
-            "name": internal_name,
-            "key": interaction_info["key"],
-            "interacts": interaction_info["interacts"],
-            "coefficient": coefficient,
-            "scale": scale,
-            "attributes": attributes,
-            "timestamp": timestamp,
-            "dirty": True,
-            "removed": False,
-        }
-        self._interactions[body][internal_name] = add_object
-        return add_object
+        self._df_array["dirty"].append(True)
+        self._df_array["removed"].append(False)
+
+        # Expand existing attributes
+        for attr in self._df_attrs:
+            self._df_array[attr].append(np.nan)
+
+        # Set new attributes
+        for k, v in attributes.items():
+            attrs_key = f"attributes.{k}"
+            if attrs_key not in self._df_array:
+                self._df_array[attrs_key] = [np.nan] * (self._df_length + 1)
+                self._df_attrs.append(attrs_key)
+            self._df_array[attrs_key][-1] = v
+
+        self._df_length += 1
 
     ################################
     # Update
@@ -185,49 +221,39 @@ class LogicalModel(AbstractModel):
         if target is not None:
             interaction_info = self._get_interaction_info_from_target(target)
 
-        body = None
         if name:
+            internal_name = name
+            if not self._has_name(internal_name):
+                raise KeyError(f"An interaction named '{internal_name}' does not exist yet in the model. Need to be added before updating.")
             # Already given the specific name
             self._check_argument_type("name", name, (str, tuple))
-            internal_name = name
-            for b in [constants.INTERACTION_LINEAR, constants.INTERACTION_QUADRATIC]:
-                if name in self._interactions[b]:
-                    body = b
-                    break
         else:
             # Will be automatically named by the default name
-            body = interaction_info["body"]
             internal_name = interaction_info["name"]
-
-        if (body is None) or (internal_name not in self._interactions[body]):
-            if target is not None:
-                warnings.warn(
-                    f"An interaction named '{internal_name}' does not exist yet in the model,"
-                    " but will be added instead of updating it."
-                )
+            if not self._has_name(internal_name):
+                warnings.warn(f"An interaction named '{internal_name}' does not exist yet in the model, but will be added instead of updating it.")
                 _coefficient = 0.0 if coefficient is None else coefficient
                 _scale = 1.0 if scale is None else scale
                 return self.add_interaction(target=target, coefficient=_coefficient, scale=_scale, timestamp=timestamp)
-            else:
-                raise KeyError(
-                    f"An interaction named '{internal_name}' does not exist yet in the model."
-                    " Need to be added before updating."
-                )
-        if self._interactions[body][internal_name]["removed"]:
+
+        if self._is_removed(internal_name):
             raise ValueError(f"An interaction named '{internal_name}' is already removed.")
+
+        update_idx = self._df_array["name"].index(internal_name)
 
         # update only properties which is given by arguments
         if coefficient is not None:
-            self._interactions[body][internal_name]["coefficient"] = coefficient
+            self._df_array["coefficient"][update_idx] = coefficient
         if scale is not None:
-            self._interactions[body][internal_name]["scale"] = scale
+            self._df_array["scale"][update_idx] = scale
         if attributes is not None:
-            self._interactions[body][internal_name]["attributes"] = attributes
-        self._interactions[body][internal_name]["timestamp"] = timestamp
-        self._interactions[body][internal_name]["dirty"] = True
-        assert not self._interactions[body][internal_name]["removed"]
-
-        return self._interactions[body][internal_name]
+            for k, v in attributes.items():
+                attrs_key = f"attributes.{k}"
+                if attrs_key not in self._df_array:
+                    self._df_array[attrs_key] = [np.nan] * self._df_length
+                self._df_array[attrs_key][update_idx] = v
+        self._df_array["timestamp"][update_idx] = timestamp
+        self._df_array["dirty"][update_idx] = True
 
     ################################
     # Remove
@@ -242,34 +268,30 @@ class LogicalModel(AbstractModel):
         if target is not None:
             interaction_info = self._get_interaction_info_from_target(target)
 
-        body = None
         if name:
             # Already given the specific name
             self._check_argument_type("name", name, (str, tuple))
             internal_name = name
-            for b in [constants.INTERACTION_LINEAR, constants.INTERACTION_QUADRATIC]:
-                if name in self._interactions[b]:
-                    body = b
-                    break
         else:
             # Will be automatically named by the default name
-            body = interaction_info["body"]
             internal_name = interaction_info["name"]
 
-        if (body is None) or (internal_name not in self._interactions[body]):
-            raise KeyError(
-                f"An interaction named '{internal_name}' does not exist yet. Need to be added before updating."
-            )
+        if not self._has_name(internal_name):
+            raise KeyError(f"An interaction named '{internal_name}' does not exist yet. Need to be added before updating.")
+
+        # Don't need to check this. Removing will be overwritten.
+        # if self._is_removed(internal_name):
+        #     raise ValueError(f"An interaction named '{internal_name}' is already removed.")
+
+        remove_idx = self._df_array["name"].index(internal_name)
 
         # logically remove
         # This will be physically removed when it's converted to a physical model.
-        self._interactions[body][internal_name]["removed"] = True
-        self._interactions[body][internal_name]["dirty"] = True
-
-        return self._interactions[body][internal_name]
+        self._df_array["removed"][remove_idx] = True
+        self._df_array["dirty"][remove_idx] = True
 
     ################################
-    # Helper methods for add, update, and remove
+    # Helper methods for add, update, remove, and select
     ################################
 
     @staticmethod
@@ -300,6 +322,19 @@ class LogicalModel(AbstractModel):
             raise TypeError("Invalid 'target'.")
         return {"body": body, "interacts": interacts, "key": key, "name": name}
 
+    def _has_name(self, internal_name):
+        return internal_name in self._df_array["name"]
+
+    def _is_removed(self, internal_name):
+        idx = self._df_array["name"].index(internal_name)
+        return self._df_array["removed"][idx]
+
+    def _update_interactions_dataframe_from_arrays(self):
+        # Generate a DataFrame from the internal interaction arrays.
+        # If we create new DataFrame every interaction update, computation time consumes a lot.
+        # We only generate a DataFrame just before we need it.
+        self._df = pd.DataFrame(self._df_array)
+
     ################################
     # Delete
     ################################
@@ -318,7 +353,7 @@ class LogicalModel(AbstractModel):
                 self.n_hot_constraint(target, n=v._n, strength=v._strength, label=v._label, delete_flag=True)
 
         # Remove related interations
-        removed = self.select_interaction_tmp(target)
+        removed = self.select_interactions_by_variable(target)
         for r in removed:
             self.remove_interaction(name=r)
 
@@ -335,9 +370,7 @@ class LogicalModel(AbstractModel):
 
     def from_pyqubo(self, expression):
         if not (isinstance(expression, pyqubo.Express) or isinstance(expression, pyqubo.Model)):
-            raise TypeError(
-                "'expression' must be a PyQUBO Expression (pyqubo.Express) or a PyQUBO Model (pyqubo.Model)."
-            )
+            raise TypeError("'expression' must be a PyQUBO Expression (pyqubo.Express) or a PyQUBO Model (pyqubo.Model).")
         raise NotImplementedError
 
     ################################
@@ -384,9 +417,7 @@ class LogicalModel(AbstractModel):
                     for adj in additional_variables:
                         if avar.label < adj.label:
                             coeff = -2.0 * strength
-                            self.add_interaction(
-                                (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
-                            )
+                            self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
                     for adj in original_variables:
                         coeff = -2.0 * strength
                         self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
@@ -403,9 +434,7 @@ class LogicalModel(AbstractModel):
                     for adj in additional_variables:
                         if avar.label < adj.label:
                             coeff = -1.0 * strength
-                            self.add_interaction(
-                                (avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff
-                            )
+                            self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
                     for adj in original_variables:
                         coeff = -1.0 * strength
                         self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
@@ -429,7 +458,7 @@ class LogicalModel(AbstractModel):
         physical = PhysicalModel(mtype=self._mtype)
 
         linear, quadratic = {}, {}
-        will_remove_linear, will_remove_quadratic = [], []
+        will_remove = []
 
         # label_to_index / index_to_label
         current_index = 0
@@ -442,34 +471,32 @@ class LogicalModel(AbstractModel):
                     current_index += 1
 
         # group by key
-        for k, v in self._interactions[constants.INTERACTION_LINEAR].items():
-            if not v["removed"]:
+        for i in range(self._df_length):
+            if not self._df_array["removed"][i]:
                 # TODO: Calc difference from previous physical model by referencing dirty flags.
-                if v["dirty"]:
-                    self._interactions[constants.INTERACTION_LINEAR][k]["dirty"] = False
-                if v["key"] in linear:
-                    linear[v["key"]] += float(v["coefficient"] * v["scale"])
-                else:
-                    linear[v["key"]] = float(v["coefficient"] * v["scale"])
-            else:
-                will_remove_linear.append(k)
-        for k, v in self._interactions[constants.INTERACTION_QUADRATIC].items():
-            if not v["removed"]:
-                # TODO: Calc difference from previous physical model by referencing dirty flags.
-                if v["dirty"]:
-                    self._interactions[constants.INTERACTION_QUADRATIC][k]["dirty"] = False
-                if v["key"] in quadratic:
-                    quadratic[v["key"]] += float(v["coefficient"] * v["scale"])
-                else:
-                    quadratic[v["key"]] = float(v["coefficient"] * v["scale"])
-            else:
-                will_remove_quadratic.append(k)
+                if self._df_array["dirty"][i]:
+                    self._df_array["dirty"][i] = False
 
-        # remove logically removed interactions
-        for k in will_remove_linear:
-            self._interactions[constants.INTERACTION_LINEAR].pop(k)
-        for k in will_remove_quadratic:
-            self._interactions[constants.INTERACTION_QUADRATIC].pop(k)
+                if self._df_array["body"][i] == constants.INTERACTION_LINEAR:
+                    if self._df_array["key"][i] in linear:
+                        linear[self._df_array["key"][i]] += float(self._df_array["coefficient"][i] * self._df_array["scale"][i])
+                    else:
+                        linear[self._df_array["key"][i]] = float(self._df_array["coefficient"][i] * self._df_array["scale"][i])
+
+                elif self._df_array["body"][i] == constants.INTERACTION_QUADRATIC:
+                    if self._df_array["key"][i] in quadratic:
+                        quadratic[self._df_array["key"][i]] += float(self._df_array["coefficient"][i] * self._df_array["scale"][i])
+                    else:
+                        quadratic[self._df_array["key"][i]] = float(self._df_array["coefficient"][i] * self._df_array["scale"][i])
+            else:
+                will_remove.append(self._df_array["name"][i])
+
+        # TODO: Physically remove the logically removed interactions
+        for rm in will_remove:
+            idx = self._df_array["name"].index(rm)
+            for k in self._df_array.keys():
+                self._df_array[k].pop(idx)
+            self._df_length -= 1
 
         # set to physical
         for k, v in linear.items():
@@ -489,7 +516,6 @@ class LogicalModel(AbstractModel):
         raise NotImplementedError
 
     def to_ising(self):
-        print(self._mtype)
         if self._mtype != constants.MODEL_ISING:
             self._convert_mtype()
 
@@ -584,14 +610,18 @@ class LogicalModel(AbstractModel):
     ################################
 
     def __repr__(self):
+        self._update_interactions_dataframe_from_arrays()
+
         s = "LogicalModel({"
         s += "'mtype': '" + str(self._mtype) + "', "
         s += "'variables': " + self.remove_leading_spaces(str(self._variables)) + ", "
-        s += "'interactions': " + str(self._interactions) + ", "
+        s += "'df': " + str(self._df) + ", "
         s += "'constraints': " + str(self._constraints) + "})"
         return s
 
     def __str__(self):
+        self._update_interactions_dataframe_from_arrays()
+
         s = []
         s.append("┏" + ("━" * 64))
         s.append("┃ LOGICAL MODEL")
@@ -601,11 +631,8 @@ class LogicalModel(AbstractModel):
         for name, vars in self._variables.items():
             s.append("┃  name: " + name)
             s.append(self.append_prefix(str(vars), length=4))
-        s.append("┣━ interactions:")
-        s.append("┃  linear:")
-        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_LINEAR]), length=4))
-        s.append("┃  quadratic:")
-        s.append(self.append_prefix(pprint.pformat(self._interactions[constants.INTERACTION_QUADRATIC]), length=4))
+        s.append("┣━ df:")
+        s.append(self.append_prefix(pprint.pformat(self._df), length=4))
         s.append("┣━ constraints:")
         s.append(self.append_prefix(pprint.pformat(self._constraints), length=4))
         s.append("┗" + ("━" * 64))

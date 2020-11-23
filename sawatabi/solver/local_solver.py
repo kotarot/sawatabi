@@ -30,10 +30,7 @@ class LocalSolver(AbstractSolver):
     def solve(self, model, num_reads=1, num_sweeps=1000, seed=None):
         self._check_argument_type("model", model, PhysicalModel)
 
-        if (
-            len(model._interactions[constants.INTERACTION_LINEAR]) == 0
-            and len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0
-        ):
+        if len(model._interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")
 
         # Signs for BQM are opposite from our definition.

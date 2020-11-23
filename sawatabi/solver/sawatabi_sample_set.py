@@ -34,6 +34,4 @@ class SawatabiSampleSet:
         return samples
 
     def __repr__(self):
-        return "SawatabiSampleSet\n[{}, {} rows, {} samples, {} variables]".format(
-            self.vartype, len(self.record), len(self.record), len(self.variables)
-        )
+        return f"SawatabiSampleSet\n[{self.vartype}, {self.record} rows, {self.record} samples, {self.variables} variables]"
