@@ -1053,7 +1053,7 @@ def model_ising_x22():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(2, 2))
     model.add_interaction(x[0, 0], coefficient=10.0)
-    model.add_interaction((x[0, 0], x[1, 1]), coefficient=11.0, attributes={"foo1": "bar1"})
+    model.add_interaction((x[0, 0], x[1, 1]), coefficient=11.0, attributes={"foo1": "bar1", "myattr": "mymy"})
     return model
 
 
@@ -1081,7 +1081,7 @@ def model_ising_x44():
     x = model.variables("x", shape=(4, 4))
     model.add_interaction(x[0, 0], coefficient=20.0)
     model.add_interaction((x[1, 1], x[2, 2]), coefficient=21.0, attributes={"foo2": "bar2"})
-    model.add_interaction(x[3, 3], coefficient=22.0, scale=2.0, timestamp=12345)
+    model.add_interaction(x[3, 3], coefficient=22.0, scale=2.0, timestamp=12345, attributes={"myattr": "mymymymy"})
     return model
 
 
@@ -1116,6 +1116,7 @@ def _check_merge_of_x22_y22(model):
     assert len(model.select_interaction("key == 'x[0][0]'")) == 1
     assert model.select_interaction("key == 'x[0][0]'")["coefficient"].values[0] == 10.0
     assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.foo1"].values[0] == "bar1"
+    assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.myattr"].values[0] == "mymy"
 
     # TODO: Check constraints
 
@@ -1150,6 +1151,8 @@ def _check_merge_of_x22_x44(model):
     assert model.select_interaction("name == 'x[1][1]*x[2][2]'")["attributes.foo2"].values[0] == "bar2"
     assert model.select_interaction("name == 'x[3][3]'")["scale"].values[0] == 2.0
     assert model.select_interaction("name == 'x[3][3]'")["timestamp"].values[0] == 12345
+    assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.myattr"].values[0] == "mymy"
+    assert model.select_interaction("name == 'x[3][3]'")["attributes.myattr"].values[0] == "mymymymy"
 
     # TODO: Check constraints
 
