@@ -40,19 +40,8 @@ class LogicalModel(AbstractModel):
         self._fixed = {}
         self._constraints = {}
         self._interactions = None
-        self._interactions_array = {
-            "body": [],
-            "name": [],
-            "key": [],
-            "key.0": [],
-            "key.1": [],
-            "interacts": [],
-            "coefficient": [],
-            "scale": [],
-            "timestamp": [],
-            "dirty": [],
-            "removed": [],
-        }
+        self._default_keys = ["body", "name", "key", "key.0", "key.1", "interacts", "coefficient", "scale", "timestamp", "dirty", "removed"]
+        self._interactions_array = {k: [] for k in self._default_keys}
         self._interactions_attrs = []
         self._interactions_length = 0
         self._previous_physical_model = None
@@ -88,7 +77,7 @@ class LogicalModel(AbstractModel):
     def append(self, name, shape=()):
         self._check_argument_type("name", name, str)
         self._check_argument_type("shape", shape, tuple)
-        self._check_argument_type_in_tuple("shape", shape, int)
+        self._check_argument_type_in_tuple("shape", shape, [int, np.int64])
 
         if name not in self._variables:
             # raise KeyError(f"Variables name '{name}' is not defined in the model.")
@@ -316,6 +305,9 @@ class LogicalModel(AbstractModel):
                     raise TypeError("All elements of 'target' must be a 'pyqubo.Spin' or 'pyqubo.Binary'.")
             body = constants.INTERACTION_QUADRATIC
 
+            if target[0].label == target[1].label:
+                raise ValueError("The given target is not a valid interaction.")
+
             # Tuple elements to dictionary order
             if target[0].label < target[1].label:
                 interacts = (target[0], target[1])
@@ -456,9 +448,6 @@ class LogicalModel(AbstractModel):
     # Utils
     ################################
 
-    def merge(self, other):
-        raise NotImplementedError
-
     def to_physical(self, placeholder={}):
         # TODO:
         # - resolve placeholder
@@ -518,6 +507,61 @@ class LogicalModel(AbstractModel):
 
         return physical
 
+    def merge(self, other):
+        self._check_argument_type("other", other, LogicalModel)
+
+        # Check type
+        if self._mtype != other._mtype:
+            # Currently...
+            raise ValueError("Cannot merge different model type.")
+
+        # Check variables
+        for key, value in self._variables.items():
+            if key in other._variables.keys():
+                if len(value.shape) != len(other._variables[key].shape):
+                    raise ValueError(f"Cannot merge model since the dimension of '{key}' is different.")
+
+        # Merge variables
+        for key, value in other._variables.items():
+            if key not in self._variables:
+                self._variables[key] = value
+            else:
+                shape_current = self._variables[key].shape
+                shape_max = Functions.elementwise_max(value.shape, shape_current)
+                shape_diff = Functions.elementwise_sub(shape_max, shape_current)
+                self.append(name=key, shape=shape_diff)
+
+        # Merge interactions
+        merged_interactions_with_duplication = {k: [] for k in self._default_keys}
+        merged_attrs = list(set(self._interactions_attrs) | set(other._interactions_attrs))
+        for k in self._default_keys:
+            merged_interactions_with_duplication[k] = self._interactions_array[k] + other._interactions_array[k]
+        for attr in merged_attrs:
+            if (attr in self._interactions_attrs) and (attr in other._interactions_array):
+                merged_interactions_with_duplication[attr] = self._interactions_array[attr] + other._interactions_array[attr]
+            elif attr in self._interactions_attrs:
+                merged_interactions_with_duplication[attr] = self._interactions_array[attr] + ([np.nan] * other._interactions_length)
+            elif attr in other._interactions_attrs:
+                merged_interactions_with_duplication[attr] = ([np.nan] * self._interactions_length) + other._interactions_array[attr]
+        duplicate_names = list(set(self._interactions_array["name"]) & set(other._interactions_array["name"]))
+
+        # Rename duplicate interaction names by adding suffix of model id
+        for idx, name in enumerate(merged_interactions_with_duplication["name"]):
+            if name in duplicate_names:
+                if idx < self._interactions_length:
+                    model_id = id(self)
+                else:
+                    model_id = id(other)
+                merged_interactions_with_duplication["name"][idx] = f"{name} ({model_id})"
+
+        self._interactions_array = merged_interactions_with_duplication
+        self._interactions_attrs = merged_attrs
+        self._interactions_length = self._interactions_length + other._interactions_length
+        self._deleted.update(other._deleted)
+        self._fixed.update(other._fixed)
+
+        # TODO: Merge constraints
+
     def _convert_mtype(self):
         """
         Converts the model to a QUBO model if the current model type is Ising, and vice versa.
@@ -527,10 +571,14 @@ class LogicalModel(AbstractModel):
     def to_ising(self):
         if self._mtype != constants.MODEL_ISING:
             self._convert_mtype()
+        else:
+            warnings.warn("The model is already an Ising model.")
 
     def to_qubo(self):
         if self._mtype != constants.MODEL_QUBO:
             self._convert_mtype()
+        else:
+            warnings.warn("The model is already a QUBO model.")
 
     ################################
     # Getters
