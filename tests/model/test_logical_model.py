@@ -136,6 +136,13 @@ def test_logical_model_variables_append_without_initialize(shape):
     assert model.get_variables_by_name("x").shape == shape
 
 
+def test_logical_model_variables_append_invalid(model):
+    model.variables("x", shape=(2, 2))
+
+    with pytest.raises(TypeError):
+        model.append("x", shape=("a", "b"))
+
+
 @pytest.mark.parametrize("vartype,mtype", [("SPIN", "ising"), ("BINARY", "qubo")])
 def test_logical_model_variables_from_pyqubo(vartype, mtype):
     x = pyqubo.Array.create("x", shape=(2, 3), vartype=vartype)
@@ -322,6 +329,9 @@ def test_logical_model_add_invalid_arguments(model):
 
     with pytest.raises(TypeError):
         model.add_interaction(("a", "b"), coefficient=1.0)
+
+    with pytest.raises(ValueError):
+        model.add_interaction((x[0], x[0]), coefficient=1.0)
 
     # Invalid types
     with pytest.raises(TypeError):
@@ -516,6 +526,9 @@ def test_logical_model_update_invalid(model):
     with pytest.raises(TypeError):
         model.update_interaction(("a", "b"), coefficient=1.0)
 
+    with pytest.raises(ValueError):
+        model.update_interaction((x[0], x[0]), coefficient=1.0)
+
     # Invalid types
     with pytest.raises(TypeError):
         model.update_interaction(x[0], coefficient="invalid type")
@@ -603,6 +616,9 @@ def test_logical_model_remove_invalid(model):
 
     with pytest.raises(TypeError):
         model.update_interaction(("a", "b"))
+
+    with pytest.raises(ValueError):
+        model.update_interaction((x[0], x[0]))
 
 
 ################################
@@ -1012,12 +1028,7 @@ def test_logical_model_to_physical_with_deleted_variables(model):
     assert len(physical._index_to_label) == 6
 
 
-def test_logical_model_utils_ising():
-    model = LogicalModel(mtype="ising")
-    other_model = LogicalModel(mtype="ising")
-    with pytest.raises(NotImplementedError):
-        model.merge(other_model)
-
+def test_logical_model_utils_ising(model):
     with pytest.raises(NotImplementedError):
         model._convert_mtype()
 
@@ -1027,19 +1038,139 @@ def test_logical_model_utils_ising():
         model.to_qubo()
 
 
-def test_logical_model_utils_qubo():
+def test_logical_model_utils_qubo(model_qubo):
+    with pytest.raises(NotImplementedError):
+        model_qubo._convert_mtype()
+
+    with pytest.raises(NotImplementedError):
+        model_qubo.to_ising()
+
+    model_qubo.to_qubo()
+
+
+@pytest.fixture
+def model_ising_x22():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(2, 2))
+    model.add_interaction(x[0, 0], coefficient=10.0)
+    model.add_interaction((x[0, 0], x[1, 1]), coefficient=11.0, attributes={"foo1": "bar1"})
+    return model
+
+
+@pytest.fixture
+def model_qubo_a22():
     model = LogicalModel(mtype="qubo")
-    other_model = LogicalModel(mtype="qubo")
-    with pytest.raises(NotImplementedError):
-        model.merge(other_model)
+    a = model.variables("a", shape=(2, 2))
+    model.add_interaction(a[0, 0], coefficient=10.0)
+    model.add_interaction((a[0, 0], a[1, 1]), coefficient=11.0)
+    return model
 
-    with pytest.raises(NotImplementedError):
-        model._convert_mtype()
 
-    with pytest.raises(NotImplementedError):
-        model.to_ising()
+@pytest.fixture
+def model_ising_y22():
+    model = LogicalModel(mtype="ising")
+    y = model.variables("y", shape=(2, 2))
+    model.add_interaction(y[0, 0], coefficient=10.0)
+    model.add_interaction((y[0, 0], y[1, 1]), coefficient=11.0)
+    return model
 
-    model.to_qubo()
+
+@pytest.fixture
+def model_ising_x44():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(4, 4))
+    model.add_interaction(x[0, 0], coefficient=20.0)
+    model.add_interaction((x[1, 1], x[2, 2]), coefficient=21.0, attributes={"foo2": "bar2"})
+    model.add_interaction(x[3, 3], coefficient=22.0, scale=2.0, timestamp=12345)
+    return model
+
+
+@pytest.fixture
+def model_ising_x999():
+    model = LogicalModel(mtype="ising")
+    model.variables("x", shape=(9, 9, 9))
+    return model
+
+
+def test_logical_model_merge_x22_y22(model_ising_x22, model_ising_y22):
+    model_ising_x22.merge(model_ising_y22)
+    _check_merge_of_x22_y22(model_ising_x22)
+
+
+def test_logical_model_merge_y22_x22(model_ising_y22, model_ising_x22):
+    model_ising_y22.merge(model_ising_x22)
+    _check_merge_of_x22_y22(model_ising_y22)
+
+
+def _check_merge_of_x22_y22(model):
+    # Check variables
+    assert "x" in model._variables
+    assert "y" in model._variables
+    assert model._variables["x"].shape == (2, 2)
+    assert model._variables["y"].shape == (2, 2)
+
+    # Check interactions
+    assert model._interactions_length == 4
+    for key, interaction in model._interactions_array.items():
+        assert len(interaction) == 4
+    assert len(model.select_interaction("key == 'x[0][0]'")) == 1
+    assert model.select_interaction("key == 'x[0][0]'")["coefficient"].values[0] == 10.0
+    assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.foo1"].values[0] == "bar1"
+
+    # TODO: Check constraints
+
+
+def test_logical_model_merge_x22_x44(model_ising_x22, model_ising_x44):
+    model_ising_x22.merge(model_ising_x44)
+    _check_merge_of_x22_x44(model_ising_x22)
+
+
+def test_logical_model_merge_x44_x22(model_ising_x44, model_ising_x22):
+    model_ising_x44.merge(model_ising_x22)
+    _check_merge_of_x22_x44(model_ising_x44)
+
+
+def _check_merge_of_x22_x44(model):
+    # Check variables
+    assert "x" in model._variables
+    assert "y" not in model._variables
+    assert model._variables["x"].shape == (4, 4)
+
+    # Check interactions
+    assert model._interactions_length == 5
+    for key, interaction in model._interactions_array.items():
+        assert len(interaction) == 5
+    assert len(model.select_interaction("key == 'x[0][0]'")) == 2
+    assert (model.select_interaction("key == 'x[0][0]'")["coefficient"].values[0]) + (
+        model.select_interaction("key == 'x[0][0]'")["coefficient"].values[1]
+    ) == 10.0 + 20.0
+    assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.foo1"].values[0] == "bar1"
+    assert np.isnan(model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.foo2"].values[0])
+    assert np.isnan(model.select_interaction("name == 'x[1][1]*x[2][2]'")["attributes.foo1"].values[0])
+    assert model.select_interaction("name == 'x[1][1]*x[2][2]'")["attributes.foo2"].values[0] == "bar2"
+    assert model.select_interaction("name == 'x[3][3]'")["scale"].values[0] == 2.0
+    assert model.select_interaction("name == 'x[3][3]'")["timestamp"].values[0] == 12345
+
+    # TODO: Check constraints
+
+
+def test_logical_model_merge_x22_a22_invalid(model_ising_x22, model_qubo_a22):
+    with pytest.raises(ValueError):
+        model_ising_x22.merge(model_qubo_a22)
+
+    with pytest.raises(ValueError):
+        model_qubo_a22.merge(model_ising_x22)
+
+
+def test_logical_model_merge_x22_x999_invalid(model_ising_x22, model_ising_x999):
+    with pytest.raises(ValueError):
+        model_ising_x22.merge(model_ising_x999)
+
+    with pytest.raises(ValueError):
+        model_ising_x999.merge(other=model_ising_x22)
+
+    with pytest.raises(TypeError):
+        model_ising_x999.merge("other type")
 
 
 ################################
