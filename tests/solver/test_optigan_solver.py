@@ -34,18 +34,22 @@ class ResponseMock:
         }
 
 
-def test_optigan_solver_with_logical_model(mocker):
+@pytest.fixture
+def physical():
     model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction((x[0], x[1]), coefficient=-1.0)
     physical = model.to_physical()
+    return physical
 
+
+def test_optigan_solver_with_logical_model(mocker, physical):
     directory = os.path.dirname(__file__)
     solver = OptiganSolver(config=f"{directory}/.optigan.yml")
 
     response_mock = ResponseMock()
-    mocker.patch("sawatabi.solver.OptiganSolver.post", return_value=response_mock)
+    mocker.patch("requests.post", return_value=response_mock)
 
     resultset = solver.solve(physical)
 
@@ -63,6 +67,29 @@ def test_optigan_solver_with_logical_model(mocker):
     assert resultset.first == ([1, 0], -1.0, 1)
     for sample in resultset.samples():
         assert sample == {"x[0]": 1, "x[1]": 0}
+
+
+def test_optigan_solver_with_logical_model_without_gzip(mocker, physical):
+    directory = os.path.dirname(__file__)
+    solver = OptiganSolver(config=f"{directory}/.optigan.yml")
+
+    response_mock = ResponseMock()
+    mocker.patch("requests.post", return_value=response_mock)
+
+    resultset = solver.solve(physical, gzip_request=False, gzip_response=False)
+    assert isinstance(resultset, SawatabiSampleSet)
+
+
+def test_optigan_solver_with_logical_model_with_invalid_response(mocker, physical):
+    directory = os.path.dirname(__file__)
+    solver = OptiganSolver(config=f"{directory}/.optigan.yml")
+
+    response_mock = ResponseMock()
+    response_mock.status_code = 400
+    mocker.patch("requests.post", return_value=response_mock)
+
+    with pytest.raises(ValueError):
+        resultset = solver.solve(physical)
 
 
 def test_optigan_solver_with_logical_model_fails():

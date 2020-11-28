@@ -78,11 +78,11 @@ class OptiganSolver(AbstractSolver):
             with gzip.GzipFile(fileobj=buf, mode="wb") as f:
                 f.write(json.dumps(payload).encode("utf-8"))
             headers["Content-Encoding"] = "gzip"
-            response = self.post(endpoint=endpoint, headers=headers, data=buf.getvalue())
+            response = requests.post(endpoint, headers=headers, data=buf.getvalue())
         else:
             # Don't comress request body
             headers["Content-Type"] = "application/json; charset=UTF-8"
-            response = self.post(endpoint=endpoint, headers=headers, json=payload)
+            response = requests.post(endpoint, headers=headers, json=payload)
 
         if response.status_code != 200:
             raise ValueError(f"Cannot get a valid response (status_code: {response.status_code}).")
@@ -98,10 +98,3 @@ class OptiganSolver(AbstractSolver):
             sampleset.add_record(spins, result["energies"][i])
 
         return sampleset
-
-    def post(self, endpoint, headers, json=None, data=None):
-        if json is not None:
-            response = requests.post(endpoint, headers=headers, json=json)
-        elif data is not None:
-            response = requests.post(endpoint, headers=headers, data=data)
-        return response
