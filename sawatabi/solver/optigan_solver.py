@@ -17,13 +17,13 @@ import io
 import json
 import os
 
+import dimod
 import requests
 import yaml
 
 import sawatabi.constants as constants
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.solver.abstract_solver import AbstractSolver
-from sawatabi.solver.sawatabi_sample_set import SawatabiSampleSet
 
 
 class OptiganSolver(AbstractSolver):
@@ -78,11 +78,11 @@ class OptiganSolver(AbstractSolver):
             with gzip.GzipFile(fileobj=buf, mode="wb") as f:
                 f.write(json.dumps(payload).encode("utf-8"))
             headers["Content-Encoding"] = "gzip"
-            response = self.post(endpoint=endpoint, headers=headers, data=buf.getvalue())
+            response = requests.post(endpoint, headers=headers, data=buf.getvalue())
         else:
             # Don't comress request body
             headers["Content-Type"] = "application/json; charset=UTF-8"
-            response = self.post(endpoint=endpoint, headers=headers, json=payload)
+            response = requests.post(endpoint, headers=headers, json=payload)
 
         if response.status_code != 200:
             raise ValueError(f"Cannot get a valid response (status_code: {response.status_code}).")
@@ -91,17 +91,11 @@ class OptiganSolver(AbstractSolver):
         result = response.json()
 
         # Create a sampleset object for return
-        sampleset = SawatabiSampleSet()
-        sampleset.info = result
-        sampleset.variables = list(model._index_to_label.values())
-        for i, spins in enumerate(result["spins"]):
-            sampleset.add_record(spins, result["energies"][i])
+        samples = []
+        for spins in result["spins"]:
+            sample = dict(zip(list(model._index_to_label.values()), spins))
+            samples.append(sample)
+        sampleset = dimod.SampleSet.from_samples(samples, dimod.BINARY, energy=result["energies"])
+        sampleset._info = result
 
         return sampleset
-
-    def post(self, endpoint, headers, json=None, data=None):
-        if json is not None:
-            response = requests.post(endpoint, headers=headers, json=json)
-        elif data is not None:
-            response = requests.post(endpoint, headers=headers, data=data)
-        return response
