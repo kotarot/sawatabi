@@ -20,8 +20,8 @@ from dwave.system.composites import EmbeddingComposite
 from dwave.system.samplers import DWaveSampler
 
 
-def dwave_sample():
-    print("\n=== dwave_sample ===\n")
+def dwave_trial():
+    print("\n=== dwave_trial ===\n")
 
     # Connect using the default or environment connection information
     with Client.from_config() as client:
@@ -121,7 +121,7 @@ def _print_sampleset(sampleset):
     print("")
 
 
-def dwave_with_embedding():
+def dwave_trial_with_embedding():
     print("\n=== dwave_with_embedding ===\n")
 
     solver = EmbeddingComposite(DWaveSampler(solver="Advantage_system1.1"))
@@ -130,7 +130,7 @@ def dwave_with_embedding():
     _print_sampleset(sampleset)
 
 
-def dwave_scheduling_options():
+def dwave_trial_scheduling_options():
     print("\n=== dwave_scheduling_options ===\n")
 
     solver = EmbeddingComposite(DWaveSampler(solver="Advantage_system1.1"))
@@ -156,9 +156,9 @@ def dwave_scheduling_options():
 
 
 def main():
-    dwave_sample()
-    dwave_with_embedding()
-    dwave_scheduling_options()
+    dwave_trial()
+    dwave_trial_with_embedding()
+    dwave_trial_scheduling_options()
 
 
 if __name__ == "__main__":
