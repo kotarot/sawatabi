@@ -77,7 +77,7 @@ class LogicalModel(AbstractModel):
     def append(self, name, shape=()):
         self._check_argument_type("name", name, str)
         self._check_argument_type("shape", shape, tuple)
-        self._check_argument_type_in_tuple("shape", shape, [int, np.int64])
+        self._check_argument_type_in_tuple("shape", shape, (int, np.int64))
 
         if name not in self._variables:
             # raise KeyError(f"Variables name '{name}' is not defined in the model.")
@@ -377,12 +377,14 @@ class LogicalModel(AbstractModel):
     ################################
 
     def n_hot_constraint(self, target, n=1, strength=1.0, label=constants.DEFAULT_LABEL_N_HOT, delete_flag=False):
-        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
+        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary, list))
         self._check_argument_type("n", n, int)
         self._check_argument_type("strength", strength, numbers.Number)
         self._check_argument_type("label", label, str)
 
-        if not isinstance(target, pyqubo.Array):
+        if isinstance(target, list):
+            self._check_argument_type_in_list("target", target, (pyqubo.Spin, pyqubo.Binary))
+        if not (isinstance(target, pyqubo.Array) or isinstance(target, list)):
             target = [target]
         if label not in self._constraints:
             self._constraints[label] = NHotConstraint(n, strength, label)
@@ -445,7 +447,7 @@ class LogicalModel(AbstractModel):
         raise NotImplementedError
 
     ################################
-    # Utils
+    # Converts
     ################################
 
     def to_physical(self, placeholder={}):
@@ -557,10 +559,17 @@ class LogicalModel(AbstractModel):
         self._interactions_array = merged_interactions_with_duplication
         self._interactions_attrs = merged_attrs
         self._interactions_length = self._interactions_length + other._interactions_length
+
+        # Merge constraints
+        # If both models have a constraint with the same label, cannnot merge currently
+        if len(set(self._constraints.keys()) & set(other._constraints.keys())) > 0:
+            raise ValueError("Cannot merge model since both model have a constraint with the same label.")
+        self._constraints.update(other._constraints)
+
+        # Merge other fields
+        self._offset += other._offset
         self._deleted.update(other._deleted)
         self._fixed.update(other._fixed)
-
-        # TODO: Merge constraints
 
     def _convert_mtype(self):
         """
