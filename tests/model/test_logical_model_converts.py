@@ -222,10 +222,11 @@ def test_logical_model_convert_from_ising(model):
     with pytest.raises(NotImplementedError):
         model._convert_mtype()
 
-    model.to_ising()
-
     with pytest.raises(NotImplementedError):
         model.to_qubo()
+
+    with pytest.warns(UserWarning):
+        model.to_ising()
 
 
 def test_logical_model_convert_from_qubo(model_qubo):
@@ -235,7 +236,8 @@ def test_logical_model_convert_from_qubo(model_qubo):
     with pytest.raises(NotImplementedError):
         model_qubo.to_ising()
 
-    model_qubo.to_qubo()
+    with pytest.warns(UserWarning):
+        model_qubo.to_qubo()
 
 
 @pytest.fixture
@@ -316,9 +318,9 @@ def _check_merge_of_x22_y22(model):
     assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.foo1"].values[0] == "bar1"
     assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.myattr"].values[0] == "mymy"
 
-    assert model._offset == 0.0
-    assert len(model._deleted) == 0
-    assert len(model._fixed) == 0
+    assert model.get_offset() == 0.0
+    assert model.get_deleted_size() == 0
+    assert model.get_fixed_size() == 0
 
 
 def test_logical_model_merge_x22_x44(model_ising_x22, model_ising_x44):
@@ -354,9 +356,9 @@ def _check_merge_of_x22_x44(model):
     assert model.select_interaction("name == 'x[0][0]*x[1][1]'")["attributes.myattr"].values[0] == "mymy"
     assert model.select_interaction("name == 'x[3][3]'")["attributes.myattr"].values[0] == "mymymymy"
 
-    assert model._offset == 0.0
-    assert len(model._deleted) == 0
-    assert len(model._fixed) == 0
+    assert model.get_offset() == 0.0
+    assert model.get_deleted_size() == 0
+    assert model.get_fixed_size() == 0
 
 
 def test_logical_model_merge_with_constraints(model_ising_x22, model_ising_z3):
@@ -394,22 +396,36 @@ def test_logical_model_merge_with_constraints_both_invalid(model_ising_x22, mode
 
 def test_logical_model_merge_with_delete(model_ising_x22, model_ising_x44):
     x = model_ising_x22.get_variables_by_name(name="x")
-    model_ising_x22.delete_variable(x[1][1])
+    model_ising_x22.delete_variable(x[1, 1])
     x = model_ising_x44.get_variables_by_name(name="x")
-    model_ising_x44.delete_variable(x[3][3])
+    model_ising_x44.delete_variable(target=x[3, 3])
     model_ising_x22.merge(model_ising_x44)
 
-    assert len(model_ising_x22._deleted) == 2
-    assert model_ising_x22._deleted["x[1][1]"]
-    assert model_ising_x22._deleted["x[3][3]"]
+    assert model_ising_x22.get_deleted_size() == 2
+    assert "x[1][1]" in model_ising_x22.get_deleted_array()
+    assert "x[3][3]" in model_ising_x22.get_deleted_array()
 
     assert model_ising_x22.select_interaction("name == 'x[0][0]*x[1][1]'")["removed"].values[0]
+    assert not model_ising_x22.select_interaction("name == 'x[1][1]*x[2][2]'")["removed"].values[0]
     assert model_ising_x22.select_interaction("name == 'x[3][3]'")["removed"].values[0]
 
 
 def test_logical_model_merge_with_fix(model_ising_x22, model_ising_x44):
-    # TODO
-    pass
+    x = model_ising_x22.get_variables_by_name(name="x")
+    model_ising_x22.fix_variable(x[1, 1], 1)
+    x = model_ising_x44.get_variables_by_name(name="x")
+    model_ising_x44.fix_variable(target=x[3, 3], value=-1)
+    model_ising_x22.merge(model_ising_x44)
+
+    assert model_ising_x22.get_fixed_size() == 2
+    assert "x[1][1]" in model_ising_x22.get_fixed_array()
+    assert "x[3][3]" in model_ising_x22.get_fixed_array()
+
+    assert model_ising_x22.select_interaction("name == 'x[0][0]*x[1][1]'")["removed"].values[0]
+    assert not model_ising_x22.select_interaction("name == 'x[1][1]*x[2][2]'")["removed"].values[0]
+    assert model_ising_x22.select_interaction("name == 'x[3][3]'")["removed"].values[0]
+    assert model_ising_x22.select_interaction("name == 'x[0][0] (before fixed: x[0][0]*x[1][1])'")["coefficient"].values[0]
+    assert model_ising_x22.get_offset() == 22.0 * 2.0
 
 
 def test_logical_model_merge_x22_a22_invalid(model_ising_x22, model_qubo_a22):

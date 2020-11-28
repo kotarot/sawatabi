@@ -346,7 +346,7 @@ class LogicalModel(AbstractModel):
     def delete_variable(self, target):
         if not target:
             raise ValueError("'target' must be specified.")
-        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
 
         # TODO: Delete variable physically
         self._deleted[target.label] = True
@@ -366,7 +366,51 @@ class LogicalModel(AbstractModel):
     ################################
 
     def fix_variable(self, target, value):
-        raise NotImplementedError
+        if not target:
+            raise ValueError("'target' must be specified.")
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
+
+        # Value check
+        if self.get_mtype() == constants.MODEL_ISING:
+            if value not in [1, -1]:
+                raise ValueError("'value' must be one of [1, -1] because the model is an Ising model.")
+        elif self.get_mtype() == constants.MODEL_QUBO:
+            if value not in [1, 0]:
+                raise ValueError("'value' must be one of [1, 0] because the model is a QUBO model.")
+
+        # TODO: Delete variable physically
+        self._fixed[target.label] = True
+
+        # Update related interations
+        selected = self.select_interactions_by_variable(target)
+
+        if len(selected) <= 0:
+            warnings.warn("No interactions updated.")
+            return
+
+        if value == 0:
+            for s in selected:
+                self.remove_interaction(name=s)
+        elif value in [1, -1]:
+            for s in selected:
+                idx = self._interactions_array["name"].index(s)
+                body = self._interactions_array["body"][idx]
+                # 1-body interaction will become an offset
+                if body == 1:
+                    self._offset += -1 * value * self._interactions_array["coefficient"][idx] * self._interactions_array["scale"][idx]
+                    self.remove_interaction(name=s)
+                # 2-body interaction will become a 1-body interaction
+                elif body == 2:
+                    # Choose a variable that will remain
+                    interacts = self._interactions_array["interacts"][idx]
+                    if interacts[0].label == target.label:
+                        interacts_to = interacts[1]
+                    elif interacts[1].label == target.label:
+                        interacts_to = interacts[0]
+                    new_name = f"{interacts_to.label} (before fixed: {s})"
+                    new_coefficient = value * self._interactions_array["coefficient"][idx] * self._interactions_array["scale"][idx]
+                    self.add_interaction(target=interacts_to, name=new_name, coefficient=new_coefficient)
+                    self.remove_interaction(name=s)
 
     ################################
     # PyQUBO
@@ -682,6 +726,12 @@ class LogicalModel(AbstractModel):
         Returns a list of constraints by the given label.
         """
         return self._constraints[label]
+
+    def get_offset(self):
+        """
+        Returns the offset value.
+        """
+        return self._offset
 
     ################################
     # Built-in functions
