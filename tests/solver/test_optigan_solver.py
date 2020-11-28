@@ -12,10 +12,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+import dimod
 import pytest
 
 from sawatabi.model import LogicalModel
-from sawatabi.solver import OptiganSolver
+from sawatabi.solver import OptiganSolver, SawatabiSampleSet
+
+
+class ResponseMock:
+    def __init__(self):
+        self.status_code = 200
+
+    def json(self):
+        return {
+            "execution_parameters": {"num_unit_steps": 10},
+            "execution_time": {"annealing_time": 123.456789, "queue_time": 123.456789, "cpu_time": 123.456789, "time_stamps": [123.456798]},
+            "energies": [-1.0],
+            "spins": [[1, 0]],
+        }
+
+
+def test_optigan_solver_with_logical_model(mocker):
+    model = LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(2,))
+    model.add_interaction(x[0], coefficient=1.0)
+    model.add_interaction((x[0], x[1]), coefficient=-1.0)
+    physical = model.to_physical()
+
+    directory = os.path.dirname(__file__)
+    solver = OptiganSolver(config=f"{directory}/.optigan.yml")
+
+    response_mock = ResponseMock()
+    mocker.patch("sawatabi.solver.OptiganSolver.post", return_value=response_mock)
+
+    resultset = solver.solve(physical)
+
+    assert isinstance(resultset, SawatabiSampleSet)
+    assert isinstance(resultset.info, dict)
+    assert resultset.info["energies"] == [-1.0]
+    assert resultset.info["spins"] == [[1, 0]]
+    assert isinstance(resultset.variables, list)
+    assert resultset.variables == ["x[0]", "x[1]"]
+    assert isinstance(resultset.record, list)
+    assert resultset.record == [([1, 0], -1.0, 1)]
+    assert isinstance(resultset.vartype, dimod.Vartype)
+    assert resultset.vartype == dimod.BINARY
+    assert isinstance(resultset.first, tuple)
+    assert resultset.first == ([1, 0], -1.0, 1)
+    for sample in resultset.samples():
+        assert sample == {"x[0]": 1, "x[1]": 0}
 
 
 def test_optigan_solver_with_logical_model_fails():

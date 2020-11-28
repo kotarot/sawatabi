@@ -18,12 +18,12 @@ from sawatabi.model import LogicalModel, PhysicalModel
 
 
 @pytest.fixture
-def simple_model():
+def simple():
     return PhysicalModel(mtype="ising")
 
 
 @pytest.fixture
-def model_ising():
+def ising():
     model = LogicalModel(mtype="ising")
     x = model.variables(name="x", shape=(3,))
     model.delete_variable(x[0])
@@ -34,7 +34,7 @@ def model_ising():
 
 
 @pytest.fixture
-def model_qubo():
+def qubo():
     model = LogicalModel(mtype="qubo")
     x = model.variables(name="x", shape=(3,))
     model.delete_variable(x[0])
@@ -61,8 +61,8 @@ def test_physical_model_constructor(mtype):
 ################################
 
 
-def test_convert_to_bqm_ising(model_ising):
-    bqm = model_ising.to_bqm()
+def test_convert_to_bqm_ising(ising):
+    bqm = ising.to_bqm()
     bqm_ising = bqm.to_ising()
     # linear
     assert bqm_ising[0]["x[1]"] == -1.0
@@ -73,8 +73,8 @@ def test_convert_to_bqm_ising(model_ising):
     assert bqm_ising[2] == 0.0
 
 
-def test_convert_to_bqm_qubo(model_qubo):
-    bqm = model_qubo.to_bqm()
+def test_convert_to_bqm_qubo(qubo):
+    bqm = qubo.to_bqm()
     bqm_qubo = bqm.to_qubo()
     # linear
     assert bqm_qubo[0][("x[1]", "x[1]")] == -1.0
@@ -85,13 +85,13 @@ def test_convert_to_bqm_qubo(model_qubo):
     assert bqm_qubo[1] == 0.0
 
 
-def test_convert_to_polynomial(model_ising):
-    assert model_ising._label_to_index["x[1]"] == 0
-    assert model_ising._label_to_index["x[2]"] == 1
-    assert model_ising._index_to_label[0] == "x[1]"
-    assert model_ising._index_to_label[1] == "x[2]"
+def test_convert_to_polynomial(ising):
+    assert ising._label_to_index["x[1]"] == 0
+    assert ising._label_to_index["x[2]"] == 1
+    assert ising._index_to_label[0] == "x[1]"
+    assert ising._index_to_label[1] == "x[2]"
 
-    polynomial = model_ising.to_polynomial()
+    polynomial = ising.to_polynomial()
     assert [0, 0, -1.0] in polynomial
     assert [1, 1, -2.0] in polynomial
     assert [0, 1, -3.0] in polynomial
@@ -125,19 +125,19 @@ def _create_ising_model_for_eq():
     return model.to_physical()
 
 
-def test_physical_model_repr(simple_model):
-    assert isinstance(simple_model.__repr__(), str)
-    assert "PhysicalModel({" in simple_model.__repr__()
-    assert "'mtype':" in simple_model.__repr__()
-    assert "'raw_interactions':" in simple_model.__repr__()
-    assert "'offset':" in simple_model.__repr__()
+def test_physical_model_repr(simple):
+    assert isinstance(simple.__repr__(), str)
+    assert "PhysicalModel({" in simple.__repr__()
+    assert "'mtype':" in simple.__repr__()
+    assert "'raw_interactions':" in simple.__repr__()
+    assert "'offset':" in simple.__repr__()
 
 
-def test_physical_model_str(simple_model):
-    assert isinstance(simple_model.__str__(), str)
-    assert "PHYSICAL MODEL" in simple_model.__str__()
-    assert "mtype:" in simple_model.__str__()
-    assert "raw_interactions:" in simple_model.__str__()
-    assert "linear:" in simple_model.__str__()
-    assert "quadratic:" in simple_model.__str__()
-    assert "offset:" in simple_model.__str__()
+def test_physical_model_str(simple):
+    assert isinstance(simple.__str__(), str)
+    assert "PHYSICAL MODEL" in simple.__str__()
+    assert "mtype:" in simple.__str__()
+    assert "raw_interactions:" in simple.__str__()
+    assert "linear:" in simple.__str__()
+    assert "quadratic:" in simple.__str__()
+    assert "offset:" in simple.__str__()

@@ -20,12 +20,12 @@ from sawatabi.model import LogicalModel
 
 
 @pytest.fixture
-def model():
+def ising():
     return LogicalModel(mtype="ising")
 
 
 @pytest.fixture
-def model_qubo():
+def qubo():
     return LogicalModel(mtype="qubo")
 
 
@@ -64,60 +64,60 @@ def test_logical_model_to_physical(mtype):
     assert len(physical._index_to_label) == 2
 
 
-def test_logical_model_to_physical_with_doubled_interactions(model):
-    x = model.variables("x", shape=(2,))
-    model.add_interaction(x[0], coefficient=2.0, scale=0.5)
-    model.add_interaction(x[0], name="additional x[0]", coefficient=-2.0)
-    model.add_interaction((x[0], x[1]), coefficient=-2.0, scale=0.5)
-    model.add_interaction((x[0], x[1]), name="additional x[0]*x[1]", coefficient=2.0)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
+def test_logical_model_to_physical_with_doubled_interactions(ising):
+    x = ising.variables("x", shape=(2,))
+    ising.add_interaction(x[0], coefficient=2.0, scale=0.5)
+    ising.add_interaction(x[0], name="additional x[0]", coefficient=-2.0)
+    ising.add_interaction((x[0], x[1]), coefficient=-2.0, scale=0.5)
+    ising.add_interaction((x[0], x[1]), name="additional x[0]*x[1]", coefficient=2.0)
+    ising._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
 
-    assert model._interactions[model._interactions["name"] == "x[0]"]["dirty"].values[0]
-    assert model._interactions[model._interactions["name"] == "additional x[0]"]["dirty"].values[0]
-    assert model._interactions[model._interactions["name"] == "x[0]*x[1]"]["dirty"].values[0]
-    assert model._interactions[model._interactions["name"] == "additional x[0]*x[1]"]["dirty"].values[0]
+    assert ising._interactions[ising._interactions["name"] == "x[0]"]["dirty"].values[0]
+    assert ising._interactions[ising._interactions["name"] == "additional x[0]"]["dirty"].values[0]
+    assert ising._interactions[ising._interactions["name"] == "x[0]*x[1]"]["dirty"].values[0]
+    assert ising._interactions[ising._interactions["name"] == "additional x[0]*x[1]"]["dirty"].values[0]
 
-    physical = model.to_physical()
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
+    physical = ising.to_physical()
+    ising._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
 
     assert len(physical._raw_interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(physical._raw_interactions[constants.INTERACTION_QUADRATIC]) == 1
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == -1.0
     assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][("x[0]", "x[1]")] == 1.0
-    assert not model._interactions[model._interactions["name"] == "x[0]"]["dirty"].values[0]
-    assert not model._interactions[model._interactions["name"] == "additional x[0]"]["dirty"].values[0]
-    assert not model._interactions[model._interactions["name"] == "x[0]*x[1]"]["dirty"].values[0]
-    assert not model._interactions[model._interactions["name"] == "additional x[0]*x[1]"]["dirty"].values[0]
+    assert not ising._interactions[ising._interactions["name"] == "x[0]"]["dirty"].values[0]
+    assert not ising._interactions[ising._interactions["name"] == "additional x[0]"]["dirty"].values[0]
+    assert not ising._interactions[ising._interactions["name"] == "x[0]*x[1]"]["dirty"].values[0]
+    assert not ising._interactions[ising._interactions["name"] == "additional x[0]*x[1]"]["dirty"].values[0]
 
 
-def test_logical_model_to_physical_with_remove(model):
-    x = model.variables("x", shape=(2,))
-    model.add_interaction(x[0], coefficient=1.0)
-    model.add_interaction(x[1], coefficient=1.0)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
+def test_logical_model_to_physical_with_remove(ising):
+    x = ising.variables("x", shape=(2,))
+    ising.add_interaction(x[0], coefficient=1.0)
+    ising.add_interaction(x[1], coefficient=1.0)
+    ising._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
 
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]"]["dirty"].values[0]
-    assert model._interactions[model._interactions["name"] == "x[1]"]["dirty"].values[0]
-    assert not model._interactions[model._interactions["name"] == "x[0]"]["removed"].values[0]
-    assert not model._interactions[model._interactions["name"] == "x[1]"]["removed"].values[0]
+    assert len(ising._interactions) == 2
+    assert ising._interactions[ising._interactions["name"] == "x[0]"]["dirty"].values[0]
+    assert ising._interactions[ising._interactions["name"] == "x[1]"]["dirty"].values[0]
+    assert not ising._interactions[ising._interactions["name"] == "x[0]"]["removed"].values[0]
+    assert not ising._interactions[ising._interactions["name"] == "x[1]"]["removed"].values[0]
 
-    model.remove_interaction(x[1])
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
+    ising.remove_interaction(x[1])
+    ising._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
 
-    assert len(model._interactions) == 2
-    assert not model._interactions[model._interactions["name"] == "x[0]"]["removed"].values[0]
-    assert model._interactions[model._interactions["name"] == "x[1]"]["removed"].values[0]
+    assert len(ising._interactions) == 2
+    assert not ising._interactions[ising._interactions["name"] == "x[0]"]["removed"].values[0]
+    assert ising._interactions[ising._interactions["name"] == "x[1]"]["removed"].values[0]
 
-    physical = model.to_physical()
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
+    physical = ising.to_physical()
+    ising._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
 
     assert len(physical._raw_interactions[constants.INTERACTION_LINEAR]) == 1
     assert len(physical._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0
 
-    assert not model._interactions[model._interactions["name"] == "x[0]"]["removed"].values[0]
-    assert not model._interactions[model._interactions["name"] == "x[0]"]["dirty"].values[0]
-    assert len(model._interactions[model._interactions["name"] == "x[1]"]) == 0
+    assert not ising._interactions[ising._interactions["name"] == "x[0]"]["removed"].values[0]
+    assert not ising._interactions[ising._interactions["name"] == "x[0]"]["dirty"].values[0]
+    assert len(ising._interactions[ising._interactions["name"] == "x[1]"]) == 0
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (10, 100)])
@@ -156,13 +156,13 @@ def test_logical_model_to_physical_with_n_hot_constraint_ising(n, s):
                 assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(l1, l2)] == -1.0
 
 
-def test_logical_model_to_physical_with_n_hot_constraint_randomly_qubo(model_qubo):
-    x = model_qubo.variables("x", shape=(4,))
-    model_qubo.n_hot_constraint(x[(slice(0, 2),)], n=1, strength=10)
-    model_qubo.n_hot_constraint(x[1], n=1, strength=10)
-    model_qubo.n_hot_constraint(x[2], n=1, strength=10)
-    model_qubo.n_hot_constraint(x, n=1, strength=10)
-    physical = model_qubo.to_physical()
+def test_logical_model_to_physical_with_n_hot_constraint_randomly_qubo(qubo):
+    x = qubo.variables("x", shape=(4,))
+    qubo.n_hot_constraint(x[(slice(0, 2),)], n=1, strength=10)
+    qubo.n_hot_constraint(x[1], n=1, strength=10)
+    qubo.n_hot_constraint(x[2], n=1, strength=10)
+    qubo.n_hot_constraint(x, n=1, strength=10)
+    physical = qubo.to_physical()
 
     for i in range(3):
         assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == 10.0
@@ -171,16 +171,16 @@ def test_logical_model_to_physical_with_n_hot_constraint_randomly_qubo(model_qub
             assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -20.0
 
 
-def test_logical_model_to_physical_with_n_hot_constraint_randomly_ising(model):
-    x = model.variables("x", shape=(4,))
-    model.n_hot_constraint(x[(slice(0, 2),)], n=1)
-    physical = model.to_physical()
-    model.n_hot_constraint(x[1], n=1)
-    physical = model.to_physical()
-    model.n_hot_constraint(x[2], n=1)
-    physical = model.to_physical()
-    model.n_hot_constraint(x, n=1)
-    physical = model.to_physical()
+def test_logical_model_to_physical_with_n_hot_constraint_randomly_ising(ising):
+    x = ising.variables("x", shape=(4,))
+    ising.n_hot_constraint(x[(slice(0, 2),)], n=1)
+    physical = ising.to_physical()
+    ising.n_hot_constraint(x[1], n=1)
+    physical = ising.to_physical()
+    ising.n_hot_constraint(x[2], n=1)
+    physical = ising.to_physical()
+    ising.n_hot_constraint(x, n=1)
+    physical = ising.to_physical()
 
     for i in range(3):
         assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == -2.0
@@ -189,17 +189,17 @@ def test_logical_model_to_physical_with_n_hot_constraint_randomly_ising(model):
             assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -1.0
 
 
-def test_logical_model_to_physical_with_placeholder(model):
+def test_logical_model_to_physical_with_placeholder(ising):
     placeholder = {"a": 10.0}
-    model.to_physical(placeholder=placeholder)
+    ising.to_physical(placeholder=placeholder)
     # TODO
 
 
-def test_logical_model_to_physical_with_deleted_variables(model):
-    x = model.variables("x", shape=(3,))
-    y = model.variables("y", shape=(2, 2))  # noqa: F841
-    model.delete_variable(x[0])
-    physical = model.to_physical()
+def test_logical_model_to_physical_with_deleted_variables(ising):
+    x = ising.variables("x", shape=(3,))
+    y = ising.variables("y", shape=(2, 2))  # noqa: F841
+    ising.delete_variable(x[0])
+    physical = ising.to_physical()
 
     assert physical._label_to_index["x[1]"] == 0
     assert physical._label_to_index["x[2]"] == 1
@@ -218,11 +218,11 @@ def test_logical_model_to_physical_with_deleted_variables(model):
     assert len(physical._index_to_label) == 6
 
 
-def test_logical_model_to_physical_with_fixed_variables(model):
-    x = model.variables("x", shape=(2,))
-    model.add_interaction(x[0], coefficient=100.0)
-    model.fix_variable(x[0], 1)
-    physical = model.to_physical()
+def test_logical_model_to_physical_with_fixed_variables(ising):
+    x = ising.variables("x", shape=(2,))
+    ising.add_interaction(x[0], coefficient=100.0)
+    ising.fix_variable(x[0], 1)
+    physical = ising.to_physical()
 
     assert physical._label_to_index["x[0]"] == 0
     assert physical._label_to_index["x[1]"] == 1
@@ -235,30 +235,30 @@ def test_logical_model_to_physical_with_fixed_variables(model):
     assert physical._offset == -100.0
 
 
-def test_logical_model_convert_from_ising(model):
+def test_logical_model_convert_from_ising(ising):
     with pytest.raises(NotImplementedError):
-        model._convert_mtype()
+        ising._convert_mtype()
 
     with pytest.raises(NotImplementedError):
-        model.to_qubo()
+        ising.to_qubo()
 
     with pytest.warns(UserWarning):
-        model.to_ising()
+        ising.to_ising()
 
 
-def test_logical_model_convert_from_qubo(model_qubo):
+def test_logical_model_convert_from_qubo(qubo):
     with pytest.raises(NotImplementedError):
-        model_qubo._convert_mtype()
+        qubo._convert_mtype()
 
     with pytest.raises(NotImplementedError):
-        model_qubo.to_ising()
+        qubo.to_ising()
 
     with pytest.warns(UserWarning):
-        model_qubo.to_qubo()
+        qubo.to_qubo()
 
 
 @pytest.fixture
-def model_ising_x22():
+def ising_x22():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(2, 2))
     model.add_interaction(x[0, 0], coefficient=10.0)
@@ -267,7 +267,7 @@ def model_ising_x22():
 
 
 @pytest.fixture
-def model_qubo_a22():
+def qubo_a22():
     model = LogicalModel(mtype="qubo")
     a = model.variables("a", shape=(2, 2))
     model.add_interaction(a[0, 0], coefficient=10.0)
@@ -276,7 +276,7 @@ def model_qubo_a22():
 
 
 @pytest.fixture
-def model_ising_y22():
+def ising_y22():
     model = LogicalModel(mtype="ising")
     y = model.variables("y", shape=(2, 2))
     model.add_interaction(y[0, 0], coefficient=10.0)
@@ -285,7 +285,7 @@ def model_ising_y22():
 
 
 @pytest.fixture
-def model_ising_z3():
+def ising_z3():
     model = LogicalModel(mtype="ising")
     z = model.variables("z", shape=(3,))
     model.n_hot_constraint(target=z, n=1)
@@ -293,7 +293,7 @@ def model_ising_z3():
 
 
 @pytest.fixture
-def model_ising_x44():
+def ising_x44():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(4, 4))
     model.add_interaction(x[0, 0], coefficient=20.0)
@@ -303,20 +303,20 @@ def model_ising_x44():
 
 
 @pytest.fixture
-def model_ising_x999():
+def ising_x999():
     model = LogicalModel(mtype="ising")
     model.variables("x", shape=(9, 9, 9))
     return model
 
 
-def test_logical_model_merge_x22_y22(model_ising_x22, model_ising_y22):
-    model_ising_x22.merge(model_ising_y22)
-    _check_merge_of_x22_y22(model_ising_x22)
+def test_logical_model_merge_x22_y22(ising_x22, ising_y22):
+    ising_x22.merge(ising_y22)
+    _check_merge_of_x22_y22(ising_x22)
 
 
-def test_logical_model_merge_y22_x22(model_ising_y22, model_ising_x22):
-    model_ising_y22.merge(model_ising_x22)
-    _check_merge_of_x22_y22(model_ising_y22)
+def test_logical_model_merge_y22_x22(ising_y22, ising_x22):
+    ising_y22.merge(ising_x22)
+    _check_merge_of_x22_y22(ising_y22)
 
 
 def _check_merge_of_x22_y22(model):
@@ -340,14 +340,14 @@ def _check_merge_of_x22_y22(model):
     assert model.get_fixed_size() == 0
 
 
-def test_logical_model_merge_x22_x44(model_ising_x22, model_ising_x44):
-    model_ising_x22.merge(model_ising_x44)
-    _check_merge_of_x22_x44(model_ising_x22)
+def test_logical_model_merge_x22_x44(ising_x22, ising_x44):
+    ising_x22.merge(ising_x44)
+    _check_merge_of_x22_x44(ising_x22)
 
 
-def test_logical_model_merge_x44_x22(model_ising_x44, model_ising_x22):
-    model_ising_x44.merge(model_ising_x22)
-    _check_merge_of_x22_x44(model_ising_x44)
+def test_logical_model_merge_x44_x22(ising_x44, ising_x22):
+    ising_x44.merge(ising_x22)
+    _check_merge_of_x22_x44(ising_x44)
 
 
 def _check_merge_of_x22_x44(model):
@@ -378,93 +378,93 @@ def _check_merge_of_x22_x44(model):
     assert model.get_fixed_size() == 0
 
 
-def test_logical_model_merge_with_constraints(model_ising_x22, model_ising_z3):
-    model_ising_x22.merge(model_ising_z3)
+def test_logical_model_merge_with_constraints(ising_x22, ising_z3):
+    ising_x22.merge(ising_z3)
 
-    assert len(model_ising_x22.get_constraints()) == 1
-    assert "Default N-hot Constraint" in model_ising_x22.get_constraints()
-    assert model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._n == 1
-    assert len(model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
-    assert len(model_ising_x22._interactions_array["name"]) == 2 + 6
-
-
-def test_logical_model_merge_with_constraints_both(model_ising_x22, model_ising_z3):
-    z = model_ising_x22.variables("z", shape=(2,))
-    model_ising_x22.n_hot_constraint(z, n=2, label="my label")
-    model_ising_x22.merge(model_ising_z3)
-
-    assert len(model_ising_x22._constraints) == 2
-    assert "Default N-hot Constraint" in model_ising_x22.get_constraints()
-    assert "my label" in model_ising_x22.get_constraints()
-    assert model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._n == 1
-    assert len(model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
-    assert model_ising_x22.get_constraints_by_label("my label")._n == 2
-    assert len(model_ising_x22.get_constraints_by_label("my label")._variables) == 2
-    assert len(model_ising_x22._interactions_array["name"]) == 2 + 3 + 6
+    assert len(ising_x22.get_constraints()) == 1
+    assert "Default N-hot Constraint" in ising_x22.get_constraints()
+    assert ising_x22.get_constraints_by_label("Default N-hot Constraint")._n == 1
+    assert len(ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
+    assert len(ising_x22._interactions_array["name"]) == 2 + 6
 
 
-def test_logical_model_merge_with_constraints_both_invalid(model_ising_x22, model_ising_z3):
+def test_logical_model_merge_with_constraints_both(ising_x22, ising_z3):
+    z = ising_x22.variables("z", shape=(2,))
+    ising_x22.n_hot_constraint(z, n=2, label="my label")
+    ising_x22.merge(ising_z3)
+
+    assert len(ising_x22._constraints) == 2
+    assert "Default N-hot Constraint" in ising_x22.get_constraints()
+    assert "my label" in ising_x22.get_constraints()
+    assert ising_x22.get_constraints_by_label("Default N-hot Constraint")._n == 1
+    assert len(ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
+    assert ising_x22.get_constraints_by_label("my label")._n == 2
+    assert len(ising_x22.get_constraints_by_label("my label")._variables) == 2
+    assert len(ising_x22._interactions_array["name"]) == 2 + 3 + 6
+
+
+def test_logical_model_merge_with_constraints_both_invalid(ising_x22, ising_z3):
     # Both models have constraints with the same label name, cannot merge.
-    z = model_ising_x22.variables("z", shape=(2,))
-    model_ising_x22.n_hot_constraint(z, n=1)
+    z = ising_x22.variables("z", shape=(2,))
+    ising_x22.n_hot_constraint(z, n=1)
     with pytest.raises(ValueError):
-        model_ising_x22.merge(model_ising_z3)
+        ising_x22.merge(ising_z3)
 
 
-def test_logical_model_merge_with_delete(model_ising_x22, model_ising_x44):
-    x = model_ising_x22.get_variables_by_name(name="x")
-    model_ising_x22.delete_variable(x[1, 1])
-    x = model_ising_x44.get_variables_by_name(name="x")
-    model_ising_x44.delete_variable(target=x[3, 3])
-    model_ising_x22.merge(model_ising_x44)
+def test_logical_model_merge_with_delete(ising_x22, ising_x44):
+    x = ising_x22.get_variables_by_name(name="x")
+    ising_x22.delete_variable(x[1, 1])
+    x = ising_x44.get_variables_by_name(name="x")
+    ising_x44.delete_variable(target=x[3, 3])
+    ising_x22.merge(ising_x44)
 
-    assert model_ising_x22.get_deleted_size() == 2
-    assert "x[1][1]" in model_ising_x22.get_deleted_array()
-    assert "x[3][3]" in model_ising_x22.get_deleted_array()
+    assert ising_x22.get_deleted_size() == 2
+    assert "x[1][1]" in ising_x22.get_deleted_array()
+    assert "x[3][3]" in ising_x22.get_deleted_array()
 
-    assert model_ising_x22.select_interaction("name == 'x[0][0]*x[1][1]'")["removed"].values[0]
-    assert not model_ising_x22.select_interaction("name == 'x[1][1]*x[2][2]'")["removed"].values[0]
-    assert model_ising_x22.select_interaction("name == 'x[3][3]'")["removed"].values[0]
-
-
-def test_logical_model_merge_with_fix(model_ising_x22, model_ising_x44):
-    x = model_ising_x22.get_variables_by_name(name="x")
-    model_ising_x22.fix_variable(x[1, 1], 1)
-    x = model_ising_x44.get_variables_by_name(name="x")
-    model_ising_x44.fix_variable(target=x[3, 3], value=-1)
-    model_ising_x22.merge(model_ising_x44)
-
-    assert model_ising_x22.get_fixed_size() == 2
-    assert "x[1][1]" in model_ising_x22.get_fixed_array()
-    assert "x[3][3]" in model_ising_x22.get_fixed_array()
-
-    assert model_ising_x22.select_interaction("name == 'x[0][0]*x[1][1]'")["removed"].values[0]
-    assert not model_ising_x22.select_interaction("name == 'x[1][1]*x[2][2]'")["removed"].values[0]
-    assert model_ising_x22.select_interaction("name == 'x[3][3]'")["removed"].values[0]
-    assert model_ising_x22.select_interaction("name == 'x[0][0] (before fixed: x[0][0]*x[1][1])'")["coefficient"].values[0]
-    assert model_ising_x22.get_offset() == 22.0 * 2.0
+    assert ising_x22.select_interaction("name == 'x[0][0]*x[1][1]'")["removed"].values[0]
+    assert not ising_x22.select_interaction("name == 'x[1][1]*x[2][2]'")["removed"].values[0]
+    assert ising_x22.select_interaction("name == 'x[3][3]'")["removed"].values[0]
 
 
-def test_logical_model_merge_x22_a22_invalid(model_ising_x22, model_qubo_a22):
+def test_logical_model_merge_with_fix(ising_x22, ising_x44):
+    x = ising_x22.get_variables_by_name(name="x")
+    ising_x22.fix_variable(x[1, 1], 1)
+    x = ising_x44.get_variables_by_name(name="x")
+    ising_x44.fix_variable(target=x[3, 3], value=-1)
+    ising_x22.merge(ising_x44)
+
+    assert ising_x22.get_fixed_size() == 2
+    assert "x[1][1]" in ising_x22.get_fixed_array()
+    assert "x[3][3]" in ising_x22.get_fixed_array()
+
+    assert ising_x22.select_interaction("name == 'x[0][0]*x[1][1]'")["removed"].values[0]
+    assert not ising_x22.select_interaction("name == 'x[1][1]*x[2][2]'")["removed"].values[0]
+    assert ising_x22.select_interaction("name == 'x[3][3]'")["removed"].values[0]
+    assert ising_x22.select_interaction("name == 'x[0][0] (before fixed: x[0][0]*x[1][1])'")["coefficient"].values[0]
+    assert ising_x22.get_offset() == 22.0 * 2.0
+
+
+def test_logical_model_merge_x22_a22_invalid(ising_x22, qubo_a22):
     with pytest.raises(ValueError):
-        model_ising_x22.merge(model_qubo_a22)
-
-    with pytest.raises(ValueError):
-        model_qubo_a22.merge(model_ising_x22)
-
-
-def test_logical_model_merge_x22_x999_invalid(model_ising_x22, model_ising_x999):
-    with pytest.raises(ValueError):
-        model_ising_x22.merge(model_ising_x999)
+        ising_x22.merge(qubo_a22)
 
     with pytest.raises(ValueError):
-        model_ising_x999.merge(other=model_ising_x22)
+        qubo_a22.merge(ising_x22)
+
+
+def test_logical_model_merge_x22_x999_invalid(ising_x22, ising_x999):
+    with pytest.raises(ValueError):
+        ising_x22.merge(ising_x999)
+
+    with pytest.raises(ValueError):
+        ising_x999.merge(other=ising_x22)
 
     with pytest.raises(TypeError):
-        model_ising_x999.merge("other type")
+        ising_x999.merge("other type")
 
 
-def test_logical_model_merge_physical_invalid(model_ising_x22, model_ising_x44):
-    physical = model_ising_x44.to_physical()
+def test_logical_model_merge_physical_invalid(ising_x22, ising_x44):
+    physical = ising_x44.to_physical()
     with pytest.raises(TypeError):
-        model_ising_x22.merge(physical)
+        ising_x22.merge(physical)
