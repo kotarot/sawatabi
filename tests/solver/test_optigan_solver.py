@@ -44,7 +44,7 @@ def physical():
     return physical
 
 
-def test_optigan_solver_with_logical_model(mocker, physical):
+def test_optigan_solver(mocker, physical):
     directory = os.path.dirname(__file__)
     solver = OptiganSolver(config=f"{directory}/.optigan.yml")
 
@@ -69,7 +69,7 @@ def test_optigan_solver_with_logical_model(mocker, physical):
         assert sample == {"x[0]": 1, "x[1]": 0}
 
 
-def test_optigan_solver_with_logical_model_without_gzip(mocker, physical):
+def test_optigan_solver_without_gzip(mocker, physical):
     directory = os.path.dirname(__file__)
     solver = OptiganSolver(config=f"{directory}/.optigan.yml")
 
@@ -80,7 +80,7 @@ def test_optigan_solver_with_logical_model_without_gzip(mocker, physical):
     assert isinstance(resultset, SawatabiSampleSet)
 
 
-def test_optigan_solver_with_logical_model_with_invalid_response(mocker, physical):
+def test_optigan_solver_with_invalid_response(mocker, physical):
     directory = os.path.dirname(__file__)
     solver = OptiganSolver(config=f"{directory}/.optigan.yml")
 
