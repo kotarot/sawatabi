@@ -16,4 +16,4 @@ from sawatabi import model, solver, utils
 from sawatabi.base_mixin import BaseMixin
 from sawatabi.__version__ import __version__, __version_info__
 
-__all__ = ["BaseMixin", "model", "solver", "utils"]
+__all__ = ["BaseMixin", "model", "solver", "utils", "__version__", "__version_info__"]
