@@ -81,10 +81,24 @@ class PhysicalModel(AbstractModel):
     # Built-in functions
     ################################
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, PhysicalModel)
+            and (self._mtype == other._mtype)
+            and (self._raw_interactions == other._raw_interactions)
+            and (self._offset == other._offset)
+            and (self._label_to_index == other._label_to_index)
+            and (self._index_to_label == other._index_to_label)
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __repr__(self):
         s = "PhysicalModel({"
         s += "'mtype': '" + str(self._mtype) + "', "
-        s += "'raw_interactions': " + str(self._raw_interactions) + "})"
+        s += "'raw_interactions': " + str(self._raw_interactions) + "}), "
+        s += "'offset': " + str(self._offset)
         return s
 
     def __str__(self):
@@ -98,5 +112,6 @@ class PhysicalModel(AbstractModel):
         s.append(self.append_prefix(pprint.pformat(self._raw_interactions[constants.INTERACTION_LINEAR]), length=4))
         s.append("┃  quadratic:")
         s.append(self.append_prefix(pprint.pformat(self._raw_interactions[constants.INTERACTION_QUADRATIC]), length=4))
+        s.append("┣━ offset: " + str(self._offset))
         s.append("┗" + ("━" * 64))
         return "\n".join(s)

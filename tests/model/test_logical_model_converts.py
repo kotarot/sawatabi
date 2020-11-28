@@ -218,6 +218,23 @@ def test_logical_model_to_physical_with_deleted_variables(model):
     assert len(physical._index_to_label) == 6
 
 
+def test_logical_model_to_physical_with_fixed_variables(model):
+    x = model.variables("x", shape=(2,))
+    model.add_interaction(x[0], coefficient=100.0)
+    model.fix_variable(x[0], 1)
+    physical = model.to_physical()
+
+    assert physical._label_to_index["x[0]"] == 0
+    assert physical._label_to_index["x[1]"] == 1
+    assert len(physical._label_to_index) == 2
+
+    assert physical._index_to_label[0] == "x[0]"
+    assert physical._index_to_label[1] == "x[1]"
+    assert len(physical._index_to_label) == 2
+
+    assert physical._offset == -100.0
+
+
 def test_logical_model_convert_from_ising(model):
     with pytest.raises(NotImplementedError):
         model._convert_mtype()

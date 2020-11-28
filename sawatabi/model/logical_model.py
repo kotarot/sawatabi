@@ -441,7 +441,7 @@ class LogicalModel(AbstractModel):
         added_variables = set()
         for t in target:
             added_variables = added_variables.union(set([t]))
-            self._constraints[label].add(set([t]))
+            self._constraints[label].add_variable(set([t]))
 
         # If delete_flag is set, the target variable will be deleted from the constraint.
         if delete_flag:
@@ -552,6 +552,7 @@ class LogicalModel(AbstractModel):
             physical.add_interaction(k, body=constants.INTERACTION_LINEAR, coefficient=v)
         for k, v in quadratic.items():
             physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
+        physical._offset = self._offset
 
         # save the last physical model
         self._previous_physical_model = physical
@@ -736,6 +737,23 @@ class LogicalModel(AbstractModel):
     ################################
     # Built-in functions
     ################################
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, LogicalModel)
+            and (self._mtype == other._mtype)
+            and (self._variables == other._variables)
+            and (self._interactions_array == other._interactions_array)
+            and (self._interactions_attrs == other._interactions_attrs)
+            and (self._interactions_length == other._interactions_length)
+            and (self._constraints == other._constraints)
+            and (self._deleted == other._deleted)
+            and (self._fixed == other._fixed)
+            and (self._offset == other._offset)
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __repr__(self):
         self._update_interactions_dataframe_from_arrays()

@@ -350,6 +350,36 @@ def test_logical_model_get_attributes(model):
 ################################
 
 
+def test_logical_model_eq():
+    model_a = _create_ising_model_for_eq()
+    model_b = _create_ising_model_for_eq()
+    assert model_a == model_b
+
+
+def test_logical_model_ne():
+    model_a = LogicalModel(mtype="ising")
+    model_b = LogicalModel(mtype="qubo")
+    assert model_a != model_b
+    assert model_a != "another type"
+
+
+def _create_ising_model_for_eq():
+    model = LogicalModel(mtype="ising")
+    x = model.variables(name="x", shape=(4,))
+    z = model.variables(name="z", shape=(4,))
+    model.add_interaction(target=x[0], coefficient=1.1)
+    model.add_interaction(target=(x[0], x[1]), coefficient=2.2, scale=3.3, attributes={"foo": "bar"})
+
+    model.add_interaction(target=x[2], coefficient=4.4)
+    model.add_interaction(target=x[3], coefficient=5.5)
+    model.remove_interaction(target=x[2])
+    model.fix_variable(target=x[3], value=1)
+
+    model.n_hot_constraint(target=z, n=1)
+
+    return model
+
+
 def test_logical_model_repr(model):
     assert isinstance(model.__repr__(), str)
     assert "LogicalModel({" in model.__repr__()

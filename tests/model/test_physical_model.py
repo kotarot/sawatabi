@@ -103,11 +103,34 @@ def test_convert_to_polynomial(model_ising):
 ################################
 
 
+def test_physical_model_eq():
+    assert PhysicalModel(mtype="ising") == PhysicalModel(mtype="ising")
+
+    p1 = _create_ising_model_for_eq()
+    p2 = _create_ising_model_for_eq()
+    assert p1 == p2
+
+
+def test_physical_model_ne():
+    assert PhysicalModel(mtype="ising") != PhysicalModel(mtype="qubo")
+
+
+def _create_ising_model_for_eq():
+    model = LogicalModel(mtype="ising")
+    x = model.variables(name="x", shape=(3,))
+    model.delete_variable(x[0])
+    model.add_interaction(x[1], coefficient=1.0)
+    model.add_interaction(x[2], coefficient=2.0)
+    model.add_interaction((x[1], x[2]), coefficient=3.0)
+    return model.to_physical()
+
+
 def test_physical_model_repr(simple_model):
     assert isinstance(simple_model.__repr__(), str)
     assert "PhysicalModel({" in simple_model.__repr__()
     assert "'mtype':" in simple_model.__repr__()
     assert "'raw_interactions':" in simple_model.__repr__()
+    assert "'offset':" in simple_model.__repr__()
 
 
 def test_physical_model_str(simple_model):
@@ -117,3 +140,4 @@ def test_physical_model_str(simple_model):
     assert "raw_interactions:" in simple_model.__str__()
     assert "linear:" in simple_model.__str__()
     assert "quadratic:" in simple_model.__str__()
+    assert "offset:" in simple_model.__str__()
