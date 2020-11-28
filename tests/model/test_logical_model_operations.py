@@ -41,52 +41,52 @@ def test_logical_model_select(ising):
     ising.add_interaction((x[0, 0], x[0, 1]), coefficient=30.0, timestamp=1234567890123, attributes={"foo": "bar", "my attr": "my value"})
 
     # single result
-    res = ising.select_interaction("name == 'x[0][0]'")
-    assert type(res) == pd.core.frame.DataFrame
-    assert len(res) == 1
-    assert res["name"].values[0] == "x[0][0]"
-    assert res["key"].values[0] == "x[0][0]"
-    assert id(res["interacts"].values[0]) == id(x[0][0])
-    assert res["coefficient"].values[0] == 10.0
+    selected = ising.select_interaction("name == 'x[0][0]'")
+    assert type(selected) == pd.core.frame.DataFrame
+    assert len(selected) == 1
+    assert selected["name"].values[0] == "x[0][0]"
+    assert selected["key"].values[0] == "x[0][0]"
+    assert id(selected["interacts"].values[0]) == id(x[0][0])
+    assert selected["coefficient"].values[0] == 10.0
 
     # dict format
-    res = ising.select_interaction("name == 'my name'", fmt="dict")
-    assert type(res) == dict
-    assert len(res) == 1
-    key = list(res.keys())[0]
-    assert res[key]["name"] == "my name"
-    assert res[key]["key"] == "x[0][1]"
-    assert id(res[key]["interacts"]) == id(x[0][1])
-    assert res[key]["coefficient"] == 20.0
+    selected = ising.select_interaction("name == 'my name'", fmt="dict")
+    assert type(selected) == dict
+    assert len(selected) == 1
+    key = list(selected.keys())[0]
+    assert selected[key]["name"] == "my name"
+    assert selected[key]["key"] == "x[0][1]"
+    assert id(selected[key]["interacts"]) == id(x[0][1])
+    assert selected[key]["coefficient"] == 20.0
 
     # multiple results
-    res = ising.select_interaction("timestamp > 1234567890000")
-    assert len(res) == 3
-    assert res["name"].values[0] == "x[0][0]"
-    assert res["name"].values[1] == "my name"
-    assert res["name"].values[2] == "x[0][0]*x[0][1]"
-    assert res["coefficient"].values[0] == 10.0
-    assert res["coefficient"].values[1] == 20.0
-    assert res["coefficient"].values[2] == 30.0
-    assert res["attributes.foo"].values[2] == "bar"
-    assert res["attributes.my attr"].values[2] == "my value"
+    selected = ising.select_interaction("timestamp > 1234567890000")
+    assert len(selected) == 3
+    assert selected["name"].values[0] == "x[0][0]"
+    assert selected["name"].values[1] == "my name"
+    assert selected["name"].values[2] == "x[0][0]*x[0][1]"
+    assert selected["coefficient"].values[0] == 10.0
+    assert selected["coefficient"].values[1] == 20.0
+    assert selected["coefficient"].values[2] == 30.0
+    assert selected["attributes.foo"].values[2] == "bar"
+    assert selected["attributes.my attr"].values[2] == "my value"
 
     # empty
-    res = ising.select_interaction("timestamp < 1234567890000")
-    assert len(res) == 0
+    selected = ising.select_interaction("timestamp < 1234567890000")
+    assert len(selected) == 0
 
     # attributes
-    res = ising.select_interaction("`attributes.foo` == 'bar'")
-    assert len(res) == 1
-    assert res["name"].values[0] == "x[0][0]*x[0][1]"
+    selected = ising.select_interaction("`attributes.foo` == 'bar'")
+    assert len(selected) == 1
+    assert selected["name"].values[0] == "x[0][0]*x[0][1]"
 
-    res = ising.select_interaction("`attributes.my attr` == 'my value'")
-    assert len(res) == 1
-    assert res["name"].values[0] == "x[0][0]*x[0][1]"
+    selected = ising.select_interaction("`attributes.my attr` == 'my value'")
+    assert len(selected) == 1
+    assert selected["name"].values[0] == "x[0][0]*x[0][1]"
 
     # invalid query
     with pytest.raises(pd.core.computation.ops.UndefinedVariableError):
-        res = ising.select_interaction("invalid == 'invalid'")
+        ising.select_interaction("invalid == 'invalid'")
 
     # invalid format
     with pytest.raises(ValueError):
@@ -99,11 +99,11 @@ def test_logical_model_select_interactions_by_variable(ising):
     ising.add_interaction(x[0, 1], coefficient=20.0)
     ising.add_interaction((x[0, 0], x[0, 1]), coefficient=30.0)
 
-    res = ising.select_interactions_by_variable(x[0, 0])
-    assert type(res) == np.ndarray
-    assert len(res) == 2
-    assert res[0] == "x[0][0]"
-    assert res[1] == "x[0][0]*x[0][1]"
+    selected = ising.select_interactions_by_variable(x[0, 0])
+    assert type(selected) == np.ndarray
+    assert len(selected) == 2
+    assert selected[0] == "x[0][0]"
+    assert selected[1] == "x[0][0]*x[0][1]"
 
 
 ################################
@@ -127,51 +127,51 @@ def test_logical_model_add(ising):
     assert ising._interactions_array["scale"][0] == 1.0
     assert ising._interactions_length == 1
 
-    res = ising.select_interaction("name == 'x[0][0]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0][0]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 1
-    assert res["name"].values[0] == "x[0][0]"
-    assert res["key"].values[0] == "x[0][0]"
-    assert res["interacts"].values[0] == x[0, 0]
-    assert id(res["interacts"].values[0]) == id(x[0, 0])
+    assert selected["name"].values[0] == "x[0][0]"
+    assert selected["key"].values[0] == "x[0][0]"
+    assert selected["interacts"].values[0] == x[0, 0]
+    assert id(selected["interacts"].values[0]) == id(x[0, 0])
     assert ising._interactions[ising._interactions["name"] == "x[0][0]"]["coefficient"].values[0] == 1.0
     assert ising._interactions[ising._interactions["name"] == "x[0][0]"]["scale"].values[0] == 1.0
 
     ising.add_interaction(x[0, 1], coefficient=2.0, scale=0.1)
-    res = ising.select_interaction("name == 'x[0][1]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0][1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
-    assert res["name"].values[0] == "x[0][1]"
+    assert selected["name"].values[0] == "x[0][1]"
     assert ising._interactions[ising._interactions["name"] == "x[0][1]"]["coefficient"].values[0] == 2.0
     assert ising._interactions[ising._interactions["name"] == "x[0][1]"]["scale"].values[0] == 0.1
 
     # attributes
     ising.add_interaction(x[1, 0], coefficient=3.0, attributes={"foo": "bar"})
-    res = ising.select_interaction("name == 'x[1][0]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[1][0]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 3
-    assert res["name"].values[0] == "x[1][0]"
+    assert selected["name"].values[0] == "x[1][0]"
     assert ising._interactions[ising._interactions["name"] == "x[1][0]"]["coefficient"].values[0] == 3.0
     assert ising._interactions[ising._interactions["name"] == "x[1][0]"]["attributes.foo"].values[0] == "bar"
 
     # timestamp
     ising.add_interaction((x[0, 0], x[0, 1]), coefficient=-4.0, timestamp=1234567890123)
-    res = ising.select_interaction("name == 'x[0][0]*x[0][1]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0][0]*x[0][1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 4
-    assert res["name"].values[0] == "x[0][0]*x[0][1]"
-    assert res["key"].values[0] == ("x[0][0]", "x[0][1]")
-    assert res["interacts"].values[0] == (x[0, 0], x[0, 1])
-    assert id(res["interacts"].values[0][0]) == id(x[0, 0])
-    assert id(res["interacts"].values[0][1]) == id(x[0, 1])
+    assert selected["name"].values[0] == "x[0][0]*x[0][1]"
+    assert selected["key"].values[0] == ("x[0][0]", "x[0][1]")
+    assert selected["interacts"].values[0] == (x[0, 0], x[0, 1])
+    assert id(selected["interacts"].values[0][0]) == id(x[0, 0])
+    assert id(selected["interacts"].values[0][1]) == id(x[0, 1])
     assert ising._interactions[ising._interactions["name"] == "x[0][0]*x[0][1]"]["coefficient"].values[0] == -4.0
     assert ising._interactions[ising._interactions["name"] == "x[0][0]*x[0][1]"]["timestamp"].values[0] == 1234567890123
 
     # Test key order
     ising.add_interaction((x[1, 1], x[1, 0]), coefficient=-4.0, timestamp=1234567890123)
-    res = ising.select_interaction("name == 'x[1][0]*x[1][1]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[1][0]*x[1][1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 5
-    assert res["name"].values[0] == "x[1][0]*x[1][1]"
-    assert res["key"].values[0] == ("x[1][0]", "x[1][1]")
-    assert res["interacts"].values[0] == (x[1, 0], x[1, 1])
-    assert id(res["interacts"].values[0][0]) == id(x[1, 0])
-    assert id(res["interacts"].values[0][1]) == id(x[1, 1])
+    assert selected["name"].values[0] == "x[1][0]*x[1][1]"
+    assert selected["key"].values[0] == ("x[1][0]", "x[1][1]")
+    assert selected["interacts"].values[0] == (x[1, 0], x[1, 1])
+    assert id(selected["interacts"].values[0][0]) == id(x[1, 0])
+    assert id(selected["interacts"].values[0][1]) == id(x[1, 1])
     assert ising._interactions[ising._interactions["name"] == "x[1][0]*x[1][1]"]["coefficient"].values[0] == -4.0
     assert ising._interactions[ising._interactions["name"] == "x[1][0]*x[1][1]"]["timestamp"].values[0] == 1234567890123
 
@@ -227,14 +227,14 @@ def test_logical_model_add_duplicate(ising):
     x = ising.variables("x", shape=(2,))
 
     ising.add_interaction(x[0], coefficient=1.0)
-    res = ising.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 1
-    assert res["name"].values[0] == "x[0]"
+    assert selected["name"].values[0] == "x[0]"
 
     ising.add_interaction(x[0], name="my name", coefficient=1.0)
-    res = ising.select_interaction("name == 'my name'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'my name'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
-    assert res["name"].values[0] == "my name"
+    assert selected["name"].values[0] == "my name"
 
 
 def test_logical_model_add_duplicate_invalid(ising):
@@ -267,13 +267,13 @@ def test_logical_model_update(ising):
 
     # update by a variable
     ising.update_interaction(x[0], coefficient=10.0)
-    res = ising.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
     assert ising._interactions[ising._interactions["name"] == "x[0]"]["coefficient"].values[0] == 10.0
-    assert res["name"].values[0] == "x[0]"
-    assert res["key"].values[0] == "x[0]"
-    assert res["interacts"].values[0] == x[0]
-    assert id(res["interacts"].values[0]) == id(x[0])
+    assert selected["name"].values[0] == "x[0]"
+    assert selected["key"].values[0] == "x[0]"
+    assert selected["interacts"].values[0] == x[0]
+    assert id(selected["interacts"].values[0]) == id(x[0])
 
     # update by a target
     ising.update_interaction(target=x[0], coefficient=100.0)
@@ -291,25 +291,25 @@ def test_logical_model_update(ising):
 
     # update by a pair of variables
     ising.update_interaction(target=(x[0], x[1]), coefficient=20.0)
-    res = ising.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
     assert ising._interactions[ising._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 20.0
-    assert res["name"].values[0] == "x[0]*x[1]"
-    assert res["key"].values[0] == ("x[0]", "x[1]")
-    assert res["interacts"].values[0] == (x[0], x[1])
-    assert id(res["interacts"].values[0][0]) == id(x[0])
-    assert id(res["interacts"].values[0][1]) == id(x[1])
+    assert selected["name"].values[0] == "x[0]*x[1]"
+    assert selected["key"].values[0] == ("x[0]", "x[1]")
+    assert selected["interacts"].values[0] == (x[0], x[1])
+    assert id(selected["interacts"].values[0][0]) == id(x[0])
+    assert id(selected["interacts"].values[0][1]) == id(x[1])
 
     # update by a pair of variables (reversed order)
     ising.update_interaction(target=(x[1], x[0]), coefficient=200.0)
-    res = ising.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
     assert ising._interactions[ising._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 200.0
-    assert res["name"].values[0] == "x[0]*x[1]"
-    assert res["key"].values[0] == ("x[0]", "x[1]")
-    assert res["interacts"].values[0] == (x[0], x[1])
-    assert id(res["interacts"].values[0][0]) == id(x[0])
-    assert id(res["interacts"].values[0][1]) == id(x[1])
+    assert selected["name"].values[0] == "x[0]*x[1]"
+    assert selected["key"].values[0] == ("x[0]", "x[1]")
+    assert selected["interacts"].values[0] == (x[0], x[1])
+    assert id(selected["interacts"].values[0][0]) == id(x[0])
+    assert id(selected["interacts"].values[0][1]) == id(x[1])
 
     # update by a name
     ising.update_interaction(name="x[0]*x[1]", coefficient=2000.0)
@@ -353,24 +353,24 @@ def test_logical_model_update_without_initialize(ising):
     with pytest.warns(UserWarning):
         ising.update_interaction(x[0], coefficient=11.0)
 
-    res = ising.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 1
     assert ising._interactions[ising._interactions["name"] == "x[0]"]["coefficient"].values[0] == 11.0
     assert ising._interactions[ising._interactions["name"] == "x[0]"]["scale"].values[0] == 1.0
-    assert res["name"].values[0] == "x[0]"
-    assert res["key"].values[0] == ("x[0]")
-    assert res["interacts"].values[0] == (x[0])
+    assert selected["name"].values[0] == "x[0]"
+    assert selected["key"].values[0] == ("x[0]")
+    assert selected["interacts"].values[0] == (x[0])
 
     with pytest.warns(UserWarning):
         ising.update_interaction((x[0], x[1]), coefficient=22.0, scale=33.0)
 
-    res = ising.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
     assert ising._interactions[ising._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 22.0
     assert ising._interactions[ising._interactions["name"] == "x[0]*x[1]"]["scale"].values[0] == 33.0
-    assert res["name"].values[0] == "x[0]*x[1]"
-    assert res["key"].values[0] == ("x[0]", "x[1]")
-    assert res["interacts"].values[0] == (x[0], x[1])
+    assert selected["name"].values[0] == "x[0]*x[1]"
+    assert selected["key"].values[0] == ("x[0]", "x[1]")
+    assert selected["interacts"].values[0] == (x[0], x[1])
 
 
 def test_logical_model_update_invalid(ising):
@@ -433,22 +433,22 @@ def test_logical_model_remove_by_target(ising):
 
     # remove
     ising.remove_interaction(x[0])
-    res = ising.select_interaction("key == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("key == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
-    assert res["name"].values[0] == "x[0]"
-    assert res["key"].values[0] == "x[0]"
-    assert res["coefficient"].values[0] == 1.0
-    assert res["dirty"].values[0]
-    assert res["removed"].values[0]
+    assert selected["name"].values[0] == "x[0]"
+    assert selected["key"].values[0] == "x[0]"
+    assert selected["coefficient"].values[0] == 1.0
+    assert selected["dirty"].values[0]
+    assert selected["removed"].values[0]
 
     ising.remove_interaction(name="x[1]")
-    res = ising.select_interaction("key == 'x[1]'")  # Side effect: Internal interactions DataFrame is updated
+    selected = ising.select_interaction("key == 'x[1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 2
-    assert res["name"].values[0] == "x[1]"
-    assert res["key"].values[0] == "x[1]"
-    assert res["coefficient"].values[0] == 10.0
-    assert res["dirty"].values[0]
-    assert res["removed"].values[0]
+    assert selected["name"].values[0] == "x[1]"
+    assert selected["key"].values[0] == "x[1]"
+    assert selected["coefficient"].values[0] == 10.0
+    assert selected["dirty"].values[0]
+    assert selected["removed"].values[0]
 
 
 def test_logical_model_remove_by_name(ising):
