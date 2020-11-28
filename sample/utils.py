@@ -17,9 +17,8 @@ import sawatabi
 
 def version():
     print("\n=== version ===\n")
-    print("version:", sawatabi.version())
-    print("version_info:", sawatabi.version_info())
     print("__version__:", sawatabi.__version__)
+    print("__version_info__:", sawatabi.__version_info__)
 
 
 def current_time():

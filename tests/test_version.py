@@ -18,11 +18,11 @@ import sawatabi
 
 
 def test_version_format():
-    assert re.match(r"^\d+.\d+.\d+(.(dev|a|b|rc)\d+)?$", sawatabi.version())
+    assert re.match(r"^\d+.\d+.\d+(.(dev|a|b|rc)\d+)?$", sawatabi.__version__)
 
 
 def test_version_info_format():
-    ver_info = sawatabi.version_info()
+    ver_info = sawatabi.__version_info__
     assert (len(ver_info) == 3) or (len(ver_info) == 4)
 
     assert isinstance(ver_info[0], int)
