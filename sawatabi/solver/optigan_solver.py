@@ -17,13 +17,13 @@ import io
 import json
 import os
 
+import dimod
 import requests
 import yaml
 
 import sawatabi.constants as constants
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.solver.abstract_solver import AbstractSolver
-from sawatabi.solver.sawatabi_sample_set import SawatabiSampleSet
 
 
 class OptiganSolver(AbstractSolver):
@@ -91,10 +91,11 @@ class OptiganSolver(AbstractSolver):
         result = response.json()
 
         # Create a sampleset object for return
-        sampleset = SawatabiSampleSet()
-        sampleset.info = result
-        sampleset.variables = list(model._index_to_label.values())
-        for i, spins in enumerate(result["spins"]):
-            sampleset.add_record(spins, result["energies"][i])
+        samples = []
+        for spins in result["spins"]:
+            sample = dict(zip(list(model._index_to_label.values()), spins))
+            samples.append(sample)
+        sampleset = dimod.SampleSet.from_samples(samples, dimod.BINARY, energy=result["energies"])
+        sampleset._info = result
 
         return sampleset

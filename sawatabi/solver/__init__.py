@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.solver.sawatabi_sample_set import SawatabiSampleSet
 from sawatabi.solver.abstract_solver import AbstractSolver
 from sawatabi.solver.local_solver import LocalSolver
 from sawatabi.solver.dwave_solver import DWaveSolver
 from sawatabi.solver.optigan_solver import OptiganSolver
 
-__all__ = ["SawatabiSampleSet", "AbstractSolver", "LocalSolver", "DWaveSolver", "OptiganSolver"]
+__all__ = ["AbstractSolver", "LocalSolver", "DWaveSolver", "OptiganSolver"]

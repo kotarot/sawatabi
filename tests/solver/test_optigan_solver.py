@@ -15,10 +15,11 @@
 import os
 
 import dimod
+import numpy as np
 import pytest
 
 from sawatabi.model import LogicalModel
-from sawatabi.solver import OptiganSolver, SawatabiSampleSet
+from sawatabi.solver import OptiganSolver
 
 
 class ResponseMock:
@@ -53,18 +54,21 @@ def test_optigan_solver(mocker, physical):
 
     resultset = solver.solve(physical, duplicate=True)
 
-    assert isinstance(resultset, SawatabiSampleSet)
+    assert isinstance(resultset, dimod.SampleSet)
     assert isinstance(resultset.info, dict)
     assert resultset.info["energies"] == [-1.0]
     assert resultset.info["spins"] == [[1, 0]]
-    assert isinstance(resultset.variables, list)
+    assert isinstance(resultset.variables, dimod.variables.Variables)
     assert resultset.variables == ["x[0]", "x[1]"]
-    assert isinstance(resultset.record, list)
-    assert resultset.record == [([1, 0], -1.0, 1)]
+    assert isinstance(resultset.record, np.recarray)
+    assert np.array_equal(resultset.record[0].sample, [1, 0])
+    assert resultset.record[0].energy == -1.0
+    assert resultset.record[0].num_occurrences == 1
     assert isinstance(resultset.vartype, dimod.Vartype)
     assert resultset.vartype == dimod.BINARY
-    assert isinstance(resultset.first, tuple)
-    assert resultset.first == ([1, 0], -1.0, 1)
+    assert resultset.first.sample == {"x[0]": 1, "x[1]": 0}
+    assert resultset.first.energy == -1.0
+    assert resultset.first.num_occurrences == 1
     for sample in resultset.samples():
         assert sample == {"x[0]": 1, "x[1]": 0}
 
@@ -77,7 +81,7 @@ def test_optigan_solver_without_gzip(mocker, physical):
     mocker.patch("requests.post", return_value=response_mock)
 
     resultset = solver.solve(physical, gzip_request=False, gzip_response=False)
-    assert isinstance(resultset, SawatabiSampleSet)
+    assert isinstance(resultset, dimod.SampleSet)
 
 
 def test_optigan_solver_with_invalid_response(mocker, physical):
