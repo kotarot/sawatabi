@@ -43,7 +43,7 @@ class BaseMixin:
     def _check_argument_type_in_tuple(name, values, atype):
         if len(values) == 0:
             raise TypeError(f"'{name}' must not be an empty tuple.")
-        if not isinstance(atype, list):
+        if not isinstance(atype, tuple):
             atype = [atype]
         for v in values:
             is_ok = False
@@ -52,7 +52,22 @@ class BaseMixin:
                     is_ok = True
             if not is_ok:
                 atypestr = [at.__name__ for at in atype]
-                raise TypeError(f"All elements in '{name}' must be one of {atypestr}.")
+                raise TypeError(f"All elements in tuple '{name}' must be one of {atypestr}.")
+
+    @staticmethod
+    def _check_argument_type_in_list(name, values, atype):
+        if len(values) == 0:
+            raise TypeError(f"'{name}' must not be an empty list.")
+        if not isinstance(atype, tuple):
+            atype = [atype]
+        for v in values:
+            is_ok = False
+            for at in atype:
+                if isinstance(v, at):
+                    is_ok = True
+            if not is_ok:
+                atypestr = [at.__name__ for at in atype]
+                raise TypeError(f"All elements in list '{name}' must be one of {atypestr}.")
 
     @staticmethod
     def _modeltype_to_vartype(mtype):
