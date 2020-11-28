@@ -256,24 +256,7 @@ class LogicalModel(AbstractModel):
     ################################
 
     def remove_interaction(self, target=None, name=""):
-        if (not target) and (not name):
-            raise ValueError("Either 'target' or 'name' must be specified.")
-        if target and name:
-            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
-
-        if target is not None:
-            interaction_info = self._get_interaction_info_from_target(target)
-
-        if name:
-            # Already given the specific name
-            self._check_argument_type("name", name, (str, tuple))
-            internal_name = name
-        else:
-            # Will be automatically named by the default name
-            internal_name = interaction_info["name"]
-
-        if not self._has_name(internal_name):
-            raise KeyError(f"An interaction named '{internal_name}' does not exist yet. Need to be added before updating.")
+        internal_name = self._get_internal_name_from_target_and_name(target, name)
 
         # Don't need to check this. Removing will be overwritten.
         # if self._is_removed(internal_name):
@@ -320,6 +303,28 @@ class LogicalModel(AbstractModel):
         else:
             raise TypeError("Invalid 'target'.")
         return {"body": body, "interacts": interacts, "key": key, "name": name}
+
+    def _get_internal_name_from_target_and_name(self, target, name):
+        if (not target) and (not name):
+            raise ValueError("Either 'target' or 'name' must be specified.")
+        if target and name:
+            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
+
+        if target is not None:
+            interaction_info = self._get_interaction_info_from_target(target)
+
+        if name:
+            # Already given the specific name
+            self._check_argument_type("name", name, (str, tuple))
+            internal_name = name
+        else:
+            # Will be automatically named by the default name
+            internal_name = interaction_info["name"]
+
+        if not self._has_name(internal_name):
+            raise KeyError(f"An interaction named '{internal_name}' does not exist yet in the model.")
+
+        return internal_name
 
     def _has_name(self, internal_name):
         return internal_name in self._interactions_array["name"]
@@ -647,17 +652,24 @@ class LogicalModel(AbstractModel):
             all_size += size
         return all_size
 
-    def get_attributes(self, target):
+    def get_attributes(self, target=None, name=""):
         """
         Returns a dict of attributes (keys and values) for the given variable or interaction.
         """
-        raise NotImplementedError
+        internal_name = self._get_internal_name_from_target_and_name(target, name)
+        idx = self._interactions_array["name"].index(internal_name)
+        res = {}
+        for attr in self._interactions_attrs:
+            res[attr] = self._interactions_array[attr][idx]
+        return res
 
-    def get_attribute(self, target, key):
+    def get_attribute(self, target=None, name="", key=""):
         """
         Returns the value of the key for the given variable or interaction.
         """
-        raise NotImplementedError
+        self._check_argument_type("key", key, str)
+        attributes = self.get_attributes(target, name)
+        return attributes[key]
 
     def get_constraints(self):
         """

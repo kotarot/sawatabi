@@ -866,11 +866,27 @@ def test_logical_model_get_fixed_array(model):
 
 def test_logical_model_get_attributes(model):
     x = model.variables("x", shape=(2,))
-    model.add_interaction(x[0], coefficient=10.0, attributes={"foo": "bar"})
-    with pytest.raises(NotImplementedError):
-        model.get_attributes(x[0])
-    with pytest.raises(NotImplementedError):
-        model.get_attribute(x[0], key="foo")
+    model.add_interaction(x[0], coefficient=10.0)
+    model.add_interaction(x[1], coefficient=11.0, attributes={"foo": "bar"})
+
+    attributes = model.get_attributes(x[0])
+    assert len(attributes) == 1
+    assert np.isnan(attributes["attributes.foo"])
+
+    attributes = model.get_attributes(target=x[1])
+    assert len(attributes) == 1
+    assert attributes["attributes.foo"] == "bar"
+
+    attributes = model.get_attributes(name="x[1]")
+    assert len(attributes) == 1
+    assert attributes["attributes.foo"] == "bar"
+
+    attribute = model.get_attribute(x[1], key="attributes.foo")
+    assert isinstance(attribute, str)
+    assert attribute == "bar"
+
+    with pytest.raises(KeyError):
+        model.get_attribute(name="x[1]", key="attributes.foofoo")
 
 
 ################################

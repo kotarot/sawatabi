@@ -362,10 +362,10 @@ def _check_merge_of_x22_x44(model):
 def test_logical_model_merge_with_constraints(model_ising_x22, model_ising_z3):
     model_ising_x22.merge(model_ising_z3)
 
-    assert len(model_ising_x22._constraints) == 1
-    assert "Default N-hot Constraint" in model_ising_x22._constraints
-    assert model_ising_x22._constraints["Default N-hot Constraint"]._n == 1
-    assert len(model_ising_x22._constraints["Default N-hot Constraint"]._variables) == 3
+    assert len(model_ising_x22.get_constraints()) == 1
+    assert "Default N-hot Constraint" in model_ising_x22.get_constraints()
+    assert model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._n == 1
+    assert len(model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
     assert len(model_ising_x22._interactions_array["name"]) == 2 + 6
 
 
@@ -375,12 +375,12 @@ def test_logical_model_merge_with_constraints_both(model_ising_x22, model_ising_
     model_ising_x22.merge(model_ising_z3)
 
     assert len(model_ising_x22._constraints) == 2
-    assert "Default N-hot Constraint" in model_ising_x22._constraints
-    assert "my label" in model_ising_x22._constraints
-    assert model_ising_x22._constraints["Default N-hot Constraint"]._n == 1
-    assert len(model_ising_x22._constraints["Default N-hot Constraint"]._variables) == 3
-    assert model_ising_x22._constraints["my label"]._n == 2
-    assert len(model_ising_x22._constraints["my label"]._variables) == 2
+    assert "Default N-hot Constraint" in model_ising_x22.get_constraints()
+    assert "my label" in model_ising_x22.get_constraints()
+    assert model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._n == 1
+    assert len(model_ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
+    assert model_ising_x22.get_constraints_by_label("my label")._n == 2
+    assert len(model_ising_x22.get_constraints_by_label("my label")._variables) == 2
     assert len(model_ising_x22._interactions_array["name"]) == 2 + 3 + 6
 
 
