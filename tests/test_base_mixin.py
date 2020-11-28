@@ -56,3 +56,27 @@ def test_vartype_to_modeltype():
 
     with pytest.raises(ValueError):
         base._vartype_to_modeltype(vartype="Another Type")
+
+
+def test_check_argument():
+    base = BaseMixin()
+
+    base._check_argument_type(name="name", value="string", atype=str)
+    with pytest.raises(TypeError):
+        base._check_argument_type("name", "string", int)
+    base._check_argument_type("name", "string", (str, int))
+    base._check_argument_type("name", 12345, (str, int))
+
+    base._check_argument_type_in_tuple(name="name", values=("string"), atype=str)
+    with pytest.raises(TypeError):
+        base._check_argument_type_in_tuple("name", (), str)
+    with pytest.raises(TypeError):
+        base._check_argument_type_in_tuple("name", ("string", 12345), str)
+    base._check_argument_type_in_tuple("name", ("string", 12345), (str, int))
+
+    base._check_argument_type_in_list(name="name", values=["string"], atype=str)
+    with pytest.raises(TypeError):
+        base._check_argument_type_in_list("name", [], str)
+    with pytest.raises(TypeError):
+        base._check_argument_type_in_list("name", ["string", 12345], str)
+    base._check_argument_type_in_list("name", ["string", 12345], (str, int))
