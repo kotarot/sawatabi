@@ -381,18 +381,24 @@ def _create_ising_model_for_eq():
 
 
 def test_logical_model_repr(model):
+    model.variables(name="x", shape=(10, 10))
+
     assert isinstance(model.__repr__(), str)
     assert "LogicalModel({" in model.__repr__()
     assert "'mtype':" in model.__repr__()
     assert "'variables':" in model.__repr__()
+    assert "'x':" in model.__repr__()
     assert "'interactions':" in model.__repr__()
     assert "'constraints':" in model.__repr__()
 
 
 def test_logical_model_str(model):
+    model.variables(name="x", shape=(10, 10))
+
     assert isinstance(model.__str__(), str)
     assert "LOGICAL MODEL" in model.__str__()
-    assert "mtype:" in model.__str__()
-    assert "variables:" in model.__str__()
+    assert "mtype: ising" in model.__str__()
+    assert "variables: ['x']" in model.__str__()
+    assert "name: x" in model.__str__()
     assert "interactions:" in model.__str__()
     assert "constraints:" in model.__str__()
