@@ -21,3 +21,15 @@ class AbstractConstraint(BaseMixin):
         self._strength = strength
         self._label = label
         self._variables = variables
+
+    def get_constraint_type(self):
+        return self._constraint_type
+
+    def get_strength(self):
+        return self._strength
+
+    def get_label(self):
+        return self._label
+
+    def get_variables(self):
+        return self._variables

@@ -33,13 +33,30 @@ class NHotConstraint(AbstractConstraint):
         self._constraint_type = "NHotConstraint"
         self._n = n
 
-    def add(self, variable):
+    def add_variable(self, variable):
         self._check_argument_type("variable", variable, set)
         # avoid duplicate variable (so we use set())
         self._variables = self._variables.union(variable)
 
-    def get(self):
-        return self._variables
+    def get_n(self):
+        return self._n
+
+    ################################
+    # Built-in functions
+    ################################
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, NHotConstraint)
+            and (self._constraint_type == other._constraint_type)
+            and (self._n == other._n)
+            and (self._strength == other._strength)
+            and (self._label == other._label)
+            and (self._variables == other._variables)
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __repr__(self):
         return f"NHotConstraint({self.__str__()})"

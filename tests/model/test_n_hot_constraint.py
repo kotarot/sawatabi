@@ -23,56 +23,53 @@ from sawatabi.model import NHotConstraint
 
 def test_n_hot_constraint():
     c = NHotConstraint()
-    assert c._constraint_type == "NHotConstraint"
-    assert c._n == 1
-    assert c._strength == 1.0
-    assert c._label == ""
-    assert c._variables == set()
+    assert c.get_constraint_type() == "NHotConstraint"
+    assert c.get_n() == 1
+    assert c.get_strength() == 1.0
+    assert c.get_label() == ""
+    assert c.get_variables() == set()
 
-    c.add(set(["x0"]))
-    assert c._variables == set(["x0"])
-    assert len(c._variables) == 1
+    c.add_variable(set(["x0"]))
+    assert c.get_variables() == set(["x0"])
+    assert len(c.get_variables()) == 1
 
-    c.add(set(["x1", "x2"]))
-    assert c._variables == set(["x0", "x1", "x2"])
-    assert len(c._variables) == 3
+    c.add_variable(set(["x1", "x2"]))
+    assert c.get_variables() == set(["x0", "x1", "x2"])
+    assert len(c.get_variables()) == 3
 
-    c.add(set(["x0"]))
-    assert c._variables == set(["x0", "x1", "x2"])
-    assert len(c._variables) == 3
+    c.add_variable(set(["x0"]))
+    assert c.get_variables() == set(["x0", "x1", "x2"])
+    assert len(c.get_variables()) == 3
 
-    c.add(set(["x0", "x1"]))
-    assert c._variables == set(["x0", "x1", "x2"])
-    assert len(c._variables) == 3
-
-    assert c.get() == set(["x0", "x1", "x2"])
-    assert len(c.get()) == 3
+    c.add_variable(set(["x0", "x1"]))
+    assert c.get_variables() == set(["x0", "x1", "x2"])
+    assert len(c.get_variables()) == 3
 
 
 def test_n_hot_constraint_constructors():
     c1 = NHotConstraint(n=2)
-    assert c1._n == 2
-    assert c1._strength == 1.0
-    assert c1._label == ""
-    assert c1._variables == set()
+    assert c1.get_n() == 2
+    assert c1.get_strength() == 1.0
+    assert c1.get_label() == ""
+    assert c1.get_variables() == set()
 
     c2 = NHotConstraint(strength=20)
-    assert c2._n == 1
-    assert c2._strength == 20.0
-    assert c2._label == ""
-    assert c2._variables == set()
+    assert c2.get_n() == 1
+    assert c2.get_strength() == 20.0
+    assert c2.get_label() == ""
+    assert c2.get_variables() == set()
 
     c3 = NHotConstraint(label="my label")
-    assert c3._n == 1
-    assert c3._strength == 1.0
-    assert c3._label == "my label"
-    assert c3._variables == set()
+    assert c3.get_n() == 1
+    assert c3.get_strength() == 1.0
+    assert c3.get_label() == "my label"
+    assert c3.get_variables() == set()
 
     c4 = NHotConstraint(variables=set(["a", "b", "c"]))
-    assert c4._n == 1
-    assert c4._strength == 1.0
-    assert c4._label == ""
-    assert c4._variables == set(["a", "b", "c"])
+    assert c4.get_n() == 1
+    assert c4.get_strength() == 1.0
+    assert c4.get_label() == ""
+    assert c4.get_variables() == set(["a", "b", "c"])
 
 
 @pytest.mark.parametrize("n", [-10, 0])
@@ -107,7 +104,30 @@ def test_n_hot_constraint_typeerror():
 ################################
 
 
-def test_logical_model_repr():
+def test_n_hot_constraint_eq():
+    assert NHotConstraint() == NHotConstraint()
+
+    c1 = NHotConstraint(n=2, strength=20, label="my label", variables=set(["a", "b", "c"]))
+    c2 = NHotConstraint(n=2, strength=20, label="my label", variables=set(["a", "b", "c"]))
+    assert c1 == c2
+
+
+def test_n_hot_constraint_ne():
+    c = []
+    c.append(NHotConstraint())
+    c.append(NHotConstraint(n=2, strength=20, label="my label", variables=set(["a", "b", "c"])))
+    c.append(NHotConstraint(n=2))
+    c.append(NHotConstraint(strength=20))
+    c.append(NHotConstraint(label="my label"))
+    c.append(NHotConstraint(variables=set(["a", "b", "c"])))
+    c.append("another type")
+
+    for i in range(len(c) - 1):
+        for j in range(i + 1, len(c)):
+            assert c[i] != c[j]
+
+
+def test_n_hot_constraint_repr():
     c = NHotConstraint()
     assert isinstance(c.__repr__(), str)
     assert "NHotConstraint({" in c.__repr__()
@@ -118,7 +138,7 @@ def test_logical_model_repr():
     assert "'variables'" in c.__repr__()
 
 
-def test_logical_model_str():
+def test_n_hot_constraint_str():
     c = NHotConstraint()
     assert isinstance(c.__str__(), str)
     assert "'constraint_type':" in c.__str__()

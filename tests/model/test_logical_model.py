@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import numpy as np
-import pandas as pd
 import pyqubo
 import pytest
 
@@ -130,7 +129,8 @@ def test_logical_model_variables_append(initial_shape, additional_shape, expecte
 def test_logical_model_variables_append_without_initialize(shape):
     model = LogicalModel(mtype="ising")
     # The following operation will be successful with a UserWarning.
-    model.append("x", shape=shape)
+    with pytest.warns(UserWarning):
+        model.append("x", shape=shape)
     assert "x" in model.get_variables()
     assert model.get_variables_by_name("x").shape == shape
 
@@ -160,551 +160,6 @@ def test_logical_model_variables_from_pyqubo_mismatch(vartype, mtype):
     model = LogicalModel(mtype=mtype)
     with pytest.raises(TypeError):
         model.variables(x)
-
-
-################################
-# Select
-################################
-
-
-def test_logical_model_select(model):
-    x = model.variables("x", shape=(10, 10))
-    model.add_interaction(x[0, 0], coefficient=10.0)
-    model.add_interaction(x[0, 1], name="my name", coefficient=20.0)
-    model.add_interaction((x[0, 0], x[0, 1]), coefficient=30.0, timestamp=1234567890123, attributes={"foo": "bar", "my attr": "my value"})
-    print(model)
-
-    # single result
-    res = model.select_interaction("name == 'x[0][0]'")
-    assert type(res) == pd.core.frame.DataFrame
-    assert len(res) == 1
-    assert res["name"].values[0] == "x[0][0]"
-    assert res["key"].values[0] == "x[0][0]"
-    assert id(res["interacts"].values[0]) == id(x[0][0])
-    assert res["coefficient"].values[0] == 10.0
-
-    # dict format
-    res = model.select_interaction("name == 'my name'", fmt="dict")
-    assert type(res) == dict
-    assert len(res) == 1
-    key = list(res.keys())[0]
-    assert res[key]["name"] == "my name"
-    assert res[key]["key"] == "x[0][1]"
-    assert id(res[key]["interacts"]) == id(x[0][1])
-    assert res[key]["coefficient"] == 20.0
-
-    # multiple results
-    res = model.select_interaction("timestamp > 1234567890000")
-    assert len(res) == 3
-    assert res["name"].values[0] == "x[0][0]"
-    assert res["name"].values[1] == "my name"
-    assert res["name"].values[2] == "x[0][0]*x[0][1]"
-    assert res["coefficient"].values[0] == 10.0
-    assert res["coefficient"].values[1] == 20.0
-    assert res["coefficient"].values[2] == 30.0
-    assert res["attributes.foo"].values[2] == "bar"
-    assert res["attributes.my attr"].values[2] == "my value"
-
-    # empty
-    res = model.select_interaction("timestamp < 1234567890000")
-    assert len(res) == 0
-
-    # attributes
-    res = model.select_interaction("`attributes.foo` == 'bar'")
-    assert len(res) == 1
-    assert res["name"].values[0] == "x[0][0]*x[0][1]"
-
-    res = model.select_interaction("`attributes.my attr` == 'my value'")
-    assert len(res) == 1
-    assert res["name"].values[0] == "x[0][0]*x[0][1]"
-
-    # invalid query
-    with pytest.raises(pd.core.computation.ops.UndefinedVariableError):
-        res = model.select_interaction("invalid == 'invalid'")
-
-    # invalid format
-    with pytest.raises(ValueError):
-        model.select_interaction("name == 'x[0][0]'", fmt="invalid")
-
-
-def test_logical_model_select_interactions_by_variable(model):
-    x = model.variables("x", shape=(10, 10))
-    model.add_interaction(x[0, 0], coefficient=10.0)
-    model.add_interaction(x[0, 1], coefficient=20.0)
-    model.add_interaction((x[0, 0], x[0, 1]), coefficient=30.0)
-
-    res = model.select_interactions_by_variable(x[0, 0])
-    assert type(res) == np.ndarray
-    assert len(res) == 2
-    assert res[0] == "x[0][0]"
-    assert res[1] == "x[0][0]*x[0][1]"
-
-
-################################
-# Add
-################################
-
-
-def test_logical_model_add(model):
-    x = model.variables("x", shape=(2, 2))
-
-    model.add_interaction(x[0, 0], coefficient=1.0)
-    assert len(model._interactions_array["name"]) == 1
-    assert model._interactions_array["name"][0] == "x[0][0]"
-    assert len(model._interactions_array["key"]) == 1
-    assert model._interactions_array["key"][0] == "x[0][0]"
-    assert len(model._interactions_array["interacts"]) == 1
-    assert model._interactions_array["interacts"][0] == x[0, 0]
-    assert len(model._interactions_array["coefficient"]) == 1
-    assert model._interactions_array["coefficient"][0] == 1.0
-    assert len(model._interactions_array["scale"]) == 1
-    assert model._interactions_array["scale"][0] == 1.0
-    assert model._interactions_length == 1
-
-    res = model.select_interaction("name == 'x[0][0]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 1
-    assert res["name"].values[0] == "x[0][0]"
-    assert res["key"].values[0] == "x[0][0]"
-    assert res["interacts"].values[0] == x[0, 0]
-    assert id(res["interacts"].values[0]) == id(x[0, 0])
-    assert model._interactions[model._interactions["name"] == "x[0][0]"]["coefficient"].values[0] == 1.0
-    assert model._interactions[model._interactions["name"] == "x[0][0]"]["scale"].values[0] == 1.0
-
-    model.add_interaction(x[0, 1], coefficient=2.0, scale=0.1)
-    res = model.select_interaction("name == 'x[0][1]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert res["name"].values[0] == "x[0][1]"
-    assert model._interactions[model._interactions["name"] == "x[0][1]"]["coefficient"].values[0] == 2.0
-    assert model._interactions[model._interactions["name"] == "x[0][1]"]["scale"].values[0] == 0.1
-
-    # attributes
-    model.add_interaction(x[1, 0], coefficient=3.0, attributes={"foo": "bar"})
-    res = model.select_interaction("name == 'x[1][0]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 3
-    assert res["name"].values[0] == "x[1][0]"
-    assert model._interactions[model._interactions["name"] == "x[1][0]"]["coefficient"].values[0] == 3.0
-    assert model._interactions[model._interactions["name"] == "x[1][0]"]["attributes.foo"].values[0] == "bar"
-
-    # timestamp
-    model.add_interaction((x[0, 0], x[0, 1]), coefficient=-4.0, timestamp=1234567890123)
-    res = model.select_interaction("name == 'x[0][0]*x[0][1]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 4
-    assert res["name"].values[0] == "x[0][0]*x[0][1]"
-    assert res["key"].values[0] == ("x[0][0]", "x[0][1]")
-    assert res["interacts"].values[0] == (x[0, 0], x[0, 1])
-    assert id(res["interacts"].values[0][0]) == id(x[0, 0])
-    assert id(res["interacts"].values[0][1]) == id(x[0, 1])
-    assert model._interactions[model._interactions["name"] == "x[0][0]*x[0][1]"]["coefficient"].values[0] == -4.0
-    assert model._interactions[model._interactions["name"] == "x[0][0]*x[0][1]"]["timestamp"].values[0] == 1234567890123
-
-    # Test key order
-    model.add_interaction((x[1, 1], x[1, 0]), coefficient=-4.0, timestamp=1234567890123)
-    res = model.select_interaction("name == 'x[1][0]*x[1][1]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 5
-    assert res["name"].values[0] == "x[1][0]*x[1][1]"
-    assert res["key"].values[0] == ("x[1][0]", "x[1][1]")
-    assert res["interacts"].values[0] == (x[1, 0], x[1, 1])
-    assert id(res["interacts"].values[0][0]) == id(x[1, 0])
-    assert id(res["interacts"].values[0][1]) == id(x[1, 1])
-    assert model._interactions[model._interactions["name"] == "x[1][0]*x[1][1]"]["coefficient"].values[0] == -4.0
-    assert model._interactions[model._interactions["name"] == "x[1][0]*x[1][1]"]["timestamp"].values[0] == 1234567890123
-
-
-def test_logical_model_add_invalid_arguments(model):
-    x = model.variables("x", shape=(3,))
-    y = model.variables("y", shape=(2,))
-
-    with pytest.raises(ValueError):
-        model.add_interaction(target=None)
-
-    with pytest.raises(TypeError):
-        model.add_interaction()
-
-    with pytest.raises(TypeError):
-        model.add_interaction("invalid type", coefficient=1.0)
-
-    with pytest.raises(TypeError):
-        model.add_interaction((x[0], x[1], x[2]), coefficient=1.0)
-
-    with pytest.raises(TypeError):
-        model.add_interaction(("a", "b"), coefficient=1.0)
-
-    with pytest.raises(ValueError):
-        model.add_interaction((x[0], x[0]), coefficient=1.0)
-
-    # Invalid types
-    with pytest.raises(TypeError):
-        model.add_interaction(x[0], coefficient="invalid type")
-
-    with pytest.raises(TypeError):
-        model.add_interaction(x[0], scale="invalid type")
-
-    with pytest.raises(TypeError):
-        model.add_interaction(x[0], attributes="invalid type")
-
-    with pytest.raises(TypeError):
-        model.add_interaction(x[0], timestamp="invalid type")
-
-    # Already added
-    with pytest.raises(ValueError):
-        model.add_interaction(y[0], coefficient=2.0)
-        model.add_interaction(y[0], coefficient=2.0)
-
-    # Already removed
-    with pytest.raises(ValueError):
-        model.add_interaction(y[1], coefficient=2.0)
-        model.remove_interaction(y[1])
-        model.add_interaction(y[1], coefficient=2.0)
-
-
-def test_logical_model_add_duplicate(model):
-    x = model.variables("x", shape=(2,))
-
-    model.add_interaction(x[0], coefficient=1.0)
-    res = model.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 1
-    assert res["name"].values[0] == "x[0]"
-
-    model.add_interaction(x[0], name="my name", coefficient=1.0)
-    res = model.select_interaction("name == 'my name'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert res["name"].values[0] == "my name"
-
-
-def test_logical_model_add_duplicate_invalid(model):
-    x = model.variables("x", shape=(2,))
-    model.add_interaction(x[0], coefficient=1.0)
-    model.add_interaction(x[1], name="my name", coefficient=1.0)
-
-    with pytest.raises(ValueError):
-        model.add_interaction(x[0], coefficient=2.0)
-
-    with pytest.raises(ValueError):
-        model.add_interaction(x[1], name="my name", coefficient=2.0)
-
-
-################################
-# Update
-################################
-
-
-def test_logical_model_update(model):
-    x = model.variables("x", shape=(2,))
-
-    # initialize
-    model.add_interaction(x[0], coefficient=1.0)
-    model.add_interaction((x[0], x[1]), coefficient=2.0)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]"]["coefficient"].values[0] == 1.0
-    assert model._interactions[model._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 2.0
-
-    # update by a variable
-    model.update_interaction(x[0], coefficient=10.0)
-    res = model.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]"]["coefficient"].values[0] == 10.0
-    assert res["name"].values[0] == "x[0]"
-    assert res["key"].values[0] == "x[0]"
-    assert res["interacts"].values[0] == x[0]
-    assert id(res["interacts"].values[0]) == id(x[0])
-
-    # update by a target
-    model.update_interaction(target=x[0], coefficient=100.0)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]"]["coefficient"].values[0] == 100.0
-
-    # update by a name
-    model.update_interaction(name="x[0]", coefficient=1000.0, scale=2.0, attributes={"foo": "bar"})
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]"]["coefficient"].values[0] == 1000.0
-    assert model._interactions[model._interactions["name"] == "x[0]"]["scale"].values[0] == 2.0
-    assert model._interactions[model._interactions["name"] == "x[0]"]["attributes.foo"].values[0] == "bar"
-
-    # update by a pair of variables
-    model.update_interaction(target=(x[0], x[1]), coefficient=20.0)
-    res = model.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 20.0
-    assert res["name"].values[0] == "x[0]*x[1]"
-    assert res["key"].values[0] == ("x[0]", "x[1]")
-    assert res["interacts"].values[0] == (x[0], x[1])
-    assert id(res["interacts"].values[0][0]) == id(x[0])
-    assert id(res["interacts"].values[0][1]) == id(x[1])
-
-    # update by a pair of variables (reversed order)
-    model.update_interaction(target=(x[1], x[0]), coefficient=200.0)
-    res = model.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 200.0
-    assert res["name"].values[0] == "x[0]*x[1]"
-    assert res["key"].values[0] == ("x[0]", "x[1]")
-    assert res["interacts"].values[0] == (x[0], x[1])
-    assert id(res["interacts"].values[0][0]) == id(x[0])
-    assert id(res["interacts"].values[0][1]) == id(x[1])
-
-    # update by a name
-    model.update_interaction(name="x[0]*x[1]", coefficient=2000.0)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 2000.0
-
-
-def test_logical_model_update_by_custom_names(model):
-    y = model.variables("y", shape=(2,))
-    n1 = "custom interaction 1"
-    n2 = "custom interaction 2"
-    n3 = "custom interaction 3"
-
-    # initialize
-    model.add_interaction(y[0], coefficient=-1.0, name=n1)
-    model.add_interaction((y[0], y[1]), coefficient=-2.0, name=n2)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == n1]["coefficient"].values[0] == -1.0
-    assert model._interactions[model._interactions["name"] == n2]["coefficient"].values[0] == -2.0
-
-    model.update_interaction(name=n1, coefficient=-10.0)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == n1]["coefficient"].values[0] == -10.0
-
-    model.update_interaction(name=n2, coefficient=-20.0)
-    model._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == n2]["coefficient"].values[0] == -20.0
-
-    with pytest.raises(KeyError):
-        model.update_interaction(name=n3, coefficient=-30.0)
-
-
-def test_logical_model_update_without_initialize(model):
-    # The following operation will be successful with a UserWarning.
-    x = model.variables("x", shape=(3,))
-
-    model.update_interaction(x[0], coefficient=11.0)
-    res = model.select_interaction("name == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 1
-    assert model._interactions[model._interactions["name"] == "x[0]"]["coefficient"].values[0] == 11.0
-    assert model._interactions[model._interactions["name"] == "x[0]"]["scale"].values[0] == 1.0
-    assert res["name"].values[0] == "x[0]"
-    assert res["key"].values[0] == ("x[0]")
-    assert res["interacts"].values[0] == (x[0])
-
-    res = model.update_interaction((x[0], x[1]), coefficient=22.0, scale=33.0)
-    res = model.select_interaction("name == 'x[0]*x[1]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert model._interactions[model._interactions["name"] == "x[0]*x[1]"]["coefficient"].values[0] == 22.0
-    assert model._interactions[model._interactions["name"] == "x[0]*x[1]"]["scale"].values[0] == 33.0
-    assert res["name"].values[0] == "x[0]*x[1]"
-    assert res["key"].values[0] == ("x[0]", "x[1]")
-    assert res["interacts"].values[0] == (x[0], x[1])
-
-
-def test_logical_model_update_invalid(model):
-    x = model.variables("x", shape=(3,))
-    model.add_interaction(x[0], coefficient=1.0)
-
-    with pytest.raises(ValueError):
-        model.update_interaction()
-
-    with pytest.raises(ValueError):
-        model.update_interaction(x[0], name="x[0]")
-
-    with pytest.raises(KeyError):
-        model.update_interaction(name="x[1]", coefficient=1.0)
-
-    with pytest.raises(TypeError):
-        model.update_interaction("invalid type", coefficient=1.0)
-
-    with pytest.raises(TypeError):
-        model.update_interaction((x[0], x[1], x[2]), coefficient=1.0)
-
-    with pytest.raises(TypeError):
-        model.update_interaction(("a", "b"), coefficient=1.0)
-
-    with pytest.raises(ValueError):
-        model.update_interaction((x[0], x[0]), coefficient=1.0)
-
-    # Invalid types
-    with pytest.raises(TypeError):
-        model.update_interaction(x[0], coefficient="invalid type")
-
-    with pytest.raises(TypeError):
-        model.update_interaction(x[0], scale="invalid type")
-
-    with pytest.raises(TypeError):
-        model.update_interaction(x[0], attributes="invalid type")
-
-    with pytest.raises(TypeError):
-        model.update_interaction(x[0], timestamp="invalid type")
-
-    # Already removed
-    with pytest.raises(ValueError):
-        model.add_interaction(x[1], coefficient=2.0)
-        model.remove_interaction(x[1])
-        model.update_interaction(x[1], coefficient=2.0)
-
-
-################################
-# Remove
-################################
-
-
-def test_logical_model_remove_by_target(model):
-    x = model.variables("x", shape=(2,))
-
-    # initialize
-    model.add_interaction(x[0], coefficient=1.0)
-    model.add_interaction(x[1], coefficient=10.0)
-    assert model._interactions_length == 2
-
-    # remove
-    model.remove_interaction(x[0])
-    res = model.select_interaction("key == 'x[0]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert res["name"].values[0] == "x[0]"
-    assert res["key"].values[0] == "x[0]"
-    assert res["coefficient"].values[0] == 1.0
-    assert res["dirty"].values[0]
-    assert res["removed"].values[0]
-
-    model.remove_interaction(name="x[1]")
-    res = model.select_interaction("key == 'x[1]'")  # Side effect: Internal interactions DataFrame is updated
-    assert len(model._interactions) == 2
-    assert res["name"].values[0] == "x[1]"
-    assert res["key"].values[0] == "x[1]"
-    assert res["coefficient"].values[0] == 10.0
-    assert res["dirty"].values[0]
-    assert res["removed"].values[0]
-
-
-def test_logical_model_remove_by_name(model):
-    x = model.variables("x", shape=(2,))
-
-    # initialize
-    model.add_interaction(x[0], "my name", coefficient=1.0)
-    assert model._interactions_length == 1
-
-    # remove
-    model.remove_interaction(name="my name")
-    assert model._interactions_length == 1
-    assert model.select_interaction("name == 'my name'")["removed"].values[0]
-
-
-def test_logical_model_remove_invalid(model):
-    x = model.variables("x", shape=(3,))
-    model.add_interaction(x[0], coefficient=1.0)
-
-    with pytest.raises(ValueError):
-        model.remove_interaction()
-
-    with pytest.raises(ValueError):
-        model.remove_interaction(x[0], name="x[0]")
-
-    with pytest.raises(KeyError):
-        model.remove_interaction(x[1])
-
-    with pytest.raises(TypeError):
-        model.remove_interaction("invalid type")
-
-    with pytest.raises(TypeError):
-        model.update_interaction((x[0], x[1], x[2]))
-
-    with pytest.raises(TypeError):
-        model.update_interaction(("a", "b"))
-
-    with pytest.raises(ValueError):
-        model.update_interaction((x[0], x[0]))
-
-
-################################
-# Delete
-################################
-
-
-def test_logical_model_delete(model):
-    x = model.variables("x", shape=(2, 3, 4))
-    y = model.variables("y", shape=(5, 6))  # noqa: F841
-
-    model.add_interaction(x[0, 0, 0], coefficient=1.0)
-    assert model._interactions_length == 1
-
-    model.add_interaction((x[0, 0, 0], x[0, 0, 1]), coefficient=2.0)
-    assert model._interactions_length == 2
-
-    assert model.get_size() == 2 * 3 * 4 + 5 * 6
-    assert model.get_deleted_size() == 0
-    assert model.get_all_size() == 2 * 3 * 4 + 5 * 6
-
-    # Set dirty flags for interactions releted to the deleting variable
-    model.delete_variable(x[0, 0, 0])
-    assert model._interactions_length == 2
-
-    assert model.get_size() == 2 * 3 * 4 + 5 * 6 - 1
-    assert model.get_deleted_size() == 1
-    assert model.get_all_size() == 2 * 3 * 4 + 5 * 6
-
-    # Convert physical to resolve dirty
-    model.to_physical()
-    assert len(model._interactions_array["name"]) == 0
-    assert model._interactions_length == 0
-
-    assert model.get_size() == 2 * 3 * 4 + 5 * 6 - 1
-    assert model.get_deleted_size() == 1
-    assert model.get_all_size() == 2 * 3 * 4 + 5 * 6
-
-
-def test_logical_model_delete_dealing_with_nhot_constraints_qubo():
-    model = LogicalModel(mtype="qubo")
-    x = model.variables("x", shape=(4,))
-    default_label = "Default N-hot Constraint"
-
-    model.n_hot_constraint(x, n=1, strength=1.0)
-    assert len(model.get_constraints()) == 1
-    assert default_label in model.get_constraints()
-    assert model.get_constraints_by_label(default_label)._n == 1
-    assert len(model.get_constraints_by_label(default_label)._variables) == 4
-
-    model.delete_variable(x[0])
-
-    assert len(model.get_constraints()) == 1
-    assert default_label in model.get_constraints()
-    assert model.get_constraints_by_label(default_label)._n == 1
-    assert len(model.get_constraints_by_label(default_label)._variables) == 3
-    assert model._interactions[model._interactions["name"] == f"x[1] ({default_label})"]["coefficient"].values[0] == 1.0
-    assert model._interactions[model._interactions["name"] == f"x[1]*x[2] ({default_label})"]["coefficient"].values[0] == -2.0
-
-
-def test_logical_model_delete_invalid_argument(model):
-    with pytest.raises(TypeError):
-        model.delete_variable()
-
-    with pytest.raises(TypeError):
-        model.delete_variable("invalid type")
-
-    with pytest.raises(ValueError):
-        model.delete_variable(target=None)
-
-
-################################
-# Fix
-################################
-
-
-def test_logical_model_fix(model):
-    x = model.variables("x", shape=(3,))
-    model.add_interaction(x[0], coefficient=10.0)
-    model.add_interaction(x[1], coefficient=20.0)
-    model.add_interaction((x[0], x[1]), coefficient=30.0)
-
-    with pytest.raises(NotImplementedError):
-        model.fix_variable(x[1], 1)
-
-    with pytest.raises(NotImplementedError):
-        model.fix_variable(target=x[2], value=-1)
 
 
 ################################
@@ -855,6 +310,7 @@ def test_logical_model_get_deleted_array(model):
     assert len(model.get_deleted_array()) == 0
     model.delete_variable(target=x[0])
     assert len(model.get_deleted_array()) == 1
+    assert "x[0]" in model.get_deleted_array()
 
 
 def test_logical_model_get_fixed_array(model):
@@ -866,16 +322,62 @@ def test_logical_model_get_fixed_array(model):
 
 def test_logical_model_get_attributes(model):
     x = model.variables("x", shape=(2,))
-    model.add_interaction(x[0], coefficient=10.0, attributes={"foo": "bar"})
-    with pytest.raises(NotImplementedError):
-        model.get_attributes(x[0])
-    with pytest.raises(NotImplementedError):
-        model.get_attribute(x[0], key="foo")
+    model.add_interaction(x[0], coefficient=10.0)
+    model.add_interaction(x[1], coefficient=11.0, attributes={"foo": "bar"})
+
+    attributes = model.get_attributes(x[0])
+    assert len(attributes) == 1
+    assert np.isnan(attributes["attributes.foo"])
+
+    attributes = model.get_attributes(target=x[1])
+    assert len(attributes) == 1
+    assert attributes["attributes.foo"] == "bar"
+
+    attributes = model.get_attributes(name="x[1]")
+    assert len(attributes) == 1
+    assert attributes["attributes.foo"] == "bar"
+
+    attribute = model.get_attribute(x[1], key="attributes.foo")
+    assert isinstance(attribute, str)
+    assert attribute == "bar"
+
+    with pytest.raises(KeyError):
+        model.get_attribute(name="x[1]", key="attributes.foofoo")
 
 
 ################################
 # Built-in functions
 ################################
+
+
+def test_logical_model_eq():
+    model_a = _create_ising_model_for_eq()
+    model_b = _create_ising_model_for_eq()
+    assert model_a == model_b
+
+
+def test_logical_model_ne():
+    model_a = LogicalModel(mtype="ising")
+    model_b = LogicalModel(mtype="qubo")
+    assert model_a != model_b
+    assert model_a != "another type"
+
+
+def _create_ising_model_for_eq():
+    model = LogicalModel(mtype="ising")
+    x = model.variables(name="x", shape=(4,))
+    z = model.variables(name="z", shape=(4,))
+    model.add_interaction(target=x[0], coefficient=1.1)
+    model.add_interaction(target=(x[0], x[1]), coefficient=2.2, scale=3.3, attributes={"foo": "bar"})
+
+    model.add_interaction(target=x[2], coefficient=4.4)
+    model.add_interaction(target=x[3], coefficient=5.5)
+    model.remove_interaction(target=x[2])
+    model.fix_variable(target=x[3], value=1)
+
+    model.n_hot_constraint(target=z, n=1)
+
+    return model
 
 
 def test_logical_model_repr(model):

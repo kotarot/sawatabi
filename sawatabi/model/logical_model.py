@@ -256,24 +256,7 @@ class LogicalModel(AbstractModel):
     ################################
 
     def remove_interaction(self, target=None, name=""):
-        if (not target) and (not name):
-            raise ValueError("Either 'target' or 'name' must be specified.")
-        if target and name:
-            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
-
-        if target is not None:
-            interaction_info = self._get_interaction_info_from_target(target)
-
-        if name:
-            # Already given the specific name
-            self._check_argument_type("name", name, (str, tuple))
-            internal_name = name
-        else:
-            # Will be automatically named by the default name
-            internal_name = interaction_info["name"]
-
-        if not self._has_name(internal_name):
-            raise KeyError(f"An interaction named '{internal_name}' does not exist yet. Need to be added before updating.")
+        internal_name = self._get_internal_name_from_target_and_name(target, name)
 
         # Don't need to check this. Removing will be overwritten.
         # if self._is_removed(internal_name):
@@ -321,6 +304,28 @@ class LogicalModel(AbstractModel):
             raise TypeError("Invalid 'target'.")
         return {"body": body, "interacts": interacts, "key": key, "name": name}
 
+    def _get_internal_name_from_target_and_name(self, target, name):
+        if (not target) and (not name):
+            raise ValueError("Either 'target' or 'name' must be specified.")
+        if target and name:
+            raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
+
+        if target is not None:
+            interaction_info = self._get_interaction_info_from_target(target)
+
+        if name:
+            # Already given the specific name
+            self._check_argument_type("name", name, (str, tuple))
+            internal_name = name
+        else:
+            # Will be automatically named by the default name
+            internal_name = interaction_info["name"]
+
+        if not self._has_name(internal_name):
+            raise KeyError(f"An interaction named '{internal_name}' does not exist yet in the model.")
+
+        return internal_name
+
     def _has_name(self, internal_name):
         return internal_name in self._interactions_array["name"]
 
@@ -341,7 +346,7 @@ class LogicalModel(AbstractModel):
     def delete_variable(self, target):
         if not target:
             raise ValueError("'target' must be specified.")
-        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary))
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
 
         # TODO: Delete variable physically
         self._deleted[target.label] = True
@@ -361,7 +366,51 @@ class LogicalModel(AbstractModel):
     ################################
 
     def fix_variable(self, target, value):
-        raise NotImplementedError
+        if not target:
+            raise ValueError("'target' must be specified.")
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
+
+        # Value check
+        if self.get_mtype() == constants.MODEL_ISING:
+            if value not in [1, -1]:
+                raise ValueError("'value' must be one of [1, -1] because the model is an Ising model.")
+        elif self.get_mtype() == constants.MODEL_QUBO:
+            if value not in [1, 0]:
+                raise ValueError("'value' must be one of [1, 0] because the model is a QUBO model.")
+
+        # TODO: Delete variable physically
+        self._fixed[target.label] = True
+
+        # Update related interations
+        selected = self.select_interactions_by_variable(target)
+
+        if len(selected) <= 0:
+            warnings.warn("No interactions updated.")
+            return
+
+        if value == 0:
+            for s in selected:
+                self.remove_interaction(name=s)
+        elif value in [1, -1]:
+            for s in selected:
+                idx = self._interactions_array["name"].index(s)
+                body = self._interactions_array["body"][idx]
+                # 1-body interaction will become an offset
+                if body == 1:
+                    self._offset += -1 * value * self._interactions_array["coefficient"][idx] * self._interactions_array["scale"][idx]
+                    self.remove_interaction(name=s)
+                # 2-body interaction will become a 1-body interaction
+                elif body == 2:
+                    # Choose a variable that will remain
+                    interacts = self._interactions_array["interacts"][idx]
+                    if interacts[0].label == target.label:
+                        interacts_to = interacts[1]
+                    elif interacts[1].label == target.label:
+                        interacts_to = interacts[0]
+                    new_name = f"{interacts_to.label} (before fixed: {s})"
+                    new_coefficient = value * self._interactions_array["coefficient"][idx] * self._interactions_array["scale"][idx]
+                    self.add_interaction(target=interacts_to, name=new_name, coefficient=new_coefficient)
+                    self.remove_interaction(name=s)
 
     ################################
     # PyQUBO
@@ -392,7 +441,7 @@ class LogicalModel(AbstractModel):
         added_variables = set()
         for t in target:
             added_variables = added_variables.union(set([t]))
-            self._constraints[label].add(set([t]))
+            self._constraints[label].add_variable(set([t]))
 
         # If delete_flag is set, the target variable will be deleted from the constraint.
         if delete_flag:
@@ -503,6 +552,7 @@ class LogicalModel(AbstractModel):
             physical.add_interaction(k, body=constants.INTERACTION_LINEAR, coefficient=v)
         for k, v in quadratic.items():
             physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
+        physical._offset = self._offset
 
         # save the last physical model
         self._previous_physical_model = physical
@@ -647,17 +697,24 @@ class LogicalModel(AbstractModel):
             all_size += size
         return all_size
 
-    def get_attributes(self, target):
+    def get_attributes(self, target=None, name=""):
         """
         Returns a dict of attributes (keys and values) for the given variable or interaction.
         """
-        raise NotImplementedError
+        internal_name = self._get_internal_name_from_target_and_name(target, name)
+        idx = self._interactions_array["name"].index(internal_name)
+        res = {}
+        for attr in self._interactions_attrs:
+            res[attr] = self._interactions_array[attr][idx]
+        return res
 
-    def get_attribute(self, target, key):
+    def get_attribute(self, target=None, name="", key=""):
         """
         Returns the value of the key for the given variable or interaction.
         """
-        raise NotImplementedError
+        self._check_argument_type("key", key, str)
+        attributes = self.get_attributes(target, name)
+        return attributes[key]
 
     def get_constraints(self):
         """
@@ -671,9 +728,32 @@ class LogicalModel(AbstractModel):
         """
         return self._constraints[label]
 
+    def get_offset(self):
+        """
+        Returns the offset value.
+        """
+        return self._offset
+
     ################################
     # Built-in functions
     ################################
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, LogicalModel)
+            and (self._mtype == other._mtype)
+            and (self._variables == other._variables)
+            and (self._interactions_array == other._interactions_array)
+            and (self._interactions_attrs == other._interactions_attrs)
+            and (self._interactions_length == other._interactions_length)
+            and (self._constraints == other._constraints)
+            and (self._deleted == other._deleted)
+            and (self._fixed == other._fixed)
+            and (self._offset == other._offset)
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __repr__(self):
         self._update_interactions_dataframe_from_arrays()
