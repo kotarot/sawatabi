@@ -57,6 +57,7 @@ setup(
         "dev": [
             "pytest>=6.1.2,<7.0.0",
             "pytest-cov>=2.10.1,<3.0.0",
+            "pytest-mock>=3.3.1,<4.0.0",
             "pytest-timeout>=1.4.2,<2.0.0",
             "black>=20.8b1,<21.0",
             "flake8>=3.8.4,<4.0.0",

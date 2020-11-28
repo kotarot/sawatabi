@@ -22,6 +22,16 @@ def solver_optigan():
     physical = _create_qubo_model()
 
     solver = sawatabi.solver.OptiganSolver()
+    resultset = solver.solve(physical, timeout=1000, duplicate=True, gzip_request=False, gzip_response=False)
+
+    _print_resultset(resultset)
+
+
+def solver_optigan_gzip():
+    print("\n=== solver (optigan gzip) ===")
+    physical = _create_qubo_model()
+
+    solver = sawatabi.solver.OptiganSolver()
     resultset = solver.solve(physical, timeout=1000, duplicate=True)
 
     _print_resultset(resultset)
@@ -29,6 +39,7 @@ def solver_optigan():
 
 def main():
     solver_optigan()
+    solver_optigan_gzip()
 
 
 if __name__ == "__main__":
