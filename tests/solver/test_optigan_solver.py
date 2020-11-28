@@ -51,7 +51,7 @@ def test_optigan_solver_with_logical_model(mocker, physical):
     response_mock = ResponseMock()
     mocker.patch("requests.post", return_value=response_mock)
 
-    resultset = solver.solve(physical)
+    resultset = solver.solve(physical, duplicate=True)
 
     assert isinstance(resultset, SawatabiSampleSet)
     assert isinstance(resultset.info, dict)
@@ -89,7 +89,7 @@ def test_optigan_solver_with_logical_model_with_invalid_response(mocker, physica
     mocker.patch("requests.post", return_value=response_mock)
 
     with pytest.raises(ValueError):
-        resultset = solver.solve(physical)
+        solver.solve(physical)
 
 
 def test_optigan_solver_with_logical_model_fails():
