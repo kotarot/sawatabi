@@ -23,13 +23,8 @@ import time
 import apache_beam as beam
 from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.transforms.trigger import AccumulationMode
-from apache_beam.transforms.trigger import AfterCount
-from apache_beam.transforms.trigger import AfterProcessingTime
-from apache_beam.transforms.trigger import AfterWatermark
-from apache_beam.transforms.userstate import BagStateSpec
-from apache_beam.transforms.userstate import CombiningValueStateSpec
-from apache_beam.transforms.userstate import StateSpec
+from apache_beam.transforms.trigger import AccumulationMode, AfterCount, AfterProcessingTime, AfterWatermark
+from apache_beam.transforms.userstate import BagStateSpec, CombiningValueStateSpec, StateSpec
 
 random.seed(0)
 
