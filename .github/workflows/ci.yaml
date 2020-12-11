@@ -30,7 +30,7 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 . --statistics --count --show-source
+        flake8 . --statistics --count --show-source --exclude="sample/trial/*.py"
 
     - name: Lint with isort
       run: |
