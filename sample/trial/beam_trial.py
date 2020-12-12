@@ -134,19 +134,19 @@ class MyStatefulDoFn(beam.DoFn):
 
         # If we have no state yet
         if len(my.read().second) == 0:
-            m = MyClass(fvalue, -fvalue, fvalue, fvalue)
+            m = MyClass(fvalue, -fvalue, max(value), min(value))
             my.add(m)
         # Otherwise, update the existing state
         else:
             m = (my.read().second)[0]
             m.myadd(fvalue)
             m.mysub(fvalue)
-            m.mymax(fvalue)
-            m.mymin(fvalue)
+            m.mymax(max(value))
+            m.mymin(min(value))
         m.update_dt()
 
         #print(m)
-        yield f"first={fvalue:2d}, last={lvalue:2d}, add={m.a:6d}, sub={m.s:6d}, max={m.x:2d}, min={m.y:2d}, dt={m.dt}, value={value}"
+        yield f"first={fvalue:2d}, last={lvalue:2d}, (acc)add={m.a:6d}, (acc)sub={m.s:6d}, (acc)max={m.x:2d}, (acc)min={m.y:2d}, dt={m.dt}, value={value}"
 
 
 # Stateful DoFn for detecting window diffs
