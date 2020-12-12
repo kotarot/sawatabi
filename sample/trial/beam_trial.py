@@ -39,7 +39,7 @@ class MyLineLengthFn(beam.DoFn):
         yield (element, len(element))
 
 
-# Source: https://beam.apache.org/documentation/transforms/python/elementwise/withtimestamps/
+# Reference: https://beam.apache.org/documentation/transforms/python/elementwise/withtimestamps/
 class WithTimestampFn(beam.DoFn):
     def process(self, data, timestamp=beam.DoFn.TimestampParam):
         yield f"[{timestamp.to_utc_datetime()}] {data}"
@@ -52,7 +52,7 @@ class WithTimestampTupleFn(beam.DoFn):
 
 
 # Sample CombineFn
-# Source: https://beam.apache.org/documentation/programming-guide/
+# Reference: https://beam.apache.org/documentation/programming-guide/
 class AverageFn(beam.CombineFn):
     def create_accumulator(self):
         return (0.0, 0)
@@ -98,7 +98,7 @@ class MyClass:
 
 
 # Simple Stateful DoFn
-# Source:
+# Reference:
 #   - https://beam.apache.org/blog/stateful-processing/
 #   - https://github.com/apache/beam/blob/master/sdks/python/apache_beam/transforms/userstate_test.py
 class IndexAssigningStatefulDoFn(beam.DoFn):
