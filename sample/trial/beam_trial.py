@@ -323,7 +323,7 @@ def run(argv=None):
         # Detect window diffs
         sliding_windowing_for_diff = (timestamp_by_index
             | "Sliding window for diff 20" >> beam.WindowInto(beam.window.SlidingWindows(size=20, period=5))
-            | "Add timestamp tuple" >> beam.ParDo(WithTimestampTupleFn())
+            | "Add timestamp tuple for diff detection" >> beam.ParDo(WithTimestampTupleFn())
             | "Sliding Windows for diff to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
             | "Global Window for sliding windows for diff" >> beam.WindowInto(beam.window.GlobalWindows())
             | beam.Map(lambda x: (None, x))
