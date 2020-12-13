@@ -118,7 +118,7 @@ class WindowDiffStatefulDoFn_ForStreaming(beam.DoFn):
                 extracted.append(v[1])
             return extracted
 
-        yield {"incoming": extract(incoming), "outgoing": extract(outgoing), "value": extract(value), "sorted": extract(sorted_value)}
+        yield {"incoming": extract(incoming), "outgoing": extract(outgoing), "elements": extract(value), "sorted": extract(sorted_value), "len": len(value)}
 
 
 def run(argv=None):
@@ -194,7 +194,7 @@ def run(argv=None):
         )
 
         sliding_windows = (processed
-            | "Sliding windows of 20 elements" >> beam.WindowInto(beam.window.SlidingWindows(size=20, period=5))
+            | "Sliding windows of 20 sec with 5 sec interval" >> beam.WindowInto(beam.window.SlidingWindows(size=20, period=5))
             | "Add timestamp tuple for diff detection" >> beam.ParDo(WithTimestampTupleFn())
             | "Sliding Windows to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
             | "Global Window for sliding windows" >> beam.WindowInto(beam.window.GlobalWindows())
