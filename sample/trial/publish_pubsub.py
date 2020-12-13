@@ -27,8 +27,8 @@ This script publishes test messages to GCP Pub/Sub for debug.
 
 Sample Usage:
 $ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=10 --random-text
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=30 --random-number
+$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=10.0 --random-text
+$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=30.0 --random-number
 """
 
 
@@ -57,8 +57,8 @@ def main():
     parser.add_argument(
         "--interval",
         dest="interval",
-        type=int,
-        default=1,
+        type=float,
+        default=1.0,
         help="Message interval in second.")
     args = parser.parse_args()
 
@@ -67,6 +67,7 @@ def main():
     topic_path = client.topic_path(args.project, args.topic)
 
     while True:
+        dt_now = datetime.datetime.now()
         if args.random_text:
             words = []
             for _ in range(random.randint(1, 10)):
@@ -77,11 +78,10 @@ def main():
             n = random.randint(1, 99)
             message = str(n)
         else:
-            dt_now = datetime.datetime.now()
-            message = f"This is a test message ({dt_now})."
+            message = f"This is a test message at {dt_now}."
 
         client.publish(topic_path, message.encode("utf-8"))
-        print(f"[Published a message to '{topic_path}'] {message}")
+        print(f"[{dt_now}] Published a message to '{topic_path}': {message}")
 
         time.sleep(args.interval)
 
