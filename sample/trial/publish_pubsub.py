@@ -19,6 +19,7 @@ import string
 import time
 
 from google.cloud import pubsub_v1
+
 #from google.oauth2 import service_account
 
 
@@ -29,11 +30,14 @@ Sample Usage:
 $ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic
 $ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=10.0 --random-text
 $ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=30.0 --random-number
+$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=0.1 --incremental-text --incremental-end=100
 """
 
 
 def main():
     parser = argparse.ArgumentParser()
+
+    # Pub/Sub options
     parser.add_argument(
         "--project",
         dest="project",
@@ -44,6 +48,8 @@ def main():
         dest="topic",
         required=True,
         help="Google Cloud Pub/Sub topic name to publish messages to.")
+
+    # Random
     parser.add_argument(
         "--random-text",
         dest="random_text",
@@ -54,6 +60,8 @@ def main():
         dest="random_number",
         action="store_true",
         help="If true, a message will be a random number.")
+
+    # Incremental
     parser.add_argument(
         "--incremental-text",
         dest="incremental_text",
@@ -64,6 +72,13 @@ def main():
         dest="incremental_number",
         action="store_true",
         help="If true, a message will be a incremental number.")
+    parser.add_argument(
+        "--incremental-end",
+        dest="incremental_end",
+        type=int,
+        default=-1,
+        help="Number for finish the increments.")
+
     parser.add_argument(
         "--interval",
         dest="interval",
@@ -98,6 +113,8 @@ def main():
         client.publish(topic_path, message.encode("utf-8"))
         print(f"[{dt_now}] Published a message to '{topic_path}': {message}")
 
+        if i == args.incremental_end:
+            break
         i += 1
         time.sleep(args.interval)
 
