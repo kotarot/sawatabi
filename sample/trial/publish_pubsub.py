@@ -55,6 +55,16 @@ def main():
         action="store_true",
         help="If true, a message will be a random number.")
     parser.add_argument(
+        "--incremental-text",
+        dest="incremental_text",
+        action="store_true",
+        help="If true, a message will be a text string whose length increments.")
+    parser.add_argument(
+        "--incremental-number",
+        dest="incremental_number",
+        action="store_true",
+        help="If true, a message will be a incremental number.")
+    parser.add_argument(
         "--interval",
         dest="interval",
         type=float,
@@ -66,6 +76,7 @@ def main():
     client = pubsub_v1.PublisherClient()
     topic_path = client.topic_path(args.project, args.topic)
 
+    i = 1
     while True:
         dt_now = datetime.datetime.now()
         if args.random_text:
@@ -77,12 +88,17 @@ def main():
         elif args.random_number:
             n = random.randint(1, 99)
             message = str(n)
+        elif args.incremental_text:
+            message = "".join([random.choice(string.ascii_letters + string.digits) for i in range(i)])
+        elif args.incremental_number:
+            message = str(i)
         else:
             message = f"This is a test message at {dt_now}."
 
         client.publish(topic_path, message.encode("utf-8"))
         print(f"[{dt_now}] Published a message to '{topic_path}': {message}")
 
+        i += 1
         time.sleep(args.interval)
 
 
