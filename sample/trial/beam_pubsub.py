@@ -18,15 +18,15 @@ import logging
 import apache_beam as beam
 from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.transforms.trigger import AccumulationMode, AfterAll, AfterAny, AfterCount, AfterProcessingTime, AfterWatermark, DefaultTrigger, Repeatedly
 from apache_beam.transforms.userstate import BagStateSpec
 
-from beam_trial import IndexAssigningStatefulDoFn, WithTimestampFn, WithTimestampTupleFn
-from beam_trial import MyClass, MyLineLengthFn, MyStatefulDoFn
+from beam_trial import IndexAssigningStatefulDoFn, MyClass, MyLineLengthFn, MyStatefulDoFn, WithTimestampFn, WithTimestampTupleFn
 
 
 """
 This script subscribes test messages from GCP Pub/Sub using Apache Beam.
-Subscribed messages will be transformed into fixed/sliding windows.
+Subscribed messages will be divided into fixed/sliding windows.
 StatefulDoFn functions are also applied to the streaming data.
 
 Sample Usage:
@@ -50,15 +50,10 @@ class MyStatefulDoFn_ForStreaming(beam.DoFn):
             fvalue = value[0]
             lvalue = value[-1]
 
-        # Read generator into a list
-        #print(my)
-        #print(my.read())
-        my_states = []
-        for rd in my.read():
-            my_states.append(rd)
-        #print(my_states)
+        # generator into a list
+        my_states = list(my.read())
 
-        # Clear the BagState so we can hold the last state only.
+        # Clear the BagState so we can hold only the latest state.
         my.clear()
 
         # If we have no state yet
@@ -77,7 +72,7 @@ class MyStatefulDoFn_ForStreaming(beam.DoFn):
             my.add(m)
 
         #print(m)
-        yield f"first={fvalue:2d}, last={lvalue:2d}, (acc)add={m.a:6d}, (acc)sub={m.s:6d}, (acc)max={m.x:2d}, (acc)min={m.y:2d}, dt={m.dt}, value={value}"
+        yield f"first={fvalue:2d}, last={lvalue:2d}, (acc)add={m.a:6d}, (acc)sub={m.s:6d}, (acc)max={m.x:2d}, (acc)min={m.y:2d}, dt={m.dt}, value={value}, len={len(value)}"
 
 
 # Stateful DoFn for detecting window diffs
@@ -92,10 +87,11 @@ class WindowDiffStatefulDoFn_ForStreaming(beam.DoFn):
         # so just `sorted` is enough.
         sorted_value = sorted(value)
 
-        # Read generator into a list
-        prev_states = []
-        for rd in prev.read():
-            prev_states.append(rd)
+        # generator into a list
+        prev_states = list(prev.read())
+
+        # Clear the BagState so we can hold only the latest state.
+        prev.clear()
 
         if len(prev_states) == 0:
             prev_value = []
@@ -165,17 +161,34 @@ def run(argv=None):
             | "Extract only value" >> beam.Values())
 
         fixed_windows = (processed
-            | "Fixed windows of 10 sec" >> beam.WindowInto(beam.window.FixedWindows(size=10))
+            | "Fixed window of 10 sec" >> beam.WindowInto(beam.window.FixedWindows(size=10))
 
-            # To list: We have two ways to do that.
-            | "Fixed Windows by index to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
+            # Using triggers:
+            #| "Fixed window of 10 sec with a 10-sec-delay processing time trigger" >> beam.WindowInto(
+            #        beam.window.FixedWindows(size=10),
+            #        trigger=AfterProcessingTime(delay=10),
+            #        accumulation_mode=AccumulationMode.DISCARDING)
+            #| "Fixed window of 10 sec with 10-sec-delay processing time trigger but must contain at least 10 elements" >> beam.WindowInto(
+            #        beam.window.FixedWindows(size=10),
+            #        trigger=AfterCount(count=10),
+            #        accumulation_mode=AccumulationMode.ACCUMULATING)
+            #| "Global window that has at least 10 elements" >> beam.WindowInto(
+            #        beam.window.GlobalWindows(),
+            #        trigger=Repeatedly(AfterCount(count=10)),
+            #        accumulation_mode=AccumulationMode.DISCARDING)
+
+            # To list, we have two ways to do that.
+            # Reference: https://cloud.google.com/pubsub/docs/pubsub-dataflow#python
+            | "Fixed Windows to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
             #| "Add temp key" >> beam.Map(lambda element: (None, element))
             #| "Group by" >> beam.GroupByKey()
             #| "Abandon temp key" >> beam.MapTuple(lambda _, val: val)
 
             | "Global Window for fixed windows" >> beam.WindowInto(beam.window.GlobalWindows())
             | beam.Map(lambda x: (None, x))
+
             #| beam.ParDo(IndexAssigningStatefulDoFn())
+            #| "With count visible" >> beam.Map(lambda val: (val[0], val[1], len(val[1])))
             | beam.ParDo(MyStatefulDoFn_ForStreaming())
 
             | "With timestamp for fixed windows" >> beam.ParDo(WithTimestampFn())
@@ -183,9 +196,9 @@ def run(argv=None):
         )
 
         sliding_windows = (processed
-            | "Sliding windows of 10 elements" >> beam.WindowInto(beam.window.SlidingWindows(size=10, period=2))
+            | "Sliding windows of 20 elements" >> beam.WindowInto(beam.window.SlidingWindows(size=20, period=5))
             | "Add timestamp tuple for diff detection" >> beam.ParDo(WithTimestampTupleFn())
-            | "Sliding Windows by index to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
+            | "Sliding Windows to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
             | "Global Window for sliding windows" >> beam.WindowInto(beam.window.GlobalWindows())
             | beam.Map(lambda x: (None, x))
             | beam.ParDo(WindowDiffStatefulDoFn_ForStreaming())
@@ -196,5 +209,5 @@ def run(argv=None):
 
 
 if __name__ == "__main__":
-    #logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
     run()
