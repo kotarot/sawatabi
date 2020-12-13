@@ -20,9 +20,7 @@ from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.trigger import AccumulationMode, AfterAll, AfterAny, AfterCount, AfterProcessingTime, AfterWatermark, DefaultTrigger, Repeatedly
 from apache_beam.transforms.userstate import BagStateSpec
-
 from beam_trial import IndexAssigningStatefulDoFn, MyClass, MyLineLengthFn, MyStatefulDoFn, WithTimestampFn, WithTimestampTupleFn
-
 
 """
 This script subscribes test messages from GCP Pub/Sub using Apache Beam.
