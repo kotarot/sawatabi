@@ -35,6 +35,93 @@ $ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial
 """
 
 
+################################################################
+# User-defined functions and parameters
+################################################################
+
+WINDOW_SIZE = 30
+WINDOW_PERIOD = 5
+
+
+def mapping(model, elements, incoming, outgoing, sorted_elements):
+    """
+    Mapping -- Update the model
+    """
+
+    if len(incoming) > 0:
+        # Max index of the incoming elements
+        max_index = max([i[1][0] for i in incoming])
+        # Get current array size
+        x_size = model.get_all_size()
+        # Update variables
+        x = model.append(name="x", shape=(max_index - x_size + 1,))
+    else:
+        x = model.get_variables_by_name(name="x")
+
+    #print("x:", x)
+    #print("elements:", elements)
+    #print("incoming:", incoming)
+    #print("outgoing:", outgoing)
+    for i in incoming:
+        for j in elements:
+            if i[0] > j[0]:
+                idx_i = i[1][0]
+                idx_j = j[1][0]
+                coeff = -1.0 * i[1][1] * j[1][1]
+                model.add_interaction(target=(x[idx_i], x[idx_j]), coefficient=coeff)
+
+    for o in outgoing:
+        idx = o[1][0]
+        model.delete_variable(target=x[idx])
+
+    return model
+
+
+def solve_and_unmapping(physical_model, elements, incoming, outgoing, sorted_elements):
+    """
+    Solve -- Anealing the model
+    Unmapping -- Decode spins to a problem solution
+    """
+
+    outputs = []
+    outputs.append("")
+    outputs.append("INPUT -->")
+    outputs.append("  " + str([e[1][1] for e in elements]))
+
+    # Solve!
+    outputs.append("SOLUTION ==>")
+    if len(elements) <= 1:
+        outputs.append("  Not enough data received for solve.")
+    else:
+        # LocalSolver
+        solver = sawatabi.solver.LocalSolver(exact=False)
+        resultset = solver.solve(physical_model, num_reads=1, num_sweeps=10000, seed=12345)
+        # OptiganSolver
+        #solver = sawatabi.solver.OptiganSolver()
+        #resultset = solver.solve(physical_model, timeout=1000, duplicate=True)
+
+        # Decode spins to solution
+        spins = resultset.samples()[0]
+
+        set_p, set_n = [], []
+        n_set_p = n_set_n = 0
+        for e in elements:
+            if spins[f"x[{e[1][0]}]"] == 1:
+                set_p.append(e[1][1])
+                n_set_p += e[1][1]
+            elif spins[f"x[{e[1][0]}]"] == -1:
+                set_n.append(e[1][1])
+                n_set_n += e[1][1]
+        outputs.append(f"  Set(+) : sum={n_set_p}, elements={set_p}")
+        outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
+        outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
+
+    outputs.append("")
+    return "\n".join(outputs)
+
+################################################################
+
+
 class SolveNPPDoFn(beam.DoFn):
     PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())
     PREV_MODEL = BagStateSpec(name="model_state", coder=coders.PickleCoder())
@@ -91,43 +178,6 @@ class SolveNPPDoFn(beam.DoFn):
         else:
             prev_model = model_state_as_list[-1]
 
-        ################################################################
-        # This will be a user-defined function
-        ################################################################
-        def mapping(model, elements, incoming, outgoing, sorted_elements):
-            """
-            Mapping -- Update the model
-            """
-
-            if len(incoming) > 0:
-                # Max index of the incoming elements
-                max_index = max([i[1][0] for i in incoming])
-                # Get current array size
-                x_size = model.get_all_size()
-                # Update variables
-                x = model.append(name="x", shape=(max_index - x_size + 1,))
-            else:
-                x = model.get_variables_by_name(name="x")
-
-            #print("x:", x)
-            #print("elements:", elements)
-            #print("incoming:", incoming)
-            #print("outgoing:", outgoing)
-            for i in incoming:
-                for j in elements:
-                    if i[0] > j[0]:
-                        idx_i = i[1][0]
-                        idx_j = j[1][0]
-                        coeff = -1.0 * i[1][1] * j[1][1]
-                        model.add_interaction(target=(x[idx_i], x[idx_j]), coefficient=coeff)
-
-            for o in outgoing:
-                idx = o[1][0]
-                model.delete_variable(target=x[idx])
-
-            return model
-        ################################################################
-
         model = mapping(prev_model, elements, incoming, outgoing, sorted_elements)
         physical = model.to_physical()
 
@@ -136,52 +186,6 @@ class SolveNPPDoFn(beam.DoFn):
         model_state.add(model)
 
         #print(model)
-
-        ################################################################
-        # This will be a user-defined function
-        ################################################################
-        def solve_and_unmapping(physical_model, elements, incoming, outgoing, sorted_elements):
-            """
-            Solve -- Anealing the model
-            Unmapping -- Decode spins to a problem solution
-            """
-
-            outputs = []
-            outputs.append("")
-            outputs.append("INPUT -->")
-            outputs.append("  " + str([e[1][1] for e in elements]))
-
-            # Solve!
-            outputs.append("SOLUTION ==>")
-            if len(elements) <= 1:
-                outputs.append("  Not enough data received for solve.")
-            else:
-                # LocalSolver
-                solver = sawatabi.solver.LocalSolver(exact=False)
-                resultset = solver.solve(physical_model, num_reads=1, num_sweeps=10000, seed=12345)
-                # OptiganSolver
-                #solver = sawatabi.solver.OptiganSolver()
-                #resultset = solver.solve(physical_model, timeout=1000, duplicate=True)
-
-                # Decode spins to solution
-                spins = resultset.samples()[0]
-
-                set_p, set_n = [], []
-                n_set_p = n_set_n = 0
-                for e in elements:
-                    if spins[f"x[{e[1][0]}]"] == 1:
-                        set_p.append(e[1][1])
-                        n_set_p += e[1][1]
-                    elif spins[f"x[{e[1][0]}]"] == -1:
-                        set_n.append(e[1][1])
-                        n_set_n += e[1][1]
-                outputs.append(f"  Set(+) : sum={n_set_p}, elements={set_p}")
-                outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
-                outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
-
-            outputs.append("")
-            return "\n".join(outputs)
-        ################################################################
 
         yield solve_and_unmapping(physical, elements, incoming, outgoing, sorted_elements)
 
@@ -227,7 +231,7 @@ def run(argv=None):
         #numbers | beam.Map(print)
 
         sliding_windows = (numbers
-            | "Sliding windows of 30 sec with 5 sec interval" >> beam.WindowInto(beam.window.SlidingWindows(size=30, period=5))
+            | "Sliding windows of 30 sec with 5 sec interval" >> beam.WindowInto(beam.window.SlidingWindows(size=WINDOW_SIZE, period=WINDOW_PERIOD))
             | "Add timestamp tuple for diff detection" >> beam.ParDo(WithTimestampTupleFn())
             | "Sliding Windows to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
             | "Global Window for sliding windows" >> beam.WindowInto(beam.window.GlobalWindows())
