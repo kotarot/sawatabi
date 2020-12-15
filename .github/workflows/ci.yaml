@@ -8,9 +8,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: ${{ matrix.python-version }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -29,9 +26,10 @@ jobs:
       run: isort . --check-only --diff
 
   unit_tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.7, 3.8]
     env:
       OS: ${{ matrix.os }}
@@ -49,7 +47,7 @@ jobs:
     - name: Run unit tests
       run: pytest --verbose --cov=./ --cov-report=xml
     - name: Upload coverage reports to Codecov
-      if: ${{ matrix.python-version == 3.8 }}
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
       uses: codecov/codecov-action@v1
       with:
         file: ./coverage.xml
@@ -59,13 +57,11 @@ jobs:
         fail_ci_if_error: true
 
   samples:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8]
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: ${{ matrix.python-version }}
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
