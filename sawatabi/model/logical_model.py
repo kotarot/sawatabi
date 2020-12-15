@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import numbers
-import platform
 import pprint
 import warnings
 
@@ -783,8 +782,4 @@ class LogicalModel(AbstractModel):
         s.append("┣━ constraints:")
         s.append(self.append_prefix(pprint.pformat(self._constraints), length=4))
         s.append("┗" + ("━" * 64))
-
-        if platform.system() == "Windows":
-            return "\n".join(s).encode("utf-8")
-        else:
-            return "\n".join(s)
+        return "\n".join(s)
