@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 # Copyright 2020 Kotaro Terada
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +31,8 @@ Subscribed messages will be divided into fixed/sliding windows.
 StatefulDoFn functions are also applied to the streaming data.
 
 Sample Usage:
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/beam_pubsub.py --project=your-project --topic=your-topic
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/beam_pubsub.py --project=your-project --subscription=your-subsctiption
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/beam_pubsub.py --project=your-project --topic=your-topic
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/beam_pubsub.py --project=your-project --subscription=your-subsctiption
 """
 
 

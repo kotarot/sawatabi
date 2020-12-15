@@ -15,7 +15,7 @@
 import gzip
 import io
 import json
-import os
+import os.path
 
 import dimod
 import requests
@@ -32,7 +32,8 @@ class OptiganSolver(AbstractSolver):
         if config:
             self.config_filename = config
         else:
-            self.config_filename = "{}/.optigan.yml".format(os.environ["HOME"])
+            home_dir = os.path.expanduser("~")
+            self.config_filename = f"{home_dir}/.optigan.yml"
 
     def get_config(self):
         with open(self.config_filename, "r") as f:

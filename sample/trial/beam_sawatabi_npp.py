@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 # Copyright 2020 Kotaro Terada
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,8 +33,8 @@ It subscribes test messages (numbers) from GCP Pub/Sub using Apache Beam, subscr
 and solve Number Partitioning Problem against the subscribed numbers with sawatabi.
 
 Sample Usage:
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/beam_sawatabi_npp.py --project=your-project --topic=your-topic
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/beam_sawatabi_npp.py --project=your-project --subscription=your-subsctiption
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/beam_sawatabi_npp.py --project=your-project --topic=your-topic
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/beam_sawatabi_npp.py --project=your-project --subscription=your-subsctiption
 """
 
 
