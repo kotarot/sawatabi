@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   lint:
+    name: 'Lint with black, flake8, and isort'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -26,6 +27,7 @@ jobs:
       run: isort . --check-only --diff
 
   unit_tests:
+    name: 'Run unit tests'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -57,11 +59,12 @@ jobs:
         fail_ci_if_error: true
 
   samples:
+    name: 'Run samples'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.8]
+        python-version: [3.7, 3.8]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
