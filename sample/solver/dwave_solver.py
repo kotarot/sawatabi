@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from solver_helper import _create_ising_model, _print_resultset
+from _solver_helper import _create_ising_model, _print_resultset
 
 import sawatabi
 
