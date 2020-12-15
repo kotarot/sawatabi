@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import platform
 import pprint
 
 import dimod
@@ -114,4 +115,8 @@ class PhysicalModel(AbstractModel):
         s.append(self.append_prefix(pprint.pformat(self._raw_interactions[constants.INTERACTION_QUADRATIC]), length=4))
         s.append("┣━ offset: " + str(self._offset))
         s.append("┗" + ("━" * 64))
-        return "\n".join(s)
+
+        if platform.system() == "Windows":
+            return "\n".join(s).encode("utf-8")
+        else:
+            return "\n".join(s)
