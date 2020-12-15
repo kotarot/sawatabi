@@ -30,10 +30,10 @@ from google.cloud import pubsub_v1
 This script publishes test messages to GCP Pub/Sub for debug.
 
 Sample Usage:
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=10.0 --random-text
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=30.0 --random-number
-$ GOOGLE_APPLICATION_CREDENTIALS="sample/trial/gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=0.1 --incremental-text --incremental-end=100
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=10.0 --random-text
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=30.0 --random-number
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=0.1 --incremental-text --incremental-end=100
 """
 
 
