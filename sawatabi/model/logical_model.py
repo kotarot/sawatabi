@@ -77,7 +77,7 @@ class LogicalModel(AbstractModel):
     def append(self, name, shape=()):
         self._check_argument_type("name", name, str)
         self._check_argument_type("shape", shape, tuple)
-        self._check_argument_type_in_tuple("shape", shape, (int, np.int64))
+        self._check_argument_type_in_tuple("shape", shape, (int, np.int64, np.int32))
 
         if name not in self._variables:
             # raise KeyError(f"Variables name '{name}' is not defined in the model.")
