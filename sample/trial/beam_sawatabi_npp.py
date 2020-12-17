@@ -42,13 +42,31 @@ $ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/beam_sawat
 # User-defined functions and parameters
 ################################################################
 
+# Windowing options
 WINDOW_SIZE = 30
 WINDOW_PERIOD = 5
+
+# Solver instance
+# - LocalSolver
+solver = sawatabi.solver.LocalSolver(exact=False)
+# - OptiganSolver
+#solver = sawatabi.solver.OptiganSolver()
+
+# Solver options as a dict
+SOLVER_OPTIONS = {
+    "num_reads": 1,
+    "num_sweeps": 10000,
+    "seed": 12345,
+}
+#SOLVER_OPTIONS = {
+#    "timeout": 1000,
+#    "duplicate": True,
+#}
 
 
 def mapping(model, elements, incoming, outgoing, sorted_elements):
     """
-    Mapping -- Update the model
+    Mapping -- Update the model based on the input data elements
     """
 
     if len(incoming) > 0:
@@ -80,9 +98,8 @@ def mapping(model, elements, incoming, outgoing, sorted_elements):
     return model
 
 
-def solve_and_unmapping(physical_model, elements, incoming, outgoing, sorted_elements):
+def unmapping(resultset, elements, incoming, outgoing, sorted_elements):
     """
-    Solve -- Anealing the model
     Unmapping -- Decode spins to a problem solution
     """
 
@@ -90,34 +107,23 @@ def solve_and_unmapping(physical_model, elements, incoming, outgoing, sorted_ele
     outputs.append("")
     outputs.append("INPUT -->")
     outputs.append("  " + str([e[1][1] for e in elements]))
-
-    # Solve!
     outputs.append("SOLUTION ==>")
-    if len(elements) <= 1:
-        outputs.append("  Not enough data received for solve.")
-    else:
-        # LocalSolver
-        solver = sawatabi.solver.LocalSolver(exact=False)
-        resultset = solver.solve(physical_model, num_reads=1, num_sweeps=10000, seed=12345)
-        # OptiganSolver
-        #solver = sawatabi.solver.OptiganSolver()
-        #resultset = solver.solve(physical_model, timeout=1000, duplicate=True)
 
-        # Decode spins to solution
-        spins = resultset.samples()[0]
+    # Decode spins to solution
+    spins = resultset.samples()[0]
 
-        set_p, set_n = [], []
-        n_set_p = n_set_n = 0
-        for e in elements:
-            if spins[f"x[{e[1][0]}]"] == 1:
-                set_p.append(e[1][1])
-                n_set_p += e[1][1]
-            elif spins[f"x[{e[1][0]}]"] == -1:
-                set_n.append(e[1][1])
-                n_set_n += e[1][1]
-        outputs.append(f"  Set(+) : sum={n_set_p}, elements={set_p}")
-        outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
-        outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
+    set_p, set_n = [], []
+    n_set_p = n_set_n = 0
+    for e in elements:
+        if spins[f"x[{e[1][0]}]"] == 1:
+            set_p.append(e[1][1])
+            n_set_p += e[1][1]
+        elif spins[f"x[{e[1][0]}]"] == -1:
+            set_n.append(e[1][1])
+            n_set_n += e[1][1]
+    outputs.append(f"  Set(+) : sum={n_set_p}, elements={set_p}")
+    outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
+    outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
 
     outputs.append("")
     return "\n".join(outputs)
@@ -181,16 +187,23 @@ class SolveNPPDoFn(beam.DoFn):
         else:
             prev_model = model_state_as_list[-1]
 
+        # Map problem input to the model
         model = mapping(prev_model, elements, incoming, outgoing, sorted_elements)
         physical = model.to_physical()
+
+        #print(model)
 
         # Register new elements and models to the states
         elements_state.add(sorted_elements)
         model_state.add(model)
 
-        #print(model)
-
-        yield solve_and_unmapping(physical, elements, incoming, outgoing, sorted_elements)
+        # Solve and unmap to the solution
+        try:
+            resultset = solver.solve(physical, **SOLVER_OPTIONS)
+        except Exception as e:
+            yield f"Failed to solve: {e}"
+        else:
+            yield unmapping(resultset, elements, incoming, outgoing, sorted_elements)
 
 
 def run(argv=None):
