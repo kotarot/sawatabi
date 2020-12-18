@@ -57,6 +57,11 @@ SOLVER_OPTIONS = {
     "num_reads": 1,
     "num_sweeps": 10000,
     "seed": 12345,
+    # TODO: Placeholder
+    #"placeholder": {
+    #    "a": [1.0, 1.1, 1.2],
+    #},
+    # TODO: Set a fallback solver
 }
 #SOLVER_OPTIONS = {
 #    "timeout": 1000,
