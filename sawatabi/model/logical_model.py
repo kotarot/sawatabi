@@ -548,9 +548,11 @@ class LogicalModel(AbstractModel):
 
         # set to physical
         for k, v in linear.items():
-            physical.add_interaction(k, body=constants.INTERACTION_LINEAR, coefficient=v)
+            if v != 0.0:
+                physical.add_interaction(k, body=constants.INTERACTION_LINEAR, coefficient=v)
         for k, v in quadratic.items():
-            physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
+            if v != 0.0:
+                physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
         physical._offset = self._offset
 
         # save the last physical model
