@@ -26,7 +26,7 @@ from sawatabi.model.dependency_constraint import DependencyConstraint
 from sawatabi.model.n_hot_constraint import NHotConstraint
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.utils.functions import Functions
-from sawatabi.utils.time import current_time_ms
+from sawatabi.utils.time import current_time
 
 
 class LogicalModel(AbstractModel):
@@ -70,7 +70,6 @@ class LogicalModel(AbstractModel):
         self._check_argument_type_in_tuple("shape", shape, int)
 
         vartype = self._modeltype_to_vartype(self._mtype)
-
         self._variables[name] = pyqubo.Array.create(name, shape=shape, vartype=vartype)
         return self._variables[name]
 
@@ -125,7 +124,7 @@ class LogicalModel(AbstractModel):
         coefficient=0.0,
         scale=1.0,
         attributes={},
-        timestamp=current_time_ms(),
+        timestamp=current_time(),
     ):
         if not target:
             raise ValueError("'target' must be specified.")
@@ -133,7 +132,7 @@ class LogicalModel(AbstractModel):
         self._check_argument_type("coefficient", coefficient, numbers.Number)
         self._check_argument_type("scale", scale, numbers.Number)
         self._check_argument_type("attributes", attributes, dict)
-        self._check_argument_type("timestamp", timestamp, int)
+        self._check_argument_type("timestamp", timestamp, (int, float))
 
         interaction_info = self._get_interaction_info_from_target(target)
 
@@ -198,7 +197,7 @@ class LogicalModel(AbstractModel):
         coefficient=None,
         scale=None,
         attributes=None,
-        timestamp=current_time_ms(),
+        timestamp=current_time(),
     ):
         if (not target) and (not name):
             raise ValueError("Either 'target' or 'name' must be specified.")
@@ -212,7 +211,7 @@ class LogicalModel(AbstractModel):
         if attributes is not None:
             self._check_argument_type("attributes", attributes, dict)
         if timestamp is not None:
-            self._check_argument_type("timestamp", timestamp, int)
+            self._check_argument_type("timestamp", timestamp, (int, float))
 
         if target is not None:
             interaction_info = self._get_interaction_info_from_target(target)
@@ -625,17 +624,88 @@ class LogicalModel(AbstractModel):
         """
         Converts the model to a QUBO model if the current model type is Ising, and vice versa.
         """
-        raise NotImplementedError
+        if self._mtype == constants.MODEL_QUBO:
+            self.to_ising()
+        elif self._mtype == constants.MODEL_ISING:
+            self.to_qubo()
+
+    def _update_variables_type(self):
+        vartype = self._modeltype_to_vartype(self._mtype)
+        for name, variable in self._variables.items():
+            self._variables[name] = pyqubo.Array.create(name, shape=variable.shape, vartype=vartype)
+        df = self.select_interaction(query="removed == False")
+        for index, interaction in df.iterrows():
+            interacts = interaction["interacts"]
+            if self._mtype == constants.MODEL_ISING:
+                if isinstance(interacts, tuple):
+                    self._interactions_array["interacts"][index] = (pyqubo.Spin(interaction["interacts"][0].label), pyqubo.Spin(interaction["interacts"][1].label))
+                else:
+                    self._interactions_array["interacts"][index] = pyqubo.Spin(interaction["interacts"].label)
+            elif self._mtype == constants.MODEL_QUBO:
+                if isinstance(interacts, tuple):
+                    self._interactions_array["interacts"][index] = (pyqubo.Binary(interaction["interacts"][0].label), pyqubo.Binary(interaction["interacts"][1].label))
+                else:
+                    self._interactions_array["interacts"][index] = pyqubo.Binary(interaction["interacts"].label)
 
     def to_ising(self):
+        """
+        For h:
+            hx = h*(s+1)/2 = hs/2+h/2
+        For J:
+            Jxy = J*(s+1)/2*(t+1)/2 = Jst/4+Js/4+Jt/4+J/4
+        """
         if self._mtype != constants.MODEL_ISING:
-            self._convert_mtype()
+            self._mtype = constants.MODEL_ISING
+
+            # Update variables from Spin to Binary
+            self._update_variables_type()
+
+            # Update h_{i}
+            h_df = self.select_interaction(query="(body == 1) and (removed == False)")
+            for index, h in h_df.iterrows():
+                coeff = h["coefficient"]
+                self.update_interaction(name=h["name"], coefficient=coeff * 0.5)
+                self._offset += coeff * 0.5
+
+            # Update J_{ij}
+            J_df = self.select_interaction(query="(body == 2) and (removed == False)")
+            for _, J in J_df.iterrows():
+                coeff = J["coefficient"]
+                self.update_interaction(name=J["name"], coefficient=coeff * 0.25)
+                self.add_interaction(target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25)
+                self.add_interaction(target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25)
+                self._offset += coeff * 0.25
         else:
-            warnings.warn("The model is already an Ising model.")
+            warnings.warn("The model is already a QUBO model.")
 
     def to_qubo(self):
+        """
+        For h:
+            hs = h*(2x-1) = 2hx-h
+        For J:
+            Jst = J*(2x-1)*(2y-1) = 4Jxy_2Jx-2Jy+J
+        """
         if self._mtype != constants.MODEL_QUBO:
-            self._convert_mtype()
+            self._mtype = constants.MODEL_QUBO
+
+            # Update variables from Spin to Binary
+            self._update_variables_type()
+
+            # Update h_{i}
+            h_df = self.select_interaction(query="(body == 1) and (removed == False)")
+            for index, h in h_df.iterrows():
+                coeff = h["coefficient"]
+                self.update_interaction(name=h["name"], coefficient=coeff * 2.0)
+                self._offset -= coeff
+
+            # Update J_{ij}
+            J_df = self.select_interaction(query="(body == 2) and (removed == False)")
+            for _, J in J_df.iterrows():
+                coeff = J["coefficient"]
+                self.update_interaction(name=J["name"], coefficient=J["coefficient"] * 4.0)
+                self.add_interaction(target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0)
+                self.add_interaction(target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0)
+                self._offset += coeff
         else:
             warnings.warn("The model is already a QUBO model.")
 
@@ -762,6 +832,7 @@ class LogicalModel(AbstractModel):
         s += "'mtype': '" + str(self._mtype) + "', "
         s += "'variables': " + self.remove_leading_spaces(str(self._variables)) + ", "
         s += "'interactions': " + str(self._interactions) + ", "
+        s += "'offset': " + str(self._offset) + ", "
         s += "'constraints': " + str(self._constraints) + "})"
         return s
 
@@ -779,6 +850,7 @@ class LogicalModel(AbstractModel):
             s.append(self.append_prefix(str(vars), length=4))
         s.append("┣━ interactions:")
         s.append(self.append_prefix(pprint.pformat(self._interactions), length=4))
+        s.append("┣━ offset: " + str(self._offset))
         s.append("┣━ constraints:")
         s.append(self.append_prefix(pprint.pformat(self._constraints), length=4))
         s.append("┗" + ("━" * 64))

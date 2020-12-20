@@ -16,16 +16,32 @@ import time
 
 
 def current_time():
+    return time.time()
+
+
+def current_time_as_int():
     return int(time.time())
 
 
 def current_time_ms():
+    return time.time() * 1_000
+
+
+def current_time_ms_as_int():
     return int(time.time() * 1_000)
 
 
 def current_time_us():
+    return time.time() * 1_000_000
+
+
+def current_time_us_as_int():
     return int(time.time() * 1_000_000)
 
 
 def current_time_ns():
+    return time.time() * 1_000_000_000
+
+
+def current_time_ns_as_int():
     return int(time.time() * 1_000_000_000)

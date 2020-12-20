@@ -38,7 +38,7 @@ def test_logical_model_select(ising):
     x = ising.variables("x", shape=(10, 10))
     ising.add_interaction(x[0][0], coefficient=10.0)
     ising.add_interaction(x[0, 1], name="my name", coefficient=20.0)
-    ising.add_interaction((x[0, 0], x[0, 1]), coefficient=30.0, timestamp=1234567890123, attributes={"foo": "bar", "my attr": "my value"})
+    ising.add_interaction((x[0, 0], x[0, 1]), coefficient=30.0, timestamp=1234567890.123, attributes={"foo": "bar", "my attr": "my value"})
 
     # single result
     selected = ising.select_interaction("name == 'x[0][0]'")
@@ -60,7 +60,7 @@ def test_logical_model_select(ising):
     assert selected[key]["coefficient"] == 20.0
 
     # multiple results
-    selected = ising.select_interaction("timestamp > 1234567890000")
+    selected = ising.select_interaction("timestamp > 1234567890.000")
     assert len(selected) == 3
     assert selected["name"].values[0] == "x[0][0]"
     assert selected["name"].values[1] == "my name"
@@ -72,7 +72,7 @@ def test_logical_model_select(ising):
     assert selected["attributes.my attr"].values[2] == "my value"
 
     # empty
-    selected = ising.select_interaction("timestamp < 1234567890000")
+    selected = ising.select_interaction("timestamp < 1234567890.000")
     assert len(selected) == 0
 
     # attributes
@@ -152,7 +152,7 @@ def test_logical_model_add(ising):
     assert ising._interactions[ising._interactions["name"] == "x[1][0]"]["attributes.foo"].values[0] == "bar"
 
     # timestamp
-    ising.add_interaction((x[0, 0], x[0, 1]), coefficient=-4.0, timestamp=1234567890123)
+    ising.add_interaction((x[0, 0], x[0, 1]), coefficient=-4.0, timestamp=1234567890.123)
     selected = ising.select_interaction("name == 'x[0][0]*x[0][1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 4
     assert selected["name"].values[0] == "x[0][0]*x[0][1]"
@@ -161,10 +161,10 @@ def test_logical_model_add(ising):
     assert id(selected["interacts"].values[0][0]) == id(x[0, 0])
     assert id(selected["interacts"].values[0][1]) == id(x[0, 1])
     assert ising._interactions[ising._interactions["name"] == "x[0][0]*x[0][1]"]["coefficient"].values[0] == -4.0
-    assert ising._interactions[ising._interactions["name"] == "x[0][0]*x[0][1]"]["timestamp"].values[0] == 1234567890123
+    assert ising._interactions[ising._interactions["name"] == "x[0][0]*x[0][1]"]["timestamp"].values[0] == 1234567890.123
 
     # Test key order
-    ising.add_interaction((x[1, 1], x[1, 0]), coefficient=-4.0, timestamp=1234567890123)
+    ising.add_interaction((x[1, 1], x[1, 0]), coefficient=-4.0, timestamp=1234567890.123)
     selected = ising.select_interaction("name == 'x[1][0]*x[1][1]'")  # Side effect: Internal interactions DataFrame is updated
     assert len(ising._interactions) == 5
     assert selected["name"].values[0] == "x[1][0]*x[1][1]"
@@ -173,7 +173,7 @@ def test_logical_model_add(ising):
     assert id(selected["interacts"].values[0][0]) == id(x[1, 0])
     assert id(selected["interacts"].values[0][1]) == id(x[1, 1])
     assert ising._interactions[ising._interactions["name"] == "x[1][0]*x[1][1]"]["coefficient"].values[0] == -4.0
-    assert ising._interactions[ising._interactions["name"] == "x[1][0]*x[1][1]"]["timestamp"].values[0] == 1234567890123
+    assert ising._interactions[ising._interactions["name"] == "x[1][0]*x[1][1]"]["timestamp"].values[0] == 1234567890.123
 
 
 def test_logical_model_add_invalid_arguments(ising):
