@@ -283,16 +283,16 @@ def test_logical_model_convert_model_type(qubo):
     assert qubo._offset == 2.5
 
     # Convert to Physical
-    physical = qubo.to_physical()
+    physical_ising = qubo.to_physical()
 
-    assert physical._mtype == constants.MODEL_ISING
-    assert len(physical._raw_interactions[constants.INTERACTION_LINEAR]) == 4
-    assert len(physical._raw_interactions[constants.INTERACTION_QUADRATIC]) == 1
-    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == 5.0
-    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[1]"] == 8.5
-    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[2]"] == 3.0
-    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["y[1][1]"] == -11.0
-    assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][("x[1]", "x[2]")] == 3.0
+    assert physical_ising._mtype == constants.MODEL_ISING
+    assert len(physical_ising._raw_interactions[constants.INTERACTION_LINEAR]) == 4
+    assert len(physical_ising._raw_interactions[constants.INTERACTION_QUADRATIC]) == 1
+    assert physical_ising._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == 5.0
+    assert physical_ising._raw_interactions[constants.INTERACTION_LINEAR]["x[1]"] == 8.5
+    assert physical_ising._raw_interactions[constants.INTERACTION_LINEAR]["x[2]"] == 3.0
+    assert physical_ising._raw_interactions[constants.INTERACTION_LINEAR]["y[1][1]"] == -11.0
+    assert physical_ising._raw_interactions[constants.INTERACTION_QUADRATIC][("x[1]", "x[2]")] == 3.0
 
     with pytest.warns(UserWarning):
         qubo.to_ising()
@@ -333,18 +333,29 @@ def test_logical_model_convert_model_type(qubo):
     assert qubo._offset == 0.0
 
     # Convert to Physical
-    physical = qubo.to_physical()
+    physical_qubo = qubo.to_physical()
 
-    assert physical._mtype == constants.MODEL_QUBO
-    assert len(physical._raw_interactions[constants.INTERACTION_LINEAR]) == 3
-    assert len(physical._raw_interactions[constants.INTERACTION_QUADRATIC]) == 1
-    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == 10.0
-    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[1]"] == 11.0
-    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["y[1][1]"] == -22.0
-    assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][("x[1]", "x[2]")] == 12.0
+    assert physical_qubo._mtype == constants.MODEL_QUBO
+    assert len(physical_qubo._raw_interactions[constants.INTERACTION_LINEAR]) == 3
+    assert len(physical_qubo._raw_interactions[constants.INTERACTION_QUADRATIC]) == 1
+    assert physical_qubo._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == 10.0
+    assert physical_qubo._raw_interactions[constants.INTERACTION_LINEAR]["x[1]"] == 11.0
+    assert physical_qubo._raw_interactions[constants.INTERACTION_LINEAR]["y[1][1]"] == -22.0
+    assert physical_qubo._raw_interactions[constants.INTERACTION_QUADRATIC][("x[1]", "x[2]")] == 12.0
 
     with pytest.warns(UserWarning):
         qubo.to_qubo()
+
+    # Re-re-convert to Ising
+    qubo._convert_mtype()
+    assert qubo._mtype == constants.MODEL_ISING
+    physical_re = qubo.to_physical()
+    assert physical_re._mtype == constants.MODEL_ISING
+    assert physical_re == physical_ising
+
+    # Re-re-re-convert to QUBO
+    qubo.to_qubo()
+    assert qubo._mtype == constants.MODEL_QUBO
 
 
 @pytest.fixture
