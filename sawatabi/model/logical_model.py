@@ -638,12 +638,18 @@ class LogicalModel(AbstractModel):
             interacts = interaction["interacts"]
             if self._mtype == constants.MODEL_ISING:
                 if isinstance(interacts, tuple):
-                    self._interactions_array["interacts"][index] = (pyqubo.Spin(interaction["interacts"][0].label), pyqubo.Spin(interaction["interacts"][1].label))
+                    self._interactions_array["interacts"][index] = (
+                        pyqubo.Spin(interaction["interacts"][0].label),
+                        pyqubo.Spin(interaction["interacts"][1].label),
+                    )
                 else:
                     self._interactions_array["interacts"][index] = pyqubo.Spin(interaction["interacts"].label)
             elif self._mtype == constants.MODEL_QUBO:
                 if isinstance(interacts, tuple):
-                    self._interactions_array["interacts"][index] = (pyqubo.Binary(interaction["interacts"][0].label), pyqubo.Binary(interaction["interacts"][1].label))
+                    self._interactions_array["interacts"][index] = (
+                        pyqubo.Binary(interaction["interacts"][0].label),
+                        pyqubo.Binary(interaction["interacts"][1].label),
+                    )
                 else:
                     self._interactions_array["interacts"][index] = pyqubo.Binary(interaction["interacts"].label)
 
@@ -672,8 +678,12 @@ class LogicalModel(AbstractModel):
             for _, J in J_df.iterrows():
                 coeff = J["coefficient"]
                 self.update_interaction(name=J["name"], coefficient=coeff * 0.25)
-                self.add_interaction(target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25)
-                self.add_interaction(target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25)
+                self.add_interaction(
+                    target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25
+                )
+                self.add_interaction(
+                    target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25
+                )
                 self._offset += coeff * 0.25
         else:
             warnings.warn("The model is already a QUBO model.")
@@ -703,8 +713,12 @@ class LogicalModel(AbstractModel):
             for _, J in J_df.iterrows():
                 coeff = J["coefficient"]
                 self.update_interaction(name=J["name"], coefficient=J["coefficient"] * 4.0)
-                self.add_interaction(target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0)
-                self.add_interaction(target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0)
+                self.add_interaction(
+                    target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0
+                )
+                self.add_interaction(
+                    target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0
+                )
                 self._offset += coeff
         else:
             warnings.warn("The model is already a QUBO model.")
