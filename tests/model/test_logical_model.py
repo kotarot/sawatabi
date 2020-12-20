@@ -384,6 +384,7 @@ def test_logical_model_repr(ising):
     assert "'variables':" in ising.__repr__()
     assert "'x':" in ising.__repr__()
     assert "'interactions':" in ising.__repr__()
+    assert "'offset':" in ising.__repr__()
     assert "'constraints':" in ising.__repr__()
 
 
@@ -396,4 +397,5 @@ def test_logical_model_str(ising):
     assert "variables: ['x']" in ising.__str__()
     assert "name: x" in ising.__str__()
     assert "interactions:" in ising.__str__()
+    assert "offset:" in ising.__str__()
     assert "constraints:" in ising.__str__()

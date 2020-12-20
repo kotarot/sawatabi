@@ -15,17 +15,25 @@
 from sawatabi.utils.functions import Functions
 from sawatabi.utils.time import (
     current_time,
+    current_time_as_int,
     current_time_ms,
+    current_time_ms_as_int,
     current_time_us,
+    current_time_us_as_int,
     current_time_ns,
+    current_time_ns_as_int,
 )
 from sawatabi.utils.profile import profile
 
 __all__ = [
     "current_time",
+    "current_time_as_int",
     "current_time_ms",
+    "current_time_ms_as_int",
     "current_time_us",
+    "current_time_us_as_int",
     "current_time_ns",
+    "current_time_ns_as_int",
     "Functions",
     "profile",
 ]
