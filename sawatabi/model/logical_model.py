@@ -129,8 +129,30 @@ class LogicalModel(AbstractModel):
         if not target:
             raise ValueError("'target' must be specified.")
 
-        self._check_argument_type("coefficient", coefficient, (numbers.Number, pyqubo.core.express.Num, pyqubo.core.express.Add, pyqubo.core.express.AddList, pyqubo.core.express.Mul, pyqubo.core.express.Placeholder))
-        self._check_argument_type("scale", scale, (numbers.Number, pyqubo.core.express.Num, pyqubo.core.express.Add, pyqubo.core.express.AddList, pyqubo.core.express.Mul, pyqubo.core.express.Placeholder))
+        self._check_argument_type(
+            "coefficient",
+            coefficient,
+            (
+                numbers.Number,
+                pyqubo.core.express.Num,
+                pyqubo.core.express.Add,
+                pyqubo.core.express.AddList,
+                pyqubo.core.express.Mul,
+                pyqubo.core.express.Placeholder,
+            ),
+        )
+        self._check_argument_type(
+            "scale",
+            scale,
+            (
+                numbers.Number,
+                pyqubo.core.express.Num,
+                pyqubo.core.express.Add,
+                pyqubo.core.express.AddList,
+                pyqubo.core.express.Mul,
+                pyqubo.core.express.Placeholder,
+            ),
+        )
         self._check_argument_type("attributes", attributes, dict)
         self._check_argument_type("timestamp", timestamp, (int, float))
 
