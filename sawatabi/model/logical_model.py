@@ -129,8 +129,8 @@ class LogicalModel(AbstractModel):
         if not target:
             raise ValueError("'target' must be specified.")
 
-        self._check_argument_type("coefficient", coefficient, numbers.Number)
-        self._check_argument_type("scale", scale, numbers.Number)
+        self._check_argument_type("coefficient", coefficient, (numbers.Number, pyqubo.core.express.Num, pyqubo.core.express.Add, pyqubo.core.express.AddList, pyqubo.core.express.Mul, pyqubo.core.express.Placeholder))
+        self._check_argument_type("scale", scale, (numbers.Number, pyqubo.core.express.Num, pyqubo.core.express.Add, pyqubo.core.express.AddList, pyqubo.core.express.Mul, pyqubo.core.express.Placeholder))
         self._check_argument_type("attributes", attributes, dict)
         self._check_argument_type("timestamp", timestamp, (int, float))
 
@@ -527,17 +527,23 @@ class LogicalModel(AbstractModel):
             if self._interactions_array["dirty"][i]:
                 self._interactions_array["dirty"][i] = False
 
+            # Resolve placeholders for coefficients and scales, using PyQUBO.
+            coeff_with_ph = self._interactions_array["coefficient"][i] * self._interactions_array["scale"][i]
+            coeff_model = (coeff_with_ph + pyqubo.Binary("sawatabi-fake-variable")).compile()  # We need a variable for a valid model for pyqubo
+            coeff_ph_resolved = coeff_model.to_qubo(feed_dict=placeholder)
+            coeff = coeff_ph_resolved[1]  # We don't need the variable just prepared, extracting only offset
+
             if self._interactions_array["body"][i] == constants.INTERACTION_LINEAR:
                 if self._interactions_array["key"][i] in linear:
-                    linear[self._interactions_array["key"][i]] += float(self._interactions_array["coefficient"][i] * self._interactions_array["scale"][i])
+                    linear[self._interactions_array["key"][i]] += coeff
                 else:
-                    linear[self._interactions_array["key"][i]] = float(self._interactions_array["coefficient"][i] * self._interactions_array["scale"][i])
+                    linear[self._interactions_array["key"][i]] = coeff
 
             elif self._interactions_array["body"][i] == constants.INTERACTION_QUADRATIC:
                 if self._interactions_array["key"][i] in quadratic:
-                    quadratic[self._interactions_array["key"][i]] += float(self._interactions_array["coefficient"][i] * self._interactions_array["scale"][i])
+                    quadratic[self._interactions_array["key"][i]] += coeff
                 else:
-                    quadratic[self._interactions_array["key"][i]] = float(self._interactions_array["coefficient"][i] * self._interactions_array["scale"][i])
+                    quadratic[self._interactions_array["key"][i]] = coeff
 
         # TODO: Physically remove the logically removed interactions
         for rm in will_remove:

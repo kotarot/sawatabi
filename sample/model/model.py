@@ -17,6 +17,7 @@
 
 import platform
 import sys
+from pyqubo import Placeholder
 
 import sawatabi
 
@@ -221,6 +222,27 @@ def model_convert_to_qubo():
     _print_utf8(physical)
 
 
+def model_convert_with_placeholder():
+    print("\n=== convert with placeholder ===")
+    model = sawatabi.model.LogicalModel(mtype="ising")
+
+    print("\nSet variables x to shape (7,) and add interactions.")
+    x = model.variables("x", shape=(7,))
+    model.add_interaction(x[0], coefficient=Placeholder("a"))
+    model.add_interaction(x[1], coefficient=Placeholder("b") + 1.0)
+    model.add_interaction(x[2], coefficient=2.0)
+    model.add_interaction(x[2], name="x[2]-2", coefficient=Placeholder("c"))
+    model.add_interaction(x[3], coefficient=2 * Placeholder("d") + 3 * Placeholder("e"))
+    model.add_interaction(x[4], coefficient=Placeholder("f"), scale=3.0)
+    model.add_interaction(x[5], coefficient=4.0, scale=Placeholder("g"))
+    model.add_interaction(x[6], coefficient=Placeholder("h"), scale=Placeholder("i") * 5.0)
+    _print_utf8(model)
+
+    print("\nConvert to Physical model with placeholders.")
+    physical_model = model.to_physical(placeholder={"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6.0, "g": -7.0, "h": 8.0, "i": 9.0})
+    _print_utf8(physical_model)
+
+
 def main():
     model_pyqubo()
     model_1d()
@@ -230,6 +252,7 @@ def main():
     model_convert()
     model_convert_to_ising()
     model_convert_to_qubo()
+    model_convert_with_placeholder()
 
 
 if __name__ == "__main__":
