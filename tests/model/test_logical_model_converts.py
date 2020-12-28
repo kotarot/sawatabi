@@ -194,9 +194,26 @@ def test_logical_model_to_physical_with_n_hot_constraint_randomly_ising(ising):
 
 
 def test_logical_model_to_physical_with_placeholder(ising):
-    placeholder = {"a": 10.0}
-    ising.to_physical(placeholder=placeholder)
-    # TODO
+    x = ising.variables("x", shape=(7,))
+    ising.add_interaction(x[0], coefficient=pyqubo.Placeholder("a"))
+    ising.add_interaction(x[1], coefficient=pyqubo.Placeholder("b") + 1.0)
+    ising.add_interaction(x[2], coefficient=2.0)
+    ising.add_interaction(x[2], name="x[2]-2", coefficient=pyqubo.Placeholder("c"))
+    ising.add_interaction(x[3], coefficient=2 * pyqubo.Placeholder("d") + 3 * pyqubo.Placeholder("e"))
+    ising.add_interaction(x[4], coefficient=pyqubo.Placeholder("f"), scale=3.0)
+    ising.add_interaction(x[5], coefficient=4.0, scale=pyqubo.Placeholder("g"))
+    ising.add_interaction(x[6], coefficient=pyqubo.Placeholder("h"), scale=pyqubo.Placeholder("i") * 5)
+
+    placeholder = {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6, "g": -7, "h": 8, "i": 9}
+    physical = ising.to_physical(placeholder=placeholder)
+
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == 1.0
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[1]"] == 3.0
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[2]"] == 5.0
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[3]"] == -7.0
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[4]"] == 18.0
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[5]"] == -28.0
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[6]"] == 360.0
 
 
 def test_logical_model_to_physical_with_deleted_variables(ising):
