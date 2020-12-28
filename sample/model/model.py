@@ -17,6 +17,7 @@
 
 import platform
 import sys
+
 from pyqubo import Placeholder
 
 import sawatabi
