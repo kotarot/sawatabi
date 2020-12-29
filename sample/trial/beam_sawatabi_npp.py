@@ -23,7 +23,7 @@ import apache_beam as beam
 from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.userstate import BagStateSpec
-from beam_trial import IndexAssigningStatefulDoFn, WithTimestampFn, WithTimestampTupleFn
+from beam_trial import IndexAssigningStatefulDoFn, WithTimestampStrFn, WithTimestampTupleFn
 
 import sawatabi
 
@@ -260,7 +260,7 @@ def run(argv=None):
             | beam.Map(lambda x: (None, x))
             | beam.ParDo(SolveNPPDoFn())
 
-            | "With timestamp for sliding windows" >> beam.ParDo(WithTimestampFn())
+            | "With timestamp for sliding windows" >> beam.ParDo(WithTimestampStrFn())
             | beam.Map(print)
         )
 

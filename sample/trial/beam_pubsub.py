@@ -23,7 +23,7 @@ from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.trigger import AccumulationMode, AfterAll, AfterAny, AfterCount, AfterProcessingTime, AfterWatermark, DefaultTrigger, Repeatedly
 from apache_beam.transforms.userstate import BagStateSpec
-from beam_trial import IndexAssigningStatefulDoFn, MyClass, MyLineLengthFn, MyStatefulDoFn, WithTimestampFn, WithTimestampTupleFn
+from beam_trial import IndexAssigningStatefulDoFn, MyClass, MyLineLengthFn, MyStatefulDoFn, WithTimestampStrFn, WithTimestampTupleFn
 
 """
 This script subscribes test messages from GCP Pub/Sub using Apache Beam.
@@ -192,7 +192,7 @@ def run(argv=None):
             #| "With count visible" >> beam.Map(lambda val: (val[0], val[1], len(val[1])))
             | beam.ParDo(MyStatefulDoFn_ForStreaming())
 
-            | "With timestamp for fixed windows" >> beam.ParDo(WithTimestampFn())
+            | "With timestamp for fixed windows" >> beam.ParDo(WithTimestampStrFn())
             #| beam.Map(print)
         )
 
@@ -204,7 +204,7 @@ def run(argv=None):
             | beam.Map(lambda x: (None, x))
             | beam.ParDo(WindowDiffStatefulDoFn_ForStreaming())
 
-            | "With timestamp for sliding windows" >> beam.ParDo(WithTimestampFn())
+            | "With timestamp for sliding windows" >> beam.ParDo(WithTimestampStrFn())
             | beam.Map(print)
         )
 
