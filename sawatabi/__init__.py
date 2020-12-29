@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi import model, solver, utils
+from sawatabi import algorithm, model, solver, utils
 from sawatabi.base_mixin import BaseMixin
 from sawatabi.__version__ import __version__, __version_info__
 
-__all__ = ["BaseMixin", "model", "solver", "utils", "__version__", "__version_info__"]
+__all__ = ["BaseMixin", "algorithm", "model", "solver", "utils", "__version__", "__version_info__"]
