@@ -21,7 +21,6 @@ import sawatabi
 
 
 def npp_window(project, topic, subscription, path, output):
-
     def npp_mapping(prev_model, elements, incoming, outgoing):
         """
         Mapping -- Update the model based on the input data elements
@@ -55,6 +54,7 @@ def npp_window(project, topic, subscription, path, output):
             model.delete_variable(target=x[idx])
 
         return model
+
     # end of user-defined function "mapping"
 
     def npp_unmapping(resultset, elements, incoming, outgoing):
@@ -85,6 +85,7 @@ def npp_window(project, topic, subscription, path, output):
         outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
 
         return "\n".join(outputs)
+
     # end of user-defined function "unmapping"
 
     def npp_solving(physical_model, elements, incoming, outgoing):
@@ -104,9 +105,10 @@ def npp_window(project, topic, subscription, path, output):
         pass
 
         return resultset
+
     # end of user-defined function "solving"
 
-    pipeline_args=["--runner=DirectRunner"]
+    pipeline_args = ["--runner=DirectRunner"]
     if project is not None:
         pipeline_args.append("--streaming")
 
@@ -143,26 +145,11 @@ def npp_window(project, topic, subscription, path, output):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--project",
-        dest="project",
-        help="Google Cloud Pub/Sub project name.")
-    parser.add_argument(
-        "--topic",
-        dest="topic",
-        help="Google Cloud Pub/Sub topic name to subscribe messages from.")
-    parser.add_argument(
-        "--subscription",
-        dest="subscription",
-        help="Google Cloud Pub/Sub subscription name.")
-    parser.add_argument(
-        "--path",
-        dest="path",
-        help="Path to the local file or the GCS object to read from.")
-    parser.add_argument(
-        "--output",
-        dest="output",
-        help="Path (prefix) to the output file or the object to write to.")
+    parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
+    parser.add_argument("--topic", dest="topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
+    parser.add_argument("--subscription", dest="subscription", help="Google Cloud Pub/Sub subscription name.")
+    parser.add_argument("--path", dest="path", help="Path to the local file or the GCS object to read from.")
+    parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
     args = parser.parse_args()
 
     npp_window(args.project, args.topic, args.subscription, args.path, args.output)

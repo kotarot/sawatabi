@@ -20,7 +20,7 @@ import apache_beam as beam
 import sawatabi
 
 
-class IO():
+class IO:
 
     ################################
     # Input (Read)
@@ -28,24 +28,30 @@ class IO():
 
     @staticmethod
     def _read_as_number(messages):
+        # fmt: off
         number_pattern = re.compile(r"^[0-9]+$")
         return (messages
             | "Filter" >> beam.Filter(lambda element: number_pattern.match(element))
             | "To int" >> beam.Map(lambda e: int(e)))
+        # fmt: on
 
     @staticmethod
     def _read_as_json(messages):
+        # fmt: off
         return (messages
             | "To JSON" >> beam.Map(lambda e: json.loads(e)))
+        # fmt: on
 
     @staticmethod
     def read_from_pubsub(project, topic=None, subscription=None):
+        # fmt: off
         if topic is not None:
             messages = beam.io.ReadFromPubSub(topic=f"projects/{project}/topics/{topic}")
         elif subscription is not None:
             messages = beam.io.ReadFromPubSub(subscription=f"projects/{project}/subscriptions/{subscription}")
         return (messages
             | "Decode" >> beam.Map(lambda m: m.decode("utf-8")))
+        # fmt: on
 
     @staticmethod
     def read_from_pubsub_as_number(project, topic=None, subscription=None):

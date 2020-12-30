@@ -31,7 +31,17 @@ class Window(AbstractAlgorithm):
         PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())
         PREV_MODEL = BagStateSpec(name="model_state", coder=coders.PickleCoder())
 
-        def process(self, value, timestamp=beam.DoFn.TimestampParam, timestamp_state=beam.DoFn.StateParam(PREV_TIMESTAMP), elements_state=beam.DoFn.StateParam(PREV_ELEMENTS), model_state=beam.DoFn.StateParam(PREV_MODEL), map_fn=None, unmap_fn=None, solve_fn=None):
+        def process(
+            self,
+            value,
+            timestamp=beam.DoFn.TimestampParam,
+            timestamp_state=beam.DoFn.StateParam(PREV_TIMESTAMP),
+            elements_state=beam.DoFn.StateParam(PREV_ELEMENTS),
+            model_state=beam.DoFn.StateParam(PREV_MODEL),
+            map_fn=None,
+            unmap_fn=None,
+            solve_fn=None,
+        ):
             _, elements = value
 
             # Sort with the event time.
@@ -125,6 +135,8 @@ class Window(AbstractAlgorithm):
         pipeline_options = PipelineOptions(pipeline_args, save_main_session=True)
         p = beam.Pipeline(options=pipeline_options)
 
+        # fmt: off
+
         # --------------------------------
         # Input part
         # --------------------------------
@@ -150,14 +162,9 @@ class Window(AbstractAlgorithm):
         # Algorithm part (windowing)
         # --------------------------------
 
-        def print_and_return(e):
-            print(e)
-            return e
-
         windows = (with_indices
             | "Sliding windows" >> beam.WindowInto(beam.window.SlidingWindows(size=algorithm_options["window.size"], period=algorithm_options["window.period"]))
             | "Add timestamp as tuple againt each window for diff detection" >> beam.ParDo(AbstractAlgorithm.WithTimestampTupleFn())
-            #| beam.Map(print_and_return)
             | "Elements in a sliding window into a list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
             | "To a single global Window from windows" >> beam.WindowInto(beam.window.GlobalWindows()))
 
@@ -187,6 +194,8 @@ class Window(AbstractAlgorithm):
         if output_fn is not None:
             outputs = (solved
                 | "Output" >> output_fn)
+
+        # fmt: on
 
         return p
 
