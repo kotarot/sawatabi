@@ -33,9 +33,24 @@ def test_io_read_from_pubsub():
         IO.read_from_pubsub(project="", topic="test-topic")
 
     fn = IO.read_from_pubsub(project="test-project", topic="test-topic")
-
     assert isinstance(fn, beam.transforms.ptransform._ChainedPTransform)
     assert fn.label == "ReadFromPubSub|Decode"
+
+    fn = IO.read_from_pubsub(project="test-project", subscription="test-subscription")
+    assert isinstance(fn, beam.transforms.ptransform._ChainedPTransform)
+    assert fn.label == "ReadFromPubSub|Decode"
+
+
+def test_io_read_from_pubsub_as_number():
+    fn = IO.read_from_pubsub_as_number(project="test-project", topic="test-topic")
+    assert isinstance(fn, beam.transforms.ptransform._ChainedPTransform)
+    assert fn.label == "ReadFromPubSub|Decode|Filter|To int"
+
+
+def test_io_read_from_pubsub_as_json():
+    fn = IO.read_from_pubsub_as_json(project="test-project", topic="test-topic")
+    assert isinstance(fn, beam.transforms.ptransform._ChainedPTransform)
+    assert fn.label == "ReadFromPubSub|Decode|To JSON"
 
 
 def test_io_read_from_text():
@@ -49,6 +64,47 @@ def test_io_read_from_text():
         IO.read_from_text(path="/path/to/test/file")
 
     fn = IO.read_from_text(path="tests/algorithm/numbers_100.txt")
-
     assert isinstance(fn, beam.io.textio.ReadFromText)
     assert fn.label == "ReadFromText"
+
+
+def test_io_read_from_text_as_number():
+    fn = IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt")
+    assert isinstance(fn, beam.transforms.ptransform._ChainedPTransform)
+    assert fn.label == "ReadFromText|Filter|To int"
+
+
+def test_io_read_from_text_as_json():
+    fn = IO.read_from_text_as_json(path="tests/algorithm/numbers_100.json")
+    assert isinstance(fn, beam.transforms.ptransform._ChainedPTransform)
+    assert fn.label == "ReadFromText|To JSON"
+
+
+def test_io_write_to_stdout():
+    fn = IO.write_to_stdout()
+    assert isinstance(fn, beam.transforms.ptransform._NamedPTransform)
+    assert fn.label == "Print to stdout"
+
+
+def test_io_write_to_pubsub():
+    with pytest.raises(TypeError):
+        IO.write_to_pubsub()
+
+    with pytest.raises(ValueError):
+        IO.write_to_pubsub(project="", topic="")
+
+    with pytest.raises(ValueError):
+        IO.write_to_pubsub(project="test-project", topic="")
+
+    with pytest.raises(ValueError):
+        IO.write_to_pubsub(project="", topic="test-topic")
+
+    fn = IO.write_to_pubsub(project="test-project", topic="test-topic")
+    assert isinstance(fn, beam.io.gcp.pubsub._WriteStringsToPubSub)
+    assert fn.label == "_WriteStringsToPubSub"
+
+
+def test_io_write_to_text():
+    fn = IO.write_to_text(path="/path/to/output")
+    assert isinstance(fn, beam.io.textio.WriteToText)
+    assert fn.label == "WriteToText"

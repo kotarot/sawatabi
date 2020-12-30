@@ -83,11 +83,11 @@ class IO:
 
     @staticmethod
     def write_to_stdout():
-        return beam.Map(print)
+        return "Print to stdout" >> beam.Map(print)
 
     @staticmethod
-    def write_to_pubsub(topic):
-        return beam.io.WriteStringsToPubSub(topic=topic)
+    def write_to_pubsub(project, topic):
+        return beam.io.WriteStringsToPubSub(topic=f"projects/{project}/topics/{topic}")
 
     @staticmethod
     def write_to_text(path):

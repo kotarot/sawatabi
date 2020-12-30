@@ -15,8 +15,6 @@
 import datetime
 import os
 
-import pytest
-
 from sample.algorithm import npp_window
 
 
