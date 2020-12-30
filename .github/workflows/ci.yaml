@@ -81,6 +81,8 @@ jobs:
       run: python sample/model/n_hot.py
     - name: Run sample/solver/local_solver.py
       run: python sample/solver/local_solver.py
+    - name: Run sample/algorithm/npp_window.py
+      run: python sample/algorithm/npp_window.py --path=tests/algorithm/numbers_100.txt
     - name: Run sample/utils/profile.py
       run: python sample/utils/profile.py
     - name: Run sample/utils/utils.py
