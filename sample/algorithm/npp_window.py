@@ -109,6 +109,7 @@ def npp_window(project, topic, subscription, path, output):
     # end of user-defined function "solving"
 
     pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
     if project is not None:
         pipeline_args.append("--streaming")
 

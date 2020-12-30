@@ -135,7 +135,7 @@ class Window(AbstractAlgorithm):
 
     @staticmethod
     def create_pipeline(algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]):
-        pipeline_options = PipelineOptions(pipeline_args, save_main_session=True)
+        pipeline_options = PipelineOptions(pipeline_args)
         p = beam.Pipeline(options=pipeline_options)
 
         # fmt: off
