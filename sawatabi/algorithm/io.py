@@ -87,7 +87,10 @@ class IO:
 
     @staticmethod
     def write_to_pubsub(project, topic):
-        return beam.io.WriteStringsToPubSub(topic=f"projects/{project}/topics/{topic}")
+        # fmt: off
+        return ("Encode" >> beam.Map(lambda s: s.encode("utf-8"))
+            | beam.io.WriteToPubSub(topic=f"projects/{project}/topics/{topic}"))
+        # fmt: on
 
     @staticmethod
     def write_to_text(path):

@@ -99,8 +99,8 @@ def test_io_write_to_pubsub():
         IO.write_to_pubsub(project="", topic="test-topic")
 
     fn = IO.write_to_pubsub(project="test-project", topic="test-topic")
-    assert isinstance(fn, beam.io.gcp.pubsub._WriteStringsToPubSub)
-    assert fn.label == "_WriteStringsToPubSub"
+    assert isinstance(fn, beam.transforms.ptransform._ChainedPTransform)
+    assert fn.label == "Encode|WriteToPubSub"
 
 
 def test_io_write_to_text():
