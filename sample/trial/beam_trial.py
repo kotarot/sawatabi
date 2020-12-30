@@ -43,7 +43,7 @@ class MyLineLengthFn(beam.DoFn):
 
 
 # Reference: https://beam.apache.org/documentation/transforms/python/elementwise/withtimestamps/
-class WithTimestampFn(beam.DoFn):
+class WithTimestampStrFn(beam.DoFn):
     def process(self, data, timestamp=beam.DoFn.TimestampParam):
         yield f"[{timestamp.to_utc_datetime()}] {data}"
 
@@ -260,7 +260,7 @@ def run(argv=None):
         # Note: Data from text data source do not have timestamp by default.
         timestamp_processing_time = processed_value | "Add timestamps to length" >> beam.Map(add_timestamp)
         #_ = (timestamp_processing_time
-        #    | "With timestamp" >> beam.ParDo(WithTimestampFn())
+        #    | "With timestamp" >> beam.ParDo(WithTimestampStrFn())
         #    | "Print timestamp" >> beam.Map(print))
 
         # Windowing by event time
@@ -300,7 +300,7 @@ def run(argv=None):
 
         timestamp_by_index = index_assigned | "With timestamps by index" >> beam.Map(add_timestamp_based_on_index)
         #_ = (timestamp_by_index
-        #    | "With timestamp" >> beam.ParDo(WithTimestampFn())
+        #    | "With timestamp" >> beam.ParDo(WithTimestampStrFn())
         #    | "Print timestamp" >> beam.Map(print))
 
         # Fixed Windowing by index

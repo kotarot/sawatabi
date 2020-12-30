@@ -192,6 +192,9 @@ notebook/figs/tmp_*
 
 gcp-key.json
 beam-temp-*
+
 sample/trial/hamlet.txt
 sample/trial/input.txt
 sample/trial/output.txt*
+
+tests/algorithm/output.txt*
