@@ -19,7 +19,6 @@ from apache_beam.transforms.userstate import BagStateSpec
 
 import sawatabi
 from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
-from sawatabi.algorithm.io import IO
 
 
 class Window(AbstractAlgorithm):
@@ -68,9 +67,13 @@ class Window(AbstractAlgorithm):
             else:
                 prev_model = model_state_as_list[-1]
 
-            # Sometimes, when we use the sliding window algorithm for a bounded data (such as a local file), we may receive an outdated event whose timestamp is older than timestamp of previously processed event.
+            # Sometimes, when we use the sliding window algorithm for a bounded data (such as a local file),
+            # we may receive an outdated event whose timestamp is older than timestamp of previously processed event.
             if float(timestamp) < float(prev_timestamp):
-                yield f"The received event is outdated: Timestamp is {timestamp.to_utc_datetime()}, while an event with timestamp of {timestamp.to_utc_datetime()} has been already processed."
+                yield (
+                    f"The received event is outdated: Timestamp is {timestamp.to_utc_datetime()}, "
+                    + f"while an event with timestamp of {timestamp.to_utc_datetime()} has been already processed."
+                )
                 return
 
             # Resolve outgoing elements in this iteration
@@ -192,7 +195,7 @@ class Window(AbstractAlgorithm):
                 | "Add output suffix" >> beam.Map(lambda element: element + algorithm_options["output.suffix"]))
 
         if output_fn is not None:
-            outputs = (solved
+            outputs = (solved  # noqa: F841
                 | "Output" >> output_fn)
 
         # fmt: on

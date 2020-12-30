@@ -22,7 +22,7 @@ jobs:
     - name: Lint with black
       run: black . --check --diff --exclude="sample\/trial"
     - name: Lint with flake8
-      run: flake8 . --statistics --count --show-source --exclude="sample/trial/*.py"
+      run: flake8 . --statistics --count --show-source --exclude="sample/trial/*.py" --ignore=E128,W503
     - name: Lint with isort
       run: isort . --check-only --diff
 

@@ -16,4 +16,4 @@ from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
 from sawatabi.algorithm.io import IO
 from sawatabi.algorithm.window import Window
 
-__all__ = ["AbstractModel", "IO", "Window"]
+__all__ = ["AbstractAlgorithm", "IO", "Window"]
