@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import re
 
 import apache_beam as beam
@@ -26,6 +27,18 @@ class IO():
     ################################
 
     @staticmethod
+    def _read_as_number(messages):
+        number_pattern = re.compile(r"^[0-9]+$")
+        return (messages
+            | "Filter" >> beam.Filter(lambda element: number_pattern.match(element))
+            | "To int" >> beam.Map(lambda e: int(e)))
+
+    @staticmethod
+    def _read_as_json(messages):
+        return (messages
+            | "To JSON" >> beam.Map(lambda e: json.loads(e)))
+
+    @staticmethod
     def read_from_pubsub(project, topic=None, subscription=None):
         if topic is not None:
             messages = beam.io.ReadFromPubSub(topic=f"projects/{project}/topics/{topic}")
@@ -35,24 +48,28 @@ class IO():
             | "Decode" >> beam.Map(lambda m: m.decode("utf-8")))
 
     @staticmethod
-    def read_from_pubsub_number(project, topic=None, subscription=None):
-        number_pattern = re.compile(r"^[0-9]+$")
+    def read_from_pubsub_as_number(project, topic=None, subscription=None):
         messages = sawatabi.algorithm.IO.read_from_pubsub(project=project, topic=topic, subscription=subscription)
-        return (messages
-            | "Filter" >> beam.Filter(lambda element: number_pattern.match(element))
-            | "To int" >> beam.Map(lambda e: int(e)))
+        return sawatabi.algorithm.IO._read_as_number(messages)
+
+    @staticmethod
+    def read_from_pubsub_as_json(project, topic=None, subscription=None):
+        messages = sawatabi.algorithm.IO.read_from_pubsub(project=project, topic=topic, subscription=subscription)
+        return sawatabi.algorithm.IO._read_as_json(messages)
 
     @staticmethod
     def read_from_text(path):
         return beam.io.ReadFromText(file_pattern=path)
 
     @staticmethod
-    def read_from_text_number(path):
-        number_pattern = re.compile(r"^[0-9]+$")
+    def read_from_text_as_number(path):
         messages = sawatabi.algorithm.IO.read_from_text(path)
-        return (messages
-            | "Filter" >> beam.Filter(lambda element: number_pattern.match(element))
-            | "To int" >> beam.Map(lambda e: int(e)))
+        return sawatabi.algorithm.IO._read_as_number(messages)
+
+    @staticmethod
+    def read_from_text_as_json(path):
+        messages = sawatabi.algorithm.IO.read_from_text(path)
+        return sawatabi.algorithm.IO._read_as_json(messages)
 
     ################################
     # Output (Write)
@@ -61,3 +78,11 @@ class IO():
     @staticmethod
     def write_to_stdout():
         return beam.Map(print)
+
+    @staticmethod
+    def write_to_pubsub(topic):
+        return beam.io.WriteStringsToPubSub(topic=topic)
+
+    @staticmethod
+    def write_to_text(path):
+        return beam.io.WriteToText(file_path_prefix=path)

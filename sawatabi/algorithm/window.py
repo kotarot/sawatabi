@@ -27,10 +27,11 @@ class Window(AbstractAlgorithm):
         super().__init__()
 
     class SolveDoFn(beam.DoFn):
+        PREV_TIMESTAMP = BagStateSpec(name="timestamp_state", coder=coders.PickleCoder())
         PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())
         PREV_MODEL = BagStateSpec(name="model_state", coder=coders.PickleCoder())
 
-        def process(self, value, elements_state=beam.DoFn.StateParam(PREV_ELEMENTS), model_state=beam.DoFn.StateParam(PREV_MODEL), map_fn=None, unmap_fn=None, solve_fn=None):
+        def process(self, value, timestamp=beam.DoFn.TimestampParam, timestamp_state=beam.DoFn.StateParam(PREV_TIMESTAMP), elements_state=beam.DoFn.StateParam(PREV_ELEMENTS), model_state=beam.DoFn.StateParam(PREV_MODEL), map_fn=None, unmap_fn=None, solve_fn=None):
             _, elements = value
 
             # Sort with the event time.
@@ -39,17 +40,28 @@ class Window(AbstractAlgorithm):
             sorted_elements = sorted(elements)
 
             # generator into a list
+            timestamp_state_as_list = list(timestamp_state.read())
             elements_state_as_list = list(elements_state.read())
             model_state_as_list = list(model_state.read())
-            # Clear the BagState so we can hold only the latest state
-            elements_state.clear()
-            model_state.clear()
 
-            # Extract elements from state
+            # Extract the previous timestamp, elements, and model from state
+            if len(timestamp_state_as_list) == 0:
+                prev_timestamp = -1.0
+            else:
+                prev_timestamp = timestamp_state_as_list[-1]
             if len(elements_state_as_list) == 0:
                 prev_elements = []
             else:
                 prev_elements = elements_state_as_list[-1]
+            if len(model_state_as_list) == 0:
+                prev_model = sawatabi.model.LogicalModel(mtype="ising")
+            else:
+                prev_model = model_state_as_list[-1]
+
+            # Sometimes, when we use the sliding window algorithm for a bounded data (such as a local file), we may receive an outdated event whose timestamp is older than timestamp of previously processed event.
+            if float(timestamp) < float(prev_timestamp):
+                yield f"The received event is outdated: Timestamp is {timestamp.to_utc_datetime()}, while an event with timestamp of {timestamp.to_utc_datetime()} has been already processed."
+                return
 
             # Resolve outgoing elements in this iteration
             def resolve_outgoing(prev_elements, sorted_elements):
@@ -76,34 +88,46 @@ class Window(AbstractAlgorithm):
 
             incoming = resolve_incoming(prev_elements, sorted_elements)
 
-            # Extract model from state
-            if len(model_state_as_list) == 0:
-                prev_model = sawatabi.model.LogicalModel(mtype="ising")
-            else:
-                prev_model = model_state_as_list[-1]
+            # Clear the BagState so we can hold only the latest state, and
+            # Register new timestamp and elements to the states
+            timestamp_state.clear()
+            timestamp_state.add(timestamp)
+            elements_state.clear()
+            elements_state.add(sorted_elements)
 
             # Map problem input to the model
-            model = map_fn(prev_model, elements, incoming, outgoing)
-            physical = model.to_physical()
+            try:
+                model = map_fn(prev_model, sorted_elements, incoming, outgoing)
+                physical = model.to_physical()
+            except Exception as e:
+                yield f"Failed to map: {e}"
+                return
 
-            #print(model)
-
-            # Register new elements and models to the states
-            elements_state.add(sorted_elements)
+            # Clear the BagState so we can hold only the latest state, and
+            # Register new model to the state
+            model_state.clear()
             model_state.add(model)
 
             # Solve and unmap to the solution
             try:
-                resultset = solve_fn(physical, elements, incoming, outgoing)
+                resultset = solve_fn(physical, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to solve: {e}"
-            else:
-                yield unmap_fn(resultset, elements, incoming, outgoing)
+                return
+
+            try:
+                yield unmap_fn(resultset, sorted_elements, incoming, outgoing)
+            except Exception as e:
+                yield f"Failed to ummap: {e}"
 
     @staticmethod
     def create_pipeline(algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]):
-        pipeline_options = PipelineOptions(pipeline_args, streaming=True, save_main_session=True)
+        pipeline_options = PipelineOptions(pipeline_args, save_main_session=True)
         p = beam.Pipeline(options=pipeline_options)
+
+        # --------------------------------
+        # Input part
+        # --------------------------------
 
         if input_fn is not None:
             inputs = (p
@@ -111,25 +135,57 @@ class Window(AbstractAlgorithm):
         else:
             inputs = p
 
-        elements = (inputs
-            | "Prepare key" >> beam.Map(lambda x: (None, x))
+        with_indices = (inputs
+            | "Prepare key" >> beam.Map(lambda element: (None, element))
             | "Assign global index for Ising variables" >> beam.ParDo(AbstractAlgorithm.IndexAssigningStatefulDoFn()))
 
-        windows = (elements
-            | "Sliding windows" >> beam.WindowInto(beam.window.SlidingWindows(size=algorithm_options["window_size"], period=algorithm_options["window_period"]))
-            | "Add timestamp tuple for diff detection" >> beam.ParDo(AbstractAlgorithm.WithTimestampTupleFn())
-            | "Sliding Windows to list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
-            | "Global Window for sliding windows" >> beam.WindowInto(beam.window.GlobalWindows()))
+        if "input.reassign_timestamp" in algorithm_options:
+            # Add (Re-assign) event timestamp based on the index
+            # - element[0]: index
+            # - element[1]: data
+            with_indices = (with_indices
+                | "Assign timestamp by index" >> beam.Map(lambda element: beam.window.TimestampedValue(element, element[0])))
+
+        # --------------------------------
+        # Algorithm part (windowing)
+        # --------------------------------
+
+        def print_and_return(e):
+            print(e)
+            return e
+
+        windows = (with_indices
+            | "Sliding windows" >> beam.WindowInto(beam.window.SlidingWindows(size=algorithm_options["window.size"], period=algorithm_options["window.period"]))
+            | "Add timestamp as tuple againt each window for diff detection" >> beam.ParDo(AbstractAlgorithm.WithTimestampTupleFn())
+            #| beam.Map(print_and_return)
+            | "Elements in a sliding window into a list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
+            | "To a single global Window from windows" >> beam.WindowInto(beam.window.GlobalWindows()))
+
+        # --------------------------------
+        # Solving part
+        # --------------------------------
 
         solved = (windows
-            | beam.Map(lambda x: (None, x))
+            | "Make windows to key-value pairs for stateful DoFn" >> beam.Map(lambda element: (None, element))
             | "Solve" >> beam.ParDo(sawatabi.algorithm.Window.SolveDoFn(), map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn))
 
-        with_timestamp = (solved
-            | "With timestamp for sliding windows" >> beam.ParDo(AbstractAlgorithm.WithTimestampStrFn()))
+        # --------------------------------
+        # Output part
+        # --------------------------------
+
+        if "output.with_timestamp" in algorithm_options:
+            solved = (solved
+                | "With timestamp for each window" >> beam.ParDo(AbstractAlgorithm.WithTimestampStrFn()))
+
+        if "output.prefix" in algorithm_options:
+            solved = (solved
+                | "Add output prefix" >> beam.Map(lambda element: algorithm_options["output.prefix"] + element))
+        if "output.suffix" in algorithm_options:
+            solved = (solved
+                | "Add output suffix" >> beam.Map(lambda element: element + algorithm_options["output.suffix"]))
 
         if output_fn is not None:
-            outputs = (with_timestamp
+            outputs = (solved
                 | "Output" >> output_fn)
 
         return p
@@ -139,8 +195,4 @@ class Window(AbstractAlgorithm):
     ################################
 
     def __repr__(self):
-        return f"Window({self.__str__()})"
-
-    def __str__(self):
-        data = {}
-        return str(data)
+        return "Window()"

@@ -20,9 +20,9 @@ import argparse
 import sawatabi
 
 
-def algorithm_window(project, topic, subscription, path):
+def npp_window(project, topic, subscription, path, output):
 
-    def my_mapping(prev_model, elements, incoming, outgoing):
+    def npp_mapping(prev_model, elements, incoming, outgoing):
         """
         Mapping -- Update the model based on the input data elements
         """
@@ -38,10 +38,10 @@ def algorithm_window(project, topic, subscription, path):
         else:
             x = model.get_variables_by_name(name="x")
 
-        #print("x:", x)
-        #print("elements:", elements)
-        #print("incoming:", incoming)
-        #print("outgoing:", outgoing)
+        # print("x:", x)
+        # print("elements:", elements)
+        # print("incoming:", incoming)
+        # print("outgoing:", outgoing)
         for i in incoming:
             for j in elements:
                 if i[0] > j[0]:
@@ -55,9 +55,9 @@ def algorithm_window(project, topic, subscription, path):
             model.delete_variable(target=x[idx])
 
         return model
-    # end of function
+    # end of user-defined function "mapping"
 
-    def my_unmapping(resultset, elements, incoming, outgoing):
+    def npp_unmapping(resultset, elements, incoming, outgoing):
         """
         Unmapping -- Decode spins to a problem solution
         """
@@ -84,11 +84,10 @@ def algorithm_window(project, topic, subscription, path):
         outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
         outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
 
-        outputs.append("")
         return "\n".join(outputs)
-    # end of function
+    # end of user-defined function "unmapping"
 
-    def my_solving(physical_model, elements, incoming, outgoing):
+    def npp_solving(physical_model, elements, incoming, outgoing):
         # Solver instance
         # - LocalSolver
         solver = sawatabi.solver.LocalSolver(exact=False)
@@ -105,23 +104,36 @@ def algorithm_window(project, topic, subscription, path):
         pass
 
         return resultset
-    # end of function
+    # end of user-defined function "solving"
+
+    pipeline_args=["--runner=DirectRunner"]
+    if project is not None:
+        pipeline_args.append("--streaming")
+
+    algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
 
     if topic is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_number(project=project, topic=topic)
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
     elif subscription is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_number(project=project, subscription=subscription)
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
     elif path is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_text_number(path=path)
+        input_fn = sawatabi.algorithm.IO.read_from_text_as_json(path=path)
+        algorithm_options["input.reassign_timestamp"] = True
+
+    if output is not None:
+        output_fn = sawatabi.algorithm.IO.write_to_text(path=output)
+    else:
+        output_fn = sawatabi.algorithm.IO.write_to_stdout()
 
     # Pipeline creation with Sawatabi
     pipeline = sawatabi.algorithm.Window.create_pipeline(
-        algorithm_options={"window_size": 30, "window_period": 10},
+        algorithm_options=algorithm_options,
         input_fn=input_fn,
-        map_fn=my_mapping,
-        solve_fn=my_solving,
-        unmap_fn=my_unmapping,
-        output_fn=sawatabi.algorithm.IO.write_to_stdout(),
+        map_fn=npp_mapping,
+        solve_fn=npp_solving,
+        unmap_fn=npp_unmapping,
+        output_fn=output_fn,
+        pipeline_args=pipeline_args,
     )
 
     # Run the pipeline
@@ -146,10 +158,14 @@ def main():
     parser.add_argument(
         "--path",
         dest="path",
-        help="Path to local file to read from.")
+        help="Path to the local file or the GCS object to read from.")
+    parser.add_argument(
+        "--output",
+        dest="output",
+        help="Path (prefix) to the output file or the object to write to.")
     args = parser.parse_args()
 
-    algorithm_window(args.project, args.topic, args.subscription, args.path)
+    npp_window(args.project, args.topic, args.subscription, args.path, args.output)
 
 
 if __name__ == "__main__":
