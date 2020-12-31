@@ -51,6 +51,7 @@ class AbstractAlgorithm(BaseMixin):
             timestamp_state=beam.DoFn.StateParam(PREV_TIMESTAMP),
             elements_state=beam.DoFn.StateParam(PREV_ELEMENTS),
             model_state=beam.DoFn.StateParam(PREV_MODEL),
+            algorithm=None,
             map_fn=None,
             unmap_fn=None,
             solve_fn=None,
@@ -89,6 +90,10 @@ class AbstractAlgorithm(BaseMixin):
                     + f"while an event with timestamp of {timestamp.to_utc_datetime()} has been already processed."
                 )
                 return
+
+            if algorithm == sawatabi.constants.ALGORITHM_ALL:
+                sorted_elements.extend(prev_elements)
+                sorted_elements = sorted(sorted_elements)
 
             # Resolve outgoing elements in this iteration
             def resolve_outgoing(prev_elements, sorted_elements):
@@ -150,6 +155,7 @@ class AbstractAlgorithm(BaseMixin):
     @classmethod
     def _create_pipeline(
         cls,
+        algorithm,
         algorithm_transform,
         algorithm_options,
         input_fn=None,
@@ -196,7 +202,7 @@ class AbstractAlgorithm(BaseMixin):
 
         solved = (algorithm_transformed
             | "Make windows to key-value pairs for stateful DoFn" >> beam.Map(lambda element: (None, element))
-            | "Solve" >> beam.ParDo(sawatabi.algorithm.Window.SolveDoFn(), map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn))
+            | "Solve" >> beam.ParDo(sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn))
 
         # --------------------------------
         # Output part

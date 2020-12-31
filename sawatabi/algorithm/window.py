@@ -14,6 +14,7 @@
 
 import apache_beam as beam
 
+import sawatabi
 from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
 
 
@@ -30,6 +31,7 @@ class Window(AbstractAlgorithm):
         )
 
         return cls._create_pipeline(
+            algorithm=sawatabi.constants.ALGORITHM_WINDOW,
             algorithm_transform=algorithm_transform,
             algorithm_options=algorithm_options,
             input_fn=input_fn,

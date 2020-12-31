@@ -50,10 +50,14 @@ def test_new_algorithm_npp_100(capfd):
     out, err = capfd.readouterr()
 
     # Timestamp
-    assert "[1970-01-01 00:00:29.999000]" in out
     for i in range(10):
         ts = (i + 1) * 10 - 0.001
         assert datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S.%f%z") in out
+
+    # Check inputs
+    assert "[47, 60, 87, 60, 91, 71, 28, 37, 7, 65]" in out  # 1--10
+    assert "[28, 29, 38, 55, 6, 75, 57, 49, 34, 83]" in out  # 11--20
+    assert "[30, 46, 78, 29, 99, 32, 86, 82, 7, 81]" in out  # 21--30
 
     # Check (Count) Solution
     assert out.count("INPUT -->") == 10

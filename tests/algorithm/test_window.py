@@ -53,10 +53,14 @@ def test_window_algorithm_npp_100(capfd):
     out, err = capfd.readouterr()
 
     # Timestamp
-    assert "[1970-01-01 00:00:29.999000]" in out
     for i in range(25):
         ts = (i + 1) * 5 - 0.001
         assert datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S.%f%z") in out
+
+    # Check inputs
+    assert "[47, 60, 87, 60, 91, 71, 28, 37, 7, 65, 28, 29, 38, 55, 6, 75, 57, 49, 34, 83, 30, 46, 78, 29, 99, 32, 86, 82, 7, 81]" in out  # 1--30
+    assert "[71, 28, 37, 7, 65, 28, 29, 38, 55, 6, 75, 57, 49, 34, 83, 30, 46, 78, 29, 99, 32, 86, 82, 7, 81, 90, 12, 20, 65, 42]" in out  # 6--35 (windowing)
+    assert "[28, 29, 38, 55, 6, 75, 57, 49, 34, 83, 30, 46, 78, 29, 99, 32, 86, 82, 7, 81, 90, 12, 20, 65, 42, 20, 47, 7, 52, 78]" in out  # 11--40 (windowing)
 
     # Check (Count) Solution
     assert out.count("INPUT -->") == 20
