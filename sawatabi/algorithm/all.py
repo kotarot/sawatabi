@@ -18,20 +18,20 @@ import sawatabi
 from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
 
 
-class Window(AbstractAlgorithm):
+class All(AbstractAlgorithm):
     @classmethod
     def create_pipeline(
         cls, algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]
     ):
         algorithm_transform = (
-            "Sliding windows" >> beam.WindowInto(beam.window.SlidingWindows(size=algorithm_options["window.size"], period=algorithm_options["window.period"]))
+            "Fixed windows for increment" >> beam.WindowInto(beam.window.FixedWindows(size=algorithm_options["incremental.size"]))
             | "Add timestamp as tuple againt each window for diff detection" >> beam.ParDo(AbstractAlgorithm.WithTimestampTupleFn())
-            | "Elements in a sliding window into a list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
-            | "To a single global Window from sliding windows" >> beam.WindowInto(beam.window.GlobalWindows())
+            | "Elements in a fixed window into a list" >> beam.CombineGlobally(beam.combiners.ToListCombineFn()).without_defaults()
+            | "To a single global Window from fixed windows" >> beam.WindowInto(beam.window.GlobalWindows())
         )
 
         return cls._create_pipeline(
-            algorithm=sawatabi.constants.ALGORITHM_WINDOW,
+            algorithm=sawatabi.constants.ALGORITHM_ALL,
             algorithm_transform=algorithm_transform,
             algorithm_options=algorithm_options,
             input_fn=input_fn,
@@ -47,4 +47,4 @@ class Window(AbstractAlgorithm):
     ################################
 
     def __repr__(self):
-        return "Window()"
+        return "All()"

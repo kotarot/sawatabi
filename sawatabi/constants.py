@@ -27,3 +27,10 @@ DEFAULT_LABEL_DEPENDENCY = "Default Dependency Constraint"
 # Select format
 SELECT_SERIES = "series"
 SELECT_DICT = "dict"
+
+# Algorithms
+ALGORITHM_ALL = "all"
+ALGORITHM_ATTENUATION = "attenuation"
+ALGORITHM_NEW = "new"
+ALGORITHM_PARTIAL = "partial"
+ALGORITHM_WINDOW = "window"
