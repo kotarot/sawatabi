@@ -87,6 +87,10 @@ jobs:
       run: python sample/solver/local_solver.py
 
     # Algorithm
+    - name: Run sample/algorithm/npp_all.py (local file)
+      run: python sample/algorithm/npp_all.py --input="tests/algorithm/numbers_100.txt"
+    - name: Run sample/algorithm/npp_all.py (GCS and output)
+      run: python sample/algorithm/npp_all.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_all.txt"
     - name: Run sample/algorithm/npp_new.py (local file)
       run: python sample/algorithm/npp_new.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_new.py (GCS and output)
