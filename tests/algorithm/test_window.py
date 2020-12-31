@@ -23,7 +23,14 @@ from sawatabi.algorithm import IO, Window
 
 
 def test_window_algorithm_npp_100(capfd):
-    algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n", "input.reassign_timestamp": True}
+    algorithm_options = {
+        "window.size": 30,
+        "window.period": 5,
+        "output.with_timestamp": True,
+        "output.prefix": "<< prefix <<\n",
+        "output.suffix": "\n>> suffix >>\n",
+        "input.reassign_timestamp": True,
+    }
 
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
@@ -58,8 +65,8 @@ def test_window_algorithm_npp_100(capfd):
     assert "diff   : 0" in out
 
     # Output prefix/suffix
-    assert out.count("<<<") == 25
-    assert out.count(">>>") == 25
+    assert out.count("<< prefix <<") == 25
+    assert out.count(">> suffix >>") == 25
 
 
 def test_window_algorithm_npp_10():
@@ -84,7 +91,6 @@ def test_window_algorithm_npp_10():
         # Run the pipeline
         result = pipeline.run()
         # result.wait_until_finish()
-
 
     assert os.path.exists(f"{output_path}-00000-of-00001")
     os.remove(f"{output_path}-00000-of-00001")
