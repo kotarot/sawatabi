@@ -75,16 +75,28 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install .
+
+    # Model
     - name: Run sample/model/model.py
       run: python sample/model/model.py
     - name: Run sample/model/n_hot.py
       run: python sample/model/n_hot.py
+
+    # Solver
     - name: Run sample/solver/local_solver.py
       run: python sample/solver/local_solver.py
+
+    # Algorithm
+    - name: Run sample/algorithm/npp_new.py (local file)
+      run: python sample/algorithm/npp_new.py --input="tests/algorithm/numbers_100.txt"
+    - name: Run sample/algorithm/npp_new.py (GCS and output)
+      run: python sample/algorithm/npp_new.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_new.txt"
     - name: Run sample/algorithm/npp_window.py (local file)
       run: python sample/algorithm/npp_window.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_window.py (GCS and output)
-      run: python sample/algorithm/npp_window.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output.txt"
+      run: python sample/algorithm/npp_window.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_window.txt"
+
+    # Utils
     - name: Run sample/utils/profile.py
       run: python sample/utils/profile.py
     - name: Run sample/utils/utils.py
