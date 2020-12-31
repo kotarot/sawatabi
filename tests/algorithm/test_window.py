@@ -47,7 +47,7 @@ def test_window_algorithm_npp_100(capfd):
 
     with pytest.warns(UserWarning):
         # Run the pipeline
-        result = pipeline.run()
+        result = pipeline.run()  # noqa: F841
         # result.wait_until_finish()
 
     out, err = capfd.readouterr()
@@ -89,7 +89,7 @@ def test_window_algorithm_npp_10():
 
     with pytest.warns(UserWarning):
         # Run the pipeline
-        result = pipeline.run()
+        result = pipeline.run()  # noqa: F841
         # result.wait_until_finish()
 
     assert os.path.exists(f"{output_path}-00000-of-00001")
@@ -117,7 +117,7 @@ def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
 
     with pytest.warns(UserWarning):
         # Run the pipeline
-        result = pipeline.run()
+        result = pipeline.run()  # noqa: F841
         # result.wait_until_finish()
 
     out, err = capfd.readouterr()
@@ -146,7 +146,7 @@ def test_window_algorithm_npp_map_fails(capfd):
     )
 
     # Run the pipeline
-    result = pipeline.run()
+    result = pipeline.run()  # noqa: F841
     # result.wait_until_finish()
 
     out, err = capfd.readouterr()
@@ -175,7 +175,7 @@ def test_window_algorithm_npp_unmap_fails(capfd):
     )
 
     # Run the pipeline
-    result = pipeline.run()
+    result = pipeline.run()  # noqa: F841
     # result.wait_until_finish()
 
     out, err = capfd.readouterr()
@@ -204,7 +204,7 @@ def test_window_algorithm_npp_solve_fails(capfd):
     )
 
     # Run the pipeline
-    result = pipeline.run()
+    result = pipeline.run()  # noqa: F841
     # result.wait_until_finish()
 
     out, err = capfd.readouterr()
