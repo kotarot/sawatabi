@@ -13,9 +13,13 @@
 # limitations under the License.
 
 from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
-from sawatabi.algorithm.all import All
-from sawatabi.algorithm.io import IO
-from sawatabi.algorithm.new import New
-from sawatabi.algorithm.window import Window
 
-__all__ = ["AbstractAlgorithm", "IO", "All", "New", "Window"]
+
+class New(AbstractAlgorithm):
+    
+    ################################
+    # Built-in functions
+    ################################
+
+    def __repr__(self):
+        return "New()"
