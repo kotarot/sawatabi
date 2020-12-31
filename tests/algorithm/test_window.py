@@ -16,13 +16,32 @@ import datetime
 import os
 import pytest
 
+import apache_beam as beam
+
 from sample.algorithm import npp_window
-from sawatabi.algorithm import Window
+from sawatabi.algorithm import IO, Window
 
 
 def test_window_algorithm_npp_100(capfd):
+    algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n", "input.reassign_timestamp": True}
+
+    pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
+
+    pipeline = Window.create_pipeline(
+        algorithm_options=algorithm_options,
+        input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
+        map_fn=npp_window.npp_mapping,
+        solve_fn=npp_window.npp_solving,
+        unmap_fn=npp_window.npp_unmapping,
+        output_fn=IO.write_to_stdout(),
+        pipeline_args=pipeline_args,
+    )
+
     with pytest.warns(UserWarning):
-        npp_window.npp_window(input_path="tests/algorithm/numbers_100.txt")
+        # Run the pipeline
+        result = pipeline.run()
+        # result.wait_until_finish()
 
     out, err = capfd.readouterr()
 
@@ -44,23 +63,148 @@ def test_window_algorithm_npp_100(capfd):
 
 
 def test_window_algorithm_npp_10():
-    output = "tests/algorithm/output.txt"
+    output_path = "tests/algorithm/output.txt"
+
+    algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "input.reassign_timestamp": True}
+
+    pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
+
+    pipeline = Window.create_pipeline(
+        algorithm_options=algorithm_options,
+        input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_10.txt"),
+        map_fn=npp_window.npp_mapping,
+        solve_fn=npp_window.npp_solving,
+        unmap_fn=npp_window.npp_unmapping,
+        output_fn=IO.write_to_text(path=output_path),
+        pipeline_args=pipeline_args,
+    )
 
     with pytest.warns(UserWarning):
-        npp_window.npp_window(input_path="tests/algorithm/numbers_10.txt", output_path=output)
+        # Run the pipeline
+        result = pipeline.run()
+        # result.wait_until_finish()
 
-    assert os.path.exists(f"{output}-00000-of-00001")
-    os.remove(f"{output}-00000-of-00001")
+
+    assert os.path.exists(f"{output_path}-00000-of-00001")
+    os.remove(f"{output_path}-00000-of-00001")
 
 
 def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
+    algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
+
+    input_fn = beam.io.ReadFromText("gs://sawatabi-bucket/numbers_100.txt") | beam.Map(lambda x: int(x))
+    output_fn = beam.Map(lambda x: "custom output --- " + x) | beam.Map(print)
+
+    pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
+
+    pipeline = Window.create_pipeline(
+        algorithm_options=algorithm_options,
+        input_fn=input_fn,
+        map_fn=npp_window.npp_mapping,
+        solve_fn=npp_window.npp_solving,
+        unmap_fn=npp_window.npp_unmapping,
+        output_fn=output_fn,
+        pipeline_args=pipeline_args,
+    )
+
     with pytest.warns(UserWarning):
-        npp_window.npp_window(input_path="gs://sawatabi-bucket/numbers_100.txt", custom=True)
+        # Run the pipeline
+        result = pipeline.run()
+        # result.wait_until_finish()
 
     out, err = capfd.readouterr()
 
-    assert out.count("custom output --- ") == 25
+    assert out.count("custom output --- ") == 12
     assert "diff   : 0" in out
+
+
+def test_window_algorithm_npp_map_fails(capfd):
+    def invalid_mapping(prev_model, elements, incoming, outgoing):
+        raise Exception("Mapping fails!")
+
+    algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
+
+    pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
+
+    pipeline = Window.create_pipeline(
+        algorithm_options=algorithm_options,
+        input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
+        map_fn=invalid_mapping,
+        solve_fn=npp_window.npp_solving,
+        unmap_fn=npp_window.npp_unmapping,
+        output_fn=IO.write_to_stdout(),
+        pipeline_args=pipeline_args,
+    )
+
+    # Run the pipeline
+    result = pipeline.run()
+    # result.wait_until_finish()
+
+    out, err = capfd.readouterr()
+
+    assert out.count("Failed to map: Mapping fails!") == 10
+    assert out.count("The received event is outdated") == 2
+
+
+def test_window_algorithm_npp_unmap_fails(capfd):
+    def invalid_unmapping(prev_model, elements, incoming, outgoing):
+        raise Exception("Unmapping fails!")
+
+    algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
+
+    pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
+
+    pipeline = Window.create_pipeline(
+        algorithm_options=algorithm_options,
+        input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
+        map_fn=npp_window.npp_mapping,
+        solve_fn=npp_window.npp_solving,
+        unmap_fn=invalid_unmapping,
+        output_fn=IO.write_to_stdout(),
+        pipeline_args=pipeline_args,
+    )
+
+    # Run the pipeline
+    result = pipeline.run()
+    # result.wait_until_finish()
+
+    out, err = capfd.readouterr()
+
+    assert out.count("Failed to unmap: Unmapping fails!") == 10
+    assert out.count("The received event is outdated") == 2
+
+
+def test_window_algorithm_npp_map_fails(capfd):
+    def invalid_solving(prev_model, elements, incoming, outgoing):
+        raise Exception("Solving fails!")
+
+    algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
+
+    pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
+
+    pipeline = Window.create_pipeline(
+        algorithm_options=algorithm_options,
+        input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
+        map_fn=npp_window.npp_mapping,
+        solve_fn=invalid_solving,
+        unmap_fn=npp_window.npp_unmapping,
+        output_fn=IO.write_to_stdout(),
+        pipeline_args=pipeline_args,
+    )
+
+    # Run the pipeline
+    result = pipeline.run()
+    # result.wait_until_finish()
+
+    out, err = capfd.readouterr()
+
+    assert out.count("Failed to solve: Solving fails!") == 10
+    assert out.count("The received event is outdated") == 2
 
 
 def test_window_algorithm_repr():

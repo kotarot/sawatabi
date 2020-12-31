@@ -20,93 +20,91 @@ import argparse
 import sawatabi
 
 
-def npp_window(project=None, topic=None, subscription=None, input_path=None, output_path=None, custom=False):
-    def npp_mapping(prev_model, elements, incoming, outgoing):
-        """
-        Mapping -- Update the model based on the input data elements
-        """
+def npp_mapping(prev_model, elements, incoming, outgoing):
+    """
+    Mapping -- Update the model based on the input data elements
+    """
 
-        model = prev_model
-        if len(incoming) > 0:
-            # Max index of the incoming elements
-            max_index = max([i[1][0] for i in incoming])
-            # Get current array size
-            x_size = model.get_all_size()
-            # Update variables
-            x = model.append(name="x", shape=(max_index - x_size + 1,))
-        else:
-            x = model.get_variables_by_name(name="x")
+    model = prev_model
+    if len(incoming) > 0:
+        # Max index of the incoming elements
+        max_index = max([i[1][0] for i in incoming])
+        # Get current array size
+        x_size = model.get_all_size()
+        # Update variables
+        x = model.append(name="x", shape=(max_index - x_size + 1,))
+    else:
+        x = model.get_variables_by_name(name="x")
 
-        # print("x:", x)
-        # print("elements:", elements)
-        # print("incoming:", incoming)
-        # print("outgoing:", outgoing)
-        for i in incoming:
-            for j in elements:
-                if i[0] > j[0]:
-                    idx_i = i[1][0]
-                    idx_j = j[1][0]
-                    coeff = -1.0 * i[1][1] * j[1][1]
-                    model.add_interaction(target=(x[idx_i], x[idx_j]), coefficient=coeff)
+    # print("x:", x)
+    # print("elements:", elements)
+    # print("incoming:", incoming)
+    # print("outgoing:", outgoing)
+    for i in incoming:
+        for j in elements:
+            if i[0] > j[0]:
+                idx_i = i[1][0]
+                idx_j = j[1][0]
+                coeff = -1.0 * i[1][1] * j[1][1]
+                model.add_interaction(target=(x[idx_i], x[idx_j]), coefficient=coeff)
 
-        for o in outgoing:
-            idx = o[1][0]
-            model.delete_variable(target=x[idx])
+    for o in outgoing:
+        idx = o[1][0]
+        model.delete_variable(target=x[idx])
 
-        return model
+    return model
 
-    # end of user-defined function "mapping"
 
-    def npp_unmapping(resultset, elements, incoming, outgoing):
-        """
-        Unmapping -- Decode spins to a problem solution
-        """
+def npp_unmapping(resultset, elements, incoming, outgoing):
+    """
+    Unmapping -- Decode spins to a problem solution
+    """
 
-        outputs = []
-        outputs.append("")
-        outputs.append("INPUT -->")
-        outputs.append("  " + str([e[1][1] for e in elements]))
-        outputs.append("SOLUTION ==>")
+    outputs = []
+    outputs.append("")
+    outputs.append("INPUT -->")
+    outputs.append("  " + str([e[1][1] for e in elements]))
+    outputs.append("SOLUTION ==>")
 
-        # Decode spins to solution
-        spins = resultset.samples()[0]
+    # Decode spins to solution
+    spins = resultset.samples()[0]
 
-        set_p, set_n = [], []
-        n_set_p = n_set_n = 0
-        for e in elements:
-            if spins[f"x[{e[1][0]}]"] == 1:
-                set_p.append(e[1][1])
-                n_set_p += e[1][1]
-            elif spins[f"x[{e[1][0]}]"] == -1:
-                set_n.append(e[1][1])
-                n_set_n += e[1][1]
-        outputs.append(f"  Set(+) : sum={n_set_p}, elements={set_p}")
-        outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
-        outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
+    set_p, set_n = [], []
+    n_set_p = n_set_n = 0
+    for e in elements:
+        if spins[f"x[{e[1][0]}]"] == 1:
+            set_p.append(e[1][1])
+            n_set_p += e[1][1]
+        elif spins[f"x[{e[1][0]}]"] == -1:
+            set_n.append(e[1][1])
+            n_set_n += e[1][1]
+    outputs.append(f"  Set(+) : sum={n_set_p}, elements={set_p}")
+    outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
+    outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
 
-        return "\n".join(outputs)
+    return "\n".join(outputs)
 
-    # end of user-defined function "unmapping"
 
-    def npp_solving(physical_model, elements, incoming, outgoing):
-        # Solver instance
-        # - LocalSolver
-        solver = sawatabi.solver.LocalSolver(exact=False)
-        # Solver options as a dict
-        SOLVER_OPTIONS = {
-            "num_reads": 1,
-            "num_sweeps": 10000,
-            "seed": 12345,
-        }
-        # The main solve.
-        resultset = solver.solve(physical_model, **SOLVER_OPTIONS)
+def npp_solving(physical_model, elements, incoming, outgoing):
+    # Solver instance
+    # - LocalSolver
+    solver = sawatabi.solver.LocalSolver(exact=False)
+    # Solver options as a dict
+    SOLVER_OPTIONS = {
+        "num_reads": 1,
+        "num_sweeps": 10000,
+        "seed": 12345,
+    }
+    # The main solve.
+    resultset = solver.solve(physical_model, **SOLVER_OPTIONS)
 
-        # Set a fallback solver if needed here.
-        pass
+    # Set a fallback solver if needed here.
+    pass
 
-        return resultset
+    return resultset
 
-    # end of user-defined function "solving"
+
+def npp_window(project=None, topic=None, subscription=None, input_path=None, output_path=None):
 
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
@@ -115,28 +113,18 @@ def npp_window(project=None, topic=None, subscription=None, input_path=None, out
 
     algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
 
-    if custom:
-        import apache_beam as beam
-
-    if custom:
-        input_fn = beam.io.ReadFromText(input_path) | beam.Map(lambda x: int(x))
+    if topic is not None:
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
+    elif subscription is not None:
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
+    elif input_path is not None:
+        input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
         algorithm_options["input.reassign_timestamp"] = True
-    else:
-        if topic is not None:
-            input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
-        elif subscription is not None:
-            input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
-        elif input_path is not None:
-            input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
-            algorithm_options["input.reassign_timestamp"] = True
 
-    if custom:
-        output_fn = beam.Map(lambda x: "custom output --- " + x) | beam.Map(print)
+    if output_path is not None:
+        output_fn = sawatabi.algorithm.IO.write_to_text(path=output_path)
     else:
-        if output_path is not None:
-            output_fn = sawatabi.algorithm.IO.write_to_text(path=output_path)
-        else:
-            output_fn = sawatabi.algorithm.IO.write_to_stdout()
+        output_fn = sawatabi.algorithm.IO.write_to_stdout()
 
     # Pipeline creation with Sawatabi
     pipeline = sawatabi.algorithm.Window.create_pipeline(
@@ -161,10 +149,9 @@ def main():
     parser.add_argument("--subscription", dest="subscription", help="Google Cloud Pub/Sub subscription name.")
     parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
     parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
-    parser.add_argument("--custom", dest="custom", action="store_true", help="If true, custom input/output DoFn will be used.")
     args = parser.parse_args()
 
-    npp_window(args.project, args.topic, args.subscription, args.input, args.output, args.custom)
+    npp_window(args.project, args.topic, args.subscription, args.input, args.output)
 
 
 if __name__ == "__main__":

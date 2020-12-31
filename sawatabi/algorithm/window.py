@@ -128,7 +128,7 @@ class Window(AbstractAlgorithm):
             try:
                 yield unmap_fn(resultset, sorted_elements, incoming, outgoing)
             except Exception as e:
-                yield f"Failed to ummap: {e}"
+                yield f"Failed to unmap: {e}"
 
     @staticmethod
     def create_pipeline(algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]):
@@ -141,11 +141,10 @@ class Window(AbstractAlgorithm):
         # Input part
         # --------------------------------
 
+        inputs = p
         if input_fn is not None:
             inputs = (p
                 | "Input" >> input_fn)
-        else:
-            inputs = p
 
         with_indices = (inputs
             | "Prepare key" >> beam.Map(lambda element: (None, element))
