@@ -91,7 +91,7 @@ class AbstractAlgorithm(BaseMixin):
                 )
                 return
 
-            if algorithm == sawatabi.constants.ALGORITHM_ALL:
+            if algorithm == sawatabi.constants.ALGORITHM_INCREMENTAL:
                 sorted_elements.extend(prev_elements)
                 sorted_elements = sorted(sorted_elements)
 

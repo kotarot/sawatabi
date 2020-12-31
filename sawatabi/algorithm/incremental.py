@@ -18,7 +18,7 @@ import sawatabi
 from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
 
 
-class All(AbstractAlgorithm):
+class Incremental(AbstractAlgorithm):
     @classmethod
     def create_pipeline(
         cls, algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]
@@ -31,7 +31,7 @@ class All(AbstractAlgorithm):
         )
 
         return cls._create_pipeline(
-            algorithm=sawatabi.constants.ALGORITHM_ALL,
+            algorithm=sawatabi.constants.ALGORITHM_INCREMENTAL,
             algorithm_transform=algorithm_transform,
             algorithm_options=algorithm_options,
             input_fn=input_fn,
@@ -47,4 +47,4 @@ class All(AbstractAlgorithm):
     ################################
 
     def __repr__(self):
-        return "All()"
+        return "Incremental()"

@@ -29,8 +29,8 @@ SELECT_SERIES = "series"
 SELECT_DICT = "dict"
 
 # Algorithms
-ALGORITHM_ALL = "all"
 ALGORITHM_ATTENUATION = "attenuation"
-ALGORITHM_NEW = "new"
+ALGORITHM_DELTA = "delta"
+ALGORITHM_INCREMENTAL = "incremental"
 ALGORITHM_PARTIAL = "partial"
 ALGORITHM_WINDOW = "window"
