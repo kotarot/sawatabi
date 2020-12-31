@@ -184,7 +184,7 @@ def test_window_algorithm_npp_unmap_fails(capfd):
     assert out.count("The received event is outdated") == 2
 
 
-def test_window_algorithm_npp_map_fails(capfd):
+def test_window_algorithm_npp_solve_fails(capfd):
     def invalid_solving(prev_model, elements, incoming, outgoing):
         raise Exception("Solving fails!")
 
