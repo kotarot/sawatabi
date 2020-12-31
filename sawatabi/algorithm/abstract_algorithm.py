@@ -148,7 +148,17 @@ class AbstractAlgorithm(BaseMixin):
                 yield f"Failed to unmap: {e}"
 
     @classmethod
-    def _create_pipeline(cls, algorithm_transform, algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]):
+    def _create_pipeline(
+        cls,
+        algorithm_transform,
+        algorithm_options,
+        input_fn=None,
+        map_fn=None,
+        solve_fn=None,
+        unmap_fn=None,
+        output_fn=None,
+        pipeline_args=["--runner=DirectRunner"],
+    ):
         pipeline_options = PipelineOptions(pipeline_args)
         p = beam.Pipeline(options=pipeline_options)
 

@@ -18,9 +18,10 @@ from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
 
 
 class Window(AbstractAlgorithm):
-
     @classmethod
-    def create_pipeline(cls, algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]):
+    def create_pipeline(
+        cls, algorithm_options, input_fn=None, map_fn=None, solve_fn=None, unmap_fn=None, output_fn=None, pipeline_args=["--runner=DirectRunner"]
+    ):
         algorithm_transform = (
             "Sliding windows" >> beam.WindowInto(beam.window.SlidingWindows(size=algorithm_options["window.size"], period=algorithm_options["window.period"]))
             | "Add timestamp as tuple againt each window for diff detection" >> beam.ParDo(AbstractAlgorithm.WithTimestampTupleFn())
@@ -28,7 +29,16 @@ class Window(AbstractAlgorithm):
             | "To a single global Window from sliding windows" >> beam.WindowInto(beam.window.GlobalWindows())
         )
 
-        return cls._create_pipeline(algorithm_transform=algorithm_transform, algorithm_options=algorithm_options, input_fn=input_fn, map_fn=map_fn, solve_fn=solve_fn, unmap_fn=unmap_fn, output_fn=output_fn, pipeline_args=pipeline_args)
+        return cls._create_pipeline(
+            algorithm_transform=algorithm_transform,
+            algorithm_options=algorithm_options,
+            input_fn=input_fn,
+            map_fn=map_fn,
+            solve_fn=solve_fn,
+            unmap_fn=unmap_fn,
+            output_fn=output_fn,
+            pipeline_args=pipeline_args,
+        )
 
     ################################
     # Built-in functions
