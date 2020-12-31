@@ -17,7 +17,7 @@ import datetime
 import pytest
 
 from sample.algorithm import npp_functions
-from sawatabi.algorithm import All, IO
+from sawatabi.algorithm import IO, All
 
 
 def test_all_algorithm_npp_100(capfd):
