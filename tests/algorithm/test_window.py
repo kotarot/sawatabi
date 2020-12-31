@@ -18,7 +18,7 @@ import pytest
 
 import apache_beam as beam
 
-from sample.algorithm import npp_window
+from sample.algorithm import npp_functions
 from sawatabi.algorithm import IO, Window
 
 
@@ -31,9 +31,9 @@ def test_window_algorithm_npp_100(capfd):
     pipeline = Window.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
-        map_fn=npp_window.npp_mapping,
-        solve_fn=npp_window.npp_solving,
-        unmap_fn=npp_window.npp_unmapping,
+        map_fn=npp_functions.npp_mapping,
+        solve_fn=npp_functions.npp_solving,
+        unmap_fn=npp_functions.npp_unmapping,
         output_fn=IO.write_to_stdout(),
         pipeline_args=pipeline_args,
     )
@@ -73,9 +73,9 @@ def test_window_algorithm_npp_10():
     pipeline = Window.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_10.txt"),
-        map_fn=npp_window.npp_mapping,
-        solve_fn=npp_window.npp_solving,
-        unmap_fn=npp_window.npp_unmapping,
+        map_fn=npp_functions.npp_mapping,
+        solve_fn=npp_functions.npp_solving,
+        unmap_fn=npp_functions.npp_unmapping,
         output_fn=IO.write_to_text(path=output_path),
         pipeline_args=pipeline_args,
     )
@@ -102,9 +102,9 @@ def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
     pipeline = Window.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=input_fn,
-        map_fn=npp_window.npp_mapping,
-        solve_fn=npp_window.npp_solving,
-        unmap_fn=npp_window.npp_unmapping,
+        map_fn=npp_functions.npp_mapping,
+        solve_fn=npp_functions.npp_solving,
+        unmap_fn=npp_functions.npp_unmapping,
         output_fn=output_fn,
         pipeline_args=pipeline_args,
     )
@@ -133,8 +133,8 @@ def test_window_algorithm_npp_map_fails(capfd):
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
         map_fn=invalid_mapping,
-        solve_fn=npp_window.npp_solving,
-        unmap_fn=npp_window.npp_unmapping,
+        solve_fn=npp_functions.npp_solving,
+        unmap_fn=npp_functions.npp_unmapping,
         output_fn=IO.write_to_stdout(),
         pipeline_args=pipeline_args,
     )
@@ -161,8 +161,8 @@ def test_window_algorithm_npp_unmap_fails(capfd):
     pipeline = Window.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
-        map_fn=npp_window.npp_mapping,
-        solve_fn=npp_window.npp_solving,
+        map_fn=npp_functions.npp_mapping,
+        solve_fn=npp_functions.npp_solving,
         unmap_fn=invalid_unmapping,
         output_fn=IO.write_to_stdout(),
         pipeline_args=pipeline_args,
@@ -190,9 +190,9 @@ def test_window_algorithm_npp_map_fails(capfd):
     pipeline = Window.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
-        map_fn=npp_window.npp_mapping,
+        map_fn=npp_functions.npp_mapping,
         solve_fn=invalid_solving,
-        unmap_fn=npp_window.npp_unmapping,
+        unmap_fn=npp_functions.npp_unmapping,
         output_fn=IO.write_to_stdout(),
         pipeline_args=pipeline_args,
     )
