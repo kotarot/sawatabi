@@ -17,7 +17,7 @@
 
 import argparse
 
-from sample.algorithm import npp_functions
+import npp_functions
 import sawatabi
 
 
