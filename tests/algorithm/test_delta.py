@@ -17,7 +17,7 @@ import datetime
 import pytest
 
 from sample.algorithm import npp_functions
-from sawatabi.algorithm import IO, New
+from sawatabi.algorithm import IO, Delta
 
 
 def test_new_algorithm_npp_100(capfd):
@@ -32,7 +32,7 @@ def test_new_algorithm_npp_100(capfd):
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
 
-    pipeline = New.create_pipeline(
+    pipeline = Delta.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
         map_fn=npp_functions.npp_mapping,
@@ -71,4 +71,4 @@ def test_new_algorithm_npp_100(capfd):
 
 
 def test_new_algorithm_repr():
-    assert str(New()) == "New()"
+    assert str(Delta()) == "Delta()"
