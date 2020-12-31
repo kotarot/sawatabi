@@ -20,7 +20,7 @@ import argparse
 import sawatabi
 
 
-def npp_window(project, topic, subscription, path, output):
+def npp_window(project=None, topic=None, subscription=None, input_path=None, output_path=None, custom=False):
     def npp_mapping(prev_model, elements, incoming, outgoing):
         """
         Mapping -- Update the model based on the input data elements
@@ -115,18 +115,28 @@ def npp_window(project, topic, subscription, path, output):
 
     algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
 
-    if topic is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
-    elif subscription is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
-    elif path is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_text_as_json(path=path)
-        algorithm_options["input.reassign_timestamp"] = True
+    if custom:
+        import apache_beam as beam
 
-    if output is not None:
-        output_fn = sawatabi.algorithm.IO.write_to_text(path=output)
+    if custom:
+        input_fn = beam.io.ReadFromText(input_path) | beam.Map(lambda x: int(x))
+        algorithm_options["input.reassign_timestamp"] = True
     else:
-        output_fn = sawatabi.algorithm.IO.write_to_stdout()
+        if topic is not None:
+            input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
+        elif subscription is not None:
+            input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
+        elif input_path is not None:
+            input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
+            algorithm_options["input.reassign_timestamp"] = True
+
+    if custom:
+        output_fn = beam.Map(lambda x: "custom output --- " + x) | beam.Map(print)
+    else:
+        if output_path is not None:
+            output_fn = sawatabi.algorithm.IO.write_to_text(path=output_path)
+        else:
+            output_fn = sawatabi.algorithm.IO.write_to_stdout()
 
     # Pipeline creation with Sawatabi
     pipeline = sawatabi.algorithm.Window.create_pipeline(
@@ -149,11 +159,12 @@ def main():
     parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
     parser.add_argument("--topic", dest="topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
     parser.add_argument("--subscription", dest="subscription", help="Google Cloud Pub/Sub subscription name.")
-    parser.add_argument("--path", dest="path", help="Path to the local file or the GCS object to read from.")
+    parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
     parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
+    parser.add_argument("--custom", dest="custom", action="store_true", help="If true, custom input/output DoFn will be used.")
     args = parser.parse_args()
 
-    npp_window(args.project, args.topic, args.subscription, args.path, args.output)
+    npp_window(args.project, args.topic, args.subscription, args.input, args.output, args.custom)
 
 
 if __name__ == "__main__":

@@ -22,9 +22,6 @@ from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
 
 
 class Window(AbstractAlgorithm):
-    def __init__(self):
-        super().__init__()
-
     class SolveDoFn(beam.DoFn):
         PREV_TIMESTAMP = BagStateSpec(name="timestamp_state", coder=coders.PickleCoder())
         PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())

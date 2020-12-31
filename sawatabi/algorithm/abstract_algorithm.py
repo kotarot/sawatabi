@@ -20,9 +20,6 @@ from sawatabi.base_mixin import BaseMixin
 
 
 class AbstractAlgorithm(BaseMixin):
-    def __init__(self):
-        pass
-
     class IndexAssigningStatefulDoFn(beam.DoFn):
         INDEX_STATE = CombiningValueStateSpec(name="index", coder=coders.PickleCoder(), combine_fn=sum)
 
