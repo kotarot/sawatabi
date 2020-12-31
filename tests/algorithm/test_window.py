@@ -14,9 +14,9 @@
 
 import datetime
 import os
-import pytest
 
 import apache_beam as beam
+import pytest
 
 from sample.algorithm import npp_functions
 from sawatabi.algorithm import IO, Window
