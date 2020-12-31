@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
+import pytest
+
+from sawatabi.algorithm import All
 
 
-class New(AbstractAlgorithm):
-    ################################
-    # Built-in functions
-    ################################
-
-    def __repr__(self):
-        return "New()"
+def test_all_algorithm_repr():
+    assert str(All()) == "All()"

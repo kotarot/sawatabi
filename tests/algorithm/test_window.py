@@ -14,12 +14,15 @@
 
 import datetime
 import os
+import pytest
 
 from sample.algorithm import npp_window
+from sawatabi.algorithm import Window
 
 
 def test_window_algorithm_npp_100(capfd):
-    npp_window.npp_window(input_path="tests/algorithm/numbers_100.txt")
+    with pytest.warns(UserWarning):
+        npp_window.npp_window(input_path="tests/algorithm/numbers_100.txt")
 
     out, err = capfd.readouterr()
 
@@ -42,16 +45,23 @@ def test_window_algorithm_npp_100(capfd):
 
 def test_window_algorithm_npp_10():
     output = "tests/algorithm/output.txt"
-    npp_window.npp_window(input_path="tests/algorithm/numbers_10.txt", output_path=output)
+
+    with pytest.warns(UserWarning):
+        npp_window.npp_window(input_path="tests/algorithm/numbers_10.txt", output_path=output)
 
     assert os.path.exists(f"{output}-00000-of-00001")
     os.remove(f"{output}-00000-of-00001")
 
 
 def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
-    npp_window.npp_window(input_path="gs://sawatabi-bucket/numbers_100.txt", custom=True)
+    with pytest.warns(UserWarning):
+        npp_window.npp_window(input_path="gs://sawatabi-bucket/numbers_100.txt", custom=True)
 
     out, err = capfd.readouterr()
 
     assert out.count("custom output --- ") == 25
     assert "diff   : 0" in out
+
+
+def test_window_algorithm_repr():
+    assert str(Window()) == "Window()"

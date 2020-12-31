@@ -16,7 +16,6 @@ from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
 
 
 class All(AbstractAlgorithm):
-    
     ################################
     # Built-in functions
     ################################
