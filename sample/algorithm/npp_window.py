@@ -117,6 +117,11 @@ def npp_window(project=None, input_path=None, input_topic=None, input_subscripti
             f"--temp_location=gs://{dataflow_bucket}/temp",
             f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
             "--experiments=use_runner_v2",  # https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
+
+            # Worker options
+            "--autoscaling_algorithm=NONE",
+            "--num_workers=1",
+            "--max_num_workers=1",
         ]
     else:
         pipeline_args = ["--runner=DirectRunner"]
