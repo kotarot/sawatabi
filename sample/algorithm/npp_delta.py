@@ -22,22 +22,23 @@ import npp_window
 import sawatabi
 
 
-def npp_new(project=None, topic=None, subscription=None, input_path=None, output_path=None):
+def npp_delta(project=None, input_path=None, input_topic=None, input_subscription=None, output_path=None):
 
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
-    if project is not None:
+
+    if (project is not None) and ((input_topic is not None) or (input_subscription is not None)):
         pipeline_args.append("--streaming")
 
     algorithm_options = {"window.size": 10, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
 
-    if topic is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
-    elif subscription is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
-    elif input_path is not None:
+    if input_path is not None:
         input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
         algorithm_options["input.reassign_timestamp"] = True
+    elif (project is not None) and (input_topic is not None):
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=input_topic)
+    elif (project is not None) and (input_subscription is not None):
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=input_subscription)
 
     if output_path is not None:
         output_fn = sawatabi.algorithm.IO.write_to_text(path=output_path)
@@ -63,13 +64,13 @@ def npp_new(project=None, topic=None, subscription=None, input_path=None, output
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
-    parser.add_argument("--topic", dest="topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
-    parser.add_argument("--subscription", dest="subscription", help="Google Cloud Pub/Sub subscription name.")
     parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
+    parser.add_argument("--input-topic", dest="input_topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
+    parser.add_argument("--input-subscription", dest="input_subscription", help="Google Cloud Pub/Sub subscription name.")
     parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
     args = parser.parse_args()
 
-    npp_new(args.project, args.topic, args.subscription, args.input, args.output)
+    npp_delta(args.project, args.input, args.input_topic, args.input_subscription, args.output)
 
 
 if __name__ == "__main__":

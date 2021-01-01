@@ -87,9 +87,11 @@ def npp_unmapping(resultset, elements, incoming, outgoing):
 
 
 def npp_solving(physical_model, elements, incoming, outgoing):
+    from sawatabi.solver import LocalSolver
+
     # Solver instance
     # - LocalSolver
-    solver = sawatabi.solver.LocalSolver(exact=False)
+    solver = LocalSolver(exact=False)
     # Solver options as a dict
     SOLVER_OPTIONS = {
         "num_reads": 1,
@@ -105,9 +107,8 @@ def npp_solving(physical_model, elements, incoming, outgoing):
     return resultset
 
 
-def npp_window(project=None, topic=None, subscription=None, input_path=None, output_path=None, dataflow=False, dataflow_bucket=None):
+def npp_window(project=None, input_path=None, input_topic=None, input_subscription=None, output_path=None, output_topic=None, dataflow=False, dataflow_bucket=None):
 
-    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
     if dataflow and dataflow_bucket:
         pipeline_args = [
             "--runner=DataflowRunner",
@@ -119,22 +120,25 @@ def npp_window(project=None, topic=None, subscription=None, input_path=None, out
         ]
     else:
         pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
 
-    if (project is not None) and ((topic is not None) or (subscription is not None)):
+    if (project is not None) and ((input_topic is not None) or (input_subscription is not None)):
         pipeline_args.append("--streaming")
 
     algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
 
-    if (project is not None) and (topic is not None):
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
-    elif (project is not None) and (subscription is not None):
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
+    if (project is not None) and (input_topic is not None):
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=input_topic)
+    elif (project is not None) and (input_subscription is not None):
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=input_subscription)
     elif input_path is not None:
         input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
         algorithm_options["input.reassign_timestamp"] = True
 
     if output_path is not None:
         output_fn = sawatabi.algorithm.IO.write_to_text(path=output_path)
+    elif (project is not None) and (output_topic is not None):
+        output_fn = sawatabi.algorithm.IO.write_to_pubsub(project=project, topic=output_topic)
     else:
         output_fn = sawatabi.algorithm.IO.write_to_stdout()
 
@@ -157,15 +161,25 @@ def npp_window(project=None, topic=None, subscription=None, input_path=None, out
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
-    parser.add_argument("--topic", dest="topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
-    parser.add_argument("--subscription", dest="subscription", help="Google Cloud Pub/Sub subscription name.")
     parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
+    parser.add_argument("--input-topic", dest="input_topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
+    parser.add_argument("--input-subscription", dest="input_subscription", help="Google Cloud Pub/Sub subscription name.")
     parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
-    parser.add_argument("--dataflow", dest="dataflow", action="store_true", help="If true, the application will run on Google Cloud Dataflow (DataflowRunner). If false, it will run on local (DirectRunner).")
-    parser.add_argument("--dataflow-bucket", dest="dataflow_bucket", help="GCS bucket for temporary files, if the app runs on Google Cloud Dataflow.")
+    parser.add_argument("--output-topic", dest="output_topic", help="Google Cloud Pub/Sub topic name to publish the result output to.")
+    parser.add_argument(
+        "--dataflow",
+        dest="dataflow",
+        action="store_true",
+        help="If true, the application will run on Google Cloud Dataflow (DataflowRunner). If false, it will run on local (DirectRunner).",
+    )
+    parser.add_argument(
+        "--dataflow-bucket",
+        dest="dataflow_bucket",
+        help="GCS bucket name for temporary files, if the application runs on Google Cloud Dataflow.",
+    )
     args = parser.parse_args()
 
-    npp_window(args.project, args.topic, args.subscription, args.input, args.output, args.dataflow, args.dataflow_bucket)
+    npp_window(args.project, args.input, args.input_topic, args.input_subscription, args.output, args.output_topic, args.dataflow, args.dataflow_bucket)
 
 
 if __name__ == "__main__":
