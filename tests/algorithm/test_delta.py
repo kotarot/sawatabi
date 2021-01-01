@@ -16,7 +16,7 @@ import datetime
 
 import pytest
 
-from sample.algorithm import npp_functions
+from sample.algorithm import npp_window
 from sawatabi.algorithm import IO, Delta
 
 
@@ -35,9 +35,9 @@ def test_new_algorithm_npp_100(capfd):
     pipeline = Delta.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
-        map_fn=npp_functions.npp_mapping,
-        solve_fn=npp_functions.npp_solving,
-        unmap_fn=npp_functions.npp_unmapping,
+        map_fn=npp_window.npp_mapping,
+        solve_fn=npp_window.npp_solving,
+        unmap_fn=npp_window.npp_unmapping,
         output_fn=IO.write_to_stdout(),
         pipeline_args=pipeline_args,
     )

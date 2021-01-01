@@ -17,7 +17,7 @@
 
 import argparse
 
-import npp_functions
+import npp_window
 
 import sawatabi
 
@@ -48,9 +48,9 @@ def npp_all(project=None, topic=None, subscription=None, input_path=None, output
     pipeline = sawatabi.algorithm.Incremental.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=input_fn,
-        map_fn=npp_functions.npp_mapping,
-        solve_fn=npp_functions.npp_solving,
-        unmap_fn=npp_functions.npp_unmapping,
+        map_fn=npp_window.npp_mapping,
+        solve_fn=npp_window.npp_solving,
+        unmap_fn=npp_window.npp_unmapping,
         output_fn=output_fn,
         pipeline_args=pipeline_args,
     )
