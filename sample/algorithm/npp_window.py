@@ -107,7 +107,9 @@ def npp_solving(physical_model, elements, incoming, outgoing):
     return resultset
 
 
-def npp_window(project=None, input_path=None, input_topic=None, input_subscription=None, output_path=None, output_topic=None, dataflow=False, dataflow_bucket=None):
+def npp_window(
+    project=None, input_path=None, input_topic=None, input_subscription=None, output_path=None, output_topic=None, dataflow=False, dataflow_bucket=None
+):
 
     if dataflow and dataflow_bucket:
         pipeline_args = [
@@ -116,8 +118,8 @@ def npp_window(project=None, input_path=None, input_topic=None, input_subscripti
             "--region=asia-northeast1",
             f"--temp_location=gs://{dataflow_bucket}/temp",
             f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
-            "--experiments=use_runner_v2",  # https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
-
+            # Reference: https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
+            "--experiments=use_runner_v2",
             # Worker options
             "--autoscaling_algorithm=NONE",
             "--num_workers=1",
