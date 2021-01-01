@@ -27,7 +27,7 @@ from google.cloud import pubsub_v1
 
 
 """
-This script publishes test messages to GCP Pub/Sub for debug.
+This script publishes test messages to GCP Pub/Sub for debugging.
 
 Sample Usage:
 $ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic
@@ -114,7 +114,7 @@ def main():
             message = f"This is a test message at {dt_now}."
 
         client.publish(topic_path, message.encode("utf-8"))
-        print(f"[{dt_now}] Published a message to '{topic_path}': {message}")
+        print(f"[{dt_now}] Sent message to '{topic_path}': {message}")
 
         if i == args.incremental_end:
             break
