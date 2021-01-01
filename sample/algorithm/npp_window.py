@@ -16,31 +16,136 @@
 # limitations under the License.
 
 import argparse
-
-import npp_functions
+import os
 
 import sawatabi
 
 
-def npp_window(project=None, topic=None, subscription=None, input_path=None, output_path=None):
+def npp_mapping(prev_model, elements, incoming, outgoing):
+    """
+    Mapping -- Update the model based on the input data elements
+    """
 
-    pipeline_args = ["--runner=DirectRunner"]
+    model = prev_model
+    if len(incoming) > 0:
+        # Max index of the incoming elements
+        max_index = max([i[1][0] for i in incoming])
+        # Get current array size
+        x_size = model.get_all_size()
+        # Update variables
+        x = model.append(name="x", shape=(max_index - x_size + 1,))
+    else:
+        x = model.get_variables_by_name(name="x")
+
+    # print("x:", x)
+    # print("elements:", elements)
+    # print("incoming:", incoming)
+    # print("outgoing:", outgoing)
+    for i in incoming:
+        for j in elements:
+            if i[0] > j[0]:
+                idx_i = i[1][0]
+                idx_j = j[1][0]
+                coeff = -1.0 * i[1][1] * j[1][1]
+                model.add_interaction(target=(x[idx_i], x[idx_j]), coefficient=coeff)
+
+    for o in outgoing:
+        idx = o[1][0]
+        model.delete_variable(target=x[idx])
+
+    return model
+
+
+def npp_unmapping(resultset, elements, incoming, outgoing):
+    """
+    Unmapping -- Decode spins to a problem solution
+    """
+
+    outputs = []
+    outputs.append("")
+    outputs.append("INPUT -->")
+    outputs.append("  " + str([e[1][1] for e in elements]))
+    outputs.append("SOLUTION ==>")
+
+    # Decode spins to solution
+    spins = resultset.samples()[0]
+
+    set_p, set_n = [], []
+    n_set_p = n_set_n = 0
+    for e in elements:
+        if spins[f"x[{e[1][0]}]"] == 1:
+            set_p.append(e[1][1])
+            n_set_p += e[1][1]
+        elif spins[f"x[{e[1][0]}]"] == -1:
+            set_n.append(e[1][1])
+            n_set_n += e[1][1]
+    outputs.append(f"  Set(+) : sum={n_set_p}, elements={set_p}")
+    outputs.append(f"  Set(-) : sum={n_set_n}, elements={set_n}")
+    outputs.append(f"  diff   : {abs(n_set_p - n_set_n)}")
+
+    return "\n".join(outputs)
+
+
+def npp_solving(physical_model, elements, incoming, outgoing):
+    from sawatabi.solver import LocalSolver
+
+    # Solver instance
+    # - LocalSolver
+    solver = LocalSolver(exact=False)
+    # Solver options as a dict
+    SOLVER_OPTIONS = {
+        "num_reads": 1,
+        "num_sweeps": 10000,
+        "seed": 12345,
+    }
+    # The main solve.
+    resultset = solver.solve(physical_model, **SOLVER_OPTIONS)
+
+    # Set a fallback solver if needed here.
+    pass
+
+    return resultset
+
+
+def npp_window(
+    project=None, input_path=None, input_topic=None, input_subscription=None, output_path=None, output_topic=None, dataflow=False, dataflow_bucket=None
+):
+
+    if dataflow and dataflow_bucket:
+        pipeline_args = [
+            "--runner=DataflowRunner",
+            f"--project={project}",
+            "--region=asia-northeast1",
+            f"--temp_location=gs://{dataflow_bucket}/temp",
+            f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
+            # Reference: https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
+            "--experiments=use_runner_v2",
+            # Worker options
+            "--autoscaling_algorithm=NONE",
+            "--num_workers=1",
+            "--max_num_workers=1",
+        ]
+    else:
+        pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
-    if project is not None:
+
+    if (project is not None) and ((input_topic is not None) or (input_subscription is not None)):
         pipeline_args.append("--streaming")
 
     algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
 
-    if topic is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=topic)
-    elif subscription is not None:
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=subscription)
+    if (project is not None) and (input_topic is not None):
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=input_topic)
+    elif (project is not None) and (input_subscription is not None):
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=input_subscription)
     elif input_path is not None:
         input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
         algorithm_options["input.reassign_timestamp"] = True
 
     if output_path is not None:
         output_fn = sawatabi.algorithm.IO.write_to_text(path=output_path)
+    elif (project is not None) and (output_topic is not None):
+        output_fn = sawatabi.algorithm.IO.write_to_pubsub(project=project, topic=output_topic)
     else:
         output_fn = sawatabi.algorithm.IO.write_to_stdout()
 
@@ -48,9 +153,9 @@ def npp_window(project=None, topic=None, subscription=None, input_path=None, out
     pipeline = sawatabi.algorithm.Window.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=input_fn,
-        map_fn=npp_functions.npp_mapping,
-        solve_fn=npp_functions.npp_solving,
-        unmap_fn=npp_functions.npp_unmapping,
+        map_fn=npp_mapping,
+        solve_fn=npp_solving,
+        unmap_fn=npp_unmapping,
         output_fn=output_fn,
         pipeline_args=pipeline_args,
     )
@@ -63,13 +168,25 @@ def npp_window(project=None, topic=None, subscription=None, input_path=None, out
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
-    parser.add_argument("--topic", dest="topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
-    parser.add_argument("--subscription", dest="subscription", help="Google Cloud Pub/Sub subscription name.")
     parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
+    parser.add_argument("--input-topic", dest="input_topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
+    parser.add_argument("--input-subscription", dest="input_subscription", help="Google Cloud Pub/Sub subscription name.")
     parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
+    parser.add_argument("--output-topic", dest="output_topic", help="Google Cloud Pub/Sub topic name to publish the result output to.")
+    parser.add_argument(
+        "--dataflow",
+        dest="dataflow",
+        action="store_true",
+        help="If true, the application will run on Google Cloud Dataflow (DataflowRunner). If false, it will run on local (DirectRunner).",
+    )
+    parser.add_argument(
+        "--dataflow-bucket",
+        dest="dataflow_bucket",
+        help="GCS bucket name for temporary files, if the application runs on Google Cloud Dataflow.",
+    )
     args = parser.parse_args()
 
-    npp_window(args.project, args.topic, args.subscription, args.input, args.output)
+    npp_window(args.project, args.input, args.input_topic, args.input_subscription, args.output, args.output_topic, args.dataflow, args.dataflow_bucket)
 
 
 if __name__ == "__main__":
