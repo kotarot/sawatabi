@@ -146,7 +146,7 @@ def model_from_pyqubo_expression():
 
     sum_x = sum(x[i] for i in range(4))
     sum_y = sum(y[i] for i in range(4))
-    hamiltonian = (sum_x - sum_y)**2
+    hamiltonian = (sum_x - sum_y) ** 2
 
     model.from_pyqubo(hamiltonian)
 
@@ -162,7 +162,7 @@ def model_from_pyqubo_model():
 
     sum_x = sum(x[i, 0] for i in range(4))
     sum_y = sum(y[i, 0] for i in range(4))
-    hamiltonian = Placeholder("A") * (sum_x - sum_y)**2 + 10.0
+    hamiltonian = Placeholder("A") * (sum_x - sum_y) ** 2 + 10.0
     pyqubo_model = hamiltonian.compile()
 
     model.from_pyqubo(pyqubo_model)

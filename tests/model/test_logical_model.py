@@ -174,7 +174,7 @@ def test_logical_model_from_pyqubo_expression(qubo):
 
     sum_x = sum(x[i] for i in range(10))
     sum_y = sum(y[i] for i in range(10))
-    hamiltonian = (sum_x - sum_y)**2
+    hamiltonian = (sum_x - sum_y) ** 2
 
     qubo.from_pyqubo(hamiltonian)
 
@@ -197,7 +197,7 @@ def test_logical_model_from_pyqubo_model_with_placeholder(qubo):
 
     sum_x = sum(x[i, 0] for i in range(10))
     sum_y = sum(y[i, 0] for i in range(10))
-    hamiltonian = pyqubo.Placeholder("A") * (sum_x - sum_y)**2 + 10.0
+    hamiltonian = pyqubo.Placeholder("A") * (sum_x - sum_y) ** 2 + 10.0
     pyqubo_model = hamiltonian.compile()
 
     qubo.from_pyqubo(pyqubo_model)
