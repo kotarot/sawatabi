@@ -16,12 +16,18 @@ import numpy as np
 import pyqubo
 import pytest
 
+import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
 
 
 @pytest.fixture
 def ising():
     return LogicalModel(mtype="ising")
+
+
+@pytest.fixture
+def qubo():
+    return LogicalModel(mtype="qubo")
 
 
 ################################
@@ -162,17 +168,58 @@ def test_logical_model_variables_from_pyqubo_mismatch(vartype, mtype):
 ################################
 
 
-def test_logical_model_pyqubo(ising):
-    x, y = pyqubo.Spin("x"), pyqubo.Spin("y")
-    exp = 2 * x * y + pyqubo.Placeholder("a") * x
+def test_logical_model_from_pyqubo_expression(qubo):
+    x = qubo.variables("x", shape=(10,))
+    y = qubo.variables("y", shape=(10,))
 
-    with pytest.raises(NotImplementedError):
-        ising.from_pyqubo(exp)
+    sum_x = sum(x[i] for i in range(10))
+    sum_y = sum(y[i] for i in range(10))
+    hamiltonian = (sum_x - sum_y)**2
+
+    qubo.from_pyqubo(hamiltonian)
+
+    qubo._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
+
+    for i in range(10):
+        assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]"]["coefficient"].values[0] == 1.0
+    for i in range(9):
+        for j in range(i + 1, 10):
+            assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]*x[{j}]"]["coefficient"].values[0] == 2.0
+            assert qubo._interactions[qubo._interactions["name"] == f"y[{i}]*y[{j}]"]["coefficient"].values[0] == 2.0
+            assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]*y[{j}]"]["coefficient"].values[0] == -2.0
+
+    assert qubo._offset == 0.0
 
 
-def test_logical_model_pyqubo_invalid(ising):
+def test_logical_model_from_pyqubo_model_with_placeholder(qubo):
+    x = qubo.variables("x", shape=(10, 2))
+    y = qubo.variables("y", shape=(10, 2))
+
+    sum_x = sum(x[i, 0] for i in range(10))
+    sum_y = sum(y[i, 0] for i in range(10))
+    hamiltonian = pyqubo.Placeholder("A") * (sum_x - sum_y)**2 + 10.0
+    pyqubo_model = hamiltonian.compile()
+
+    qubo.from_pyqubo(pyqubo_model)
+
+    # We cannot evaluate cofficient values before placeholders are resolved,
+    # so convert it to a physical model.
+    physical = qubo.to_physical({"A": 2.0})
+
+    for i in range(10):
+        assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}][0]"] == 2.0
+    for i in range(10):
+        for j in range(i + 1, 10):
+            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}][0]", f"x[{j}][0]")] == 4.0
+            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"y[{i}][0]", f"y[{j}][0]")] == 4.0
+            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}][0]", f"y[{j}][0]")] == -4.0
+
+    assert physical._offset == 10.0
+
+
+def test_logical_model_from_pyqubo_invalid(qubo):
     with pytest.raises(TypeError):
-        ising.from_pyqubo("invalid type")
+        qubo.from_pyqubo("invalid type")
 
 
 ################################

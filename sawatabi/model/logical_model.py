@@ -129,30 +129,8 @@ class LogicalModel(AbstractModel):
         if not target:
             raise ValueError("'target' must be specified.")
 
-        self._check_argument_type(
-            "coefficient",
-            coefficient,
-            (
-                numbers.Number,
-                pyqubo.core.express.Num,
-                pyqubo.core.express.Add,
-                pyqubo.core.express.AddList,
-                pyqubo.core.express.Mul,
-                pyqubo.core.express.Placeholder,
-            ),
-        )
-        self._check_argument_type(
-            "scale",
-            scale,
-            (
-                numbers.Number,
-                pyqubo.core.express.Num,
-                pyqubo.core.express.Add,
-                pyqubo.core.express.AddList,
-                pyqubo.core.express.Mul,
-                pyqubo.core.express.Placeholder,
-            ),
-        )
+        self._check_argument_type("coefficient", coefficient, (numbers.Number, pyqubo.core.Express, pyqubo.core.Coefficient))
+        self._check_argument_type("scale", scale, (numbers.Number, pyqubo.core.Express, pyqubo.core.Coefficient))
         self._check_argument_type("attributes", attributes, dict)
         self._check_argument_type("timestamp", timestamp, (int, float))
 
@@ -438,9 +416,35 @@ class LogicalModel(AbstractModel):
     ################################
 
     def from_pyqubo(self, expression):
-        if not (isinstance(expression, pyqubo.Express) or isinstance(expression, pyqubo.Model)):
-            raise TypeError("'expression' must be a PyQUBO Expression (pyqubo.Express) or a PyQUBO Model (pyqubo.Model).")
-        raise NotImplementedError
+        self._check_argument_type("expression", expression, (pyqubo.Express, pyqubo.Model))
+
+        if isinstance(expression, pyqubo.Express):
+            pyqubo_model = expression.compile()
+        else:
+            pyqubo_model = expression
+
+        compiled_qubo = pyqubo_model.compiled_qubo
+        structure = pyqubo_model.structure
+
+        for k, v in compiled_qubo.qubo.items():
+            # For the first variable.
+            # - structure[k[0]][0] holds the variable name,
+            # - structure[k[0]][1:] holds the variable index as tuple.
+            variable_0 = self.get_variables_by_name(structure[k[0]][0])
+            target_0 = variable_0[structure[k[0]][1:]]
+
+            # For the second variable.
+            variable_1 = self.get_variables_by_name(structure[k[1]][0])
+            target_1 = variable_1[structure[k[1]][1:]]
+
+            if k[0] == k[1]:
+                # 1-body
+                self.add_interaction(target=target_0, coefficient=v)
+            else:
+                # 2-body
+                self.add_interaction(target=(target_0, target_1), coefficient=v)
+
+        self._offset = compiled_qubo.offset
 
     ################################
     # Constraints
@@ -521,9 +525,6 @@ class LogicalModel(AbstractModel):
     ################################
 
     def to_physical(self, placeholder={}):
-        # TODO:
-        # - resolve placeholder
-
         physical = PhysicalModel(mtype=self._mtype)
 
         linear, quadratic = {}, {}
@@ -550,7 +551,17 @@ class LogicalModel(AbstractModel):
                 self._interactions_array["dirty"][i] = False
 
             # Resolve placeholders for coefficients and scales, using PyQUBO.
-            coeff_with_ph = self._interactions_array["coefficient"][i] * self._interactions_array["scale"][i]
+
+            # Firstly resolve placeholders if the coefficient and/or scale is already Coefficient type
+            coeff_i = self._interactions_array["coefficient"][i]
+            scale_i = self._interactions_array["scale"][i]
+            if isinstance(coeff_i, pyqubo.core.Coefficient):
+                coeff_i = coeff_i.evaluate(feed_dict=placeholder)
+            if isinstance(scale_i, pyqubo.core.Coefficient):
+                scale_i = scale_i.evaluate(feed_dict=placeholder)
+
+            # Calculate coefficient with the placeholder
+            coeff_with_ph = coeff_i * scale_i
             coeff_model = (coeff_with_ph + pyqubo.Binary("sawatabi-fake-variable")).compile()  # We need a variable for a valid model for pyqubo
             coeff_ph_resolved = coeff_model.to_qubo(feed_dict=placeholder)
             coeff = coeff_ph_resolved[1]  # We don't need the variable just prepared, extracting only offset
