@@ -130,7 +130,7 @@ class LogicalModel(AbstractModel):
             raise ValueError("'target' must be specified.")
 
         self._check_argument_type("coefficient", coefficient, (numbers.Number, pyqubo.core.Express, pyqubo.core.Coefficient))
-        self._check_argument_type("scale", scale, (numbers.Number, pyqubo.core.Express, pyqubo.core.Coefficient))
+        self._check_argument_type("scale", scale, (numbers.Number, pyqubo.core.Express))
         self._check_argument_type("attributes", attributes, dict)
         self._check_argument_type("timestamp", timestamp, (int, float))
 
@@ -552,13 +552,11 @@ class LogicalModel(AbstractModel):
 
             # Resolve placeholders for coefficients and scales, using PyQUBO.
 
-            # Firstly resolve placeholders if the coefficient and/or scale is already Coefficient type
+            # Firstly resolve placeholders if the coefficient is already Coefficient type
             coeff_i = self._interactions_array["coefficient"][i]
             scale_i = self._interactions_array["scale"][i]
             if isinstance(coeff_i, pyqubo.core.Coefficient):
                 coeff_i = coeff_i.evaluate(feed_dict=placeholder)
-            if isinstance(scale_i, pyqubo.core.Coefficient):
-                scale_i = scale_i.evaluate(feed_dict=placeholder)
 
             # Calculate coefficient with the placeholder
             coeff_with_ph = coeff_i * scale_i
