@@ -18,7 +18,7 @@
 import platform
 import sys
 
-from pyqubo import Placeholder
+from pyqubo import Array, Placeholder
 
 import sawatabi
 
@@ -33,11 +33,9 @@ def _print_utf8(model):
         print(model)
 
 
-def model_pyqubo():
-    import pyqubo
-
-    print("\n=== model (pyqubo) ===")
-    x = pyqubo.Array.create("x", shape=(2, 3), vartype="SPIN")
+def model_variables_pyqubo():
+    print("\n=== model (variables via pyqubo) ===")
+    x = Array.create("x", shape=(2, 3), vartype="SPIN")
     model = sawatabi.model.LogicalModel(mtype="ising")
     model.variables(x)
 
@@ -138,6 +136,43 @@ def model_select():
     print("\nSelect interactions whose attributes.foo is bar.")
     res = model.select_interaction("`attributes.foo` == 'bar'", fmt="dict")
     _print_utf8(res)
+
+
+def model_from_pyqubo_expression():
+    print("\n=== from pyqubo expression ===")
+    model = sawatabi.model.LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(4,))
+    y = model.variables("y", shape=(4,))
+
+    sum_x = sum(x[i] for i in range(4))
+    sum_y = sum(y[i] for i in range(4))
+    hamiltonian = (sum_x - sum_y) ** 2
+
+    model.from_pyqubo(hamiltonian)
+
+    print("\nInteractions are set via pyqubo expression.")
+    _print_utf8(model)
+
+
+def model_from_pyqubo_model():
+    print("\n=== from pyqubo compiled model ===")
+    model = sawatabi.model.LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(4, 2))
+    y = model.variables("y", shape=(4, 2))
+
+    sum_x = sum(x[i, 0] for i in range(4))
+    sum_y = sum(y[i, 0] for i in range(4))
+    hamiltonian = Placeholder("A") * (sum_x - sum_y) ** 2 + 10.0
+    pyqubo_model = hamiltonian.compile()
+
+    model.from_pyqubo(pyqubo_model)
+
+    print("\nInteractions are set with pyqubo expression.")
+    _print_utf8(model)
+
+    print("\nCheck also the physical model after placeholder resolves.")
+    physical = model.to_physical({"A": 2.0})
+    _print_utf8(physical)
 
 
 def model_convert():
@@ -245,11 +280,13 @@ def model_convert_with_placeholder():
 
 
 def main():
-    model_pyqubo()
+    model_variables_pyqubo()
     model_1d()
     model_2d()
     model_constraints()
     model_select()
+    model_from_pyqubo_expression()
+    model_from_pyqubo_model()
     model_convert()
     model_convert_to_ising()
     model_convert_to_qubo()
