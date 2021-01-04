@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import numbers
 import pprint
 import warnings
@@ -437,12 +438,20 @@ class LogicalModel(AbstractModel):
             variable_1 = self.get_variables_by_name(structure[k[1]][0])
             target_1 = variable_1[structure[k[1]][1:]]
 
+            coeff = v
+            if isinstance(coeff, pyqubo.Coefficient):
+                assert isinstance(coeff.terms, collections.defaultdict)
+                for placeholder_k, _ in coeff.terms.items():
+                    coeff.terms[placeholder_k] *= -1
+            else:
+                coeff *= -1
+
             if k[0] == k[1]:
                 # 1-body
-                self.add_interaction(target=target_0, coefficient=v)
+                self.add_interaction(target=target_0, coefficient=coeff)
             else:
                 # 2-body
-                self.add_interaction(target=(target_0, target_1), coefficient=v)
+                self.add_interaction(target=(target_0, target_1), coefficient=coeff)
 
         self._offset = compiled_qubo.offset
 

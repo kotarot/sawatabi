@@ -18,6 +18,7 @@ import pytest
 
 import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
+from sawatabi.solver import LocalSolver
 
 
 @pytest.fixture
@@ -181,12 +182,12 @@ def test_logical_model_from_pyqubo_expression(qubo):
     qubo._update_interactions_dataframe_from_arrays()  # Update the interactions DataFrame for debug
 
     for i in range(10):
-        assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]"]["coefficient"].values[0] == 1.0
+        assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]"]["coefficient"].values[0] == -1.0
     for i in range(9):
         for j in range(i + 1, 10):
-            assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]*x[{j}]"]["coefficient"].values[0] == 2.0
-            assert qubo._interactions[qubo._interactions["name"] == f"y[{i}]*y[{j}]"]["coefficient"].values[0] == 2.0
-            assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]*y[{j}]"]["coefficient"].values[0] == -2.0
+            assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]*x[{j}]"]["coefficient"].values[0] == -2.0
+            assert qubo._interactions[qubo._interactions["name"] == f"y[{i}]*y[{j}]"]["coefficient"].values[0] == -2.0
+            assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]*y[{j}]"]["coefficient"].values[0] == 2.0
 
     assert qubo._offset == 0.0
 
@@ -207,14 +208,30 @@ def test_logical_model_from_pyqubo_model_with_placeholder(qubo):
     physical = qubo.to_physical({"A": 2.0})
 
     for i in range(10):
-        assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}][0]"] == 2.0
+        assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}][0]"] == -2.0
     for i in range(10):
         for j in range(i + 1, 10):
-            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}][0]", f"x[{j}][0]")] == 4.0
-            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"y[{i}][0]", f"y[{j}][0]")] == 4.0
-            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}][0]", f"y[{j}][0]")] == -4.0
+            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}][0]", f"x[{j}][0]")] == -4.0
+            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"y[{i}][0]", f"y[{j}][0]")] == -4.0
+            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}][0]", f"y[{j}][0]")] == 4.0
 
     assert physical._offset == 10.0
+
+
+def test_logical_model_from_pyqubo_spins(qubo):
+    x = qubo.variables("x", shape=(10,))
+    y = qubo.variables("y", shape=(10,))
+
+    sum_x = sum(x[i] for i in range(10))
+    sum_y = sum(y[i] for i in range(10))
+    hamiltonian = (sum_x - sum_y) ** 2
+
+    qubo.from_pyqubo(hamiltonian)
+    physical = qubo.to_physical()
+    solver = LocalSolver(exact=False)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=10000)
+    spins = resultset.record[0][0]
+    assert np.count_nonzero(spins[:10]) == np.count_nonzero(spins[10:])
 
 
 def test_logical_model_from_pyqubo_invalid(qubo):
