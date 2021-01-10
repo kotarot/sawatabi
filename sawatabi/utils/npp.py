@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 # Copyright 2021 Kotaro Terada
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +22,7 @@ If not, return (False, partitions) such that the diff of partitions is minimized
 Note that `partitions` represents a pair of lists of indices of the input numbers list.
 """
 
-def solve_npp(numbers, print_dp=False):
+def solve_dp(numbers, print_dp=False):
     n = len(numbers)
     s2 = sum(numbers)
     s = int(s2 / 2)
@@ -78,33 +75,3 @@ def solve_npp(numbers, print_dp=False):
         for i in range(s, -1, -1):
             if dp[i][n][0]:
                 return (False, dp[i][n][1], find_another_partition(dp[i][n][1], n))
-
-
-def main():
-    numbers = [1, 1, 2, 3, 5, 8, 13, 21]
-
-    # np.random.seed(12345)
-    # numbers = list(np.random.randint(low=1, high=99, size=100))
-
-    n = len(numbers)
-    s2 = sum(numbers)
-    s = int(s2 / 2)
-
-    print("Problem:", numbers)
-    print("Sum:", s2)
-    print("Half of Sum:", s)
-    print("")
-
-    ans = solve_npp(numbers)
-
-    print("Answer:", ans)
-    solution1 = [numbers[i] for i in ans[1]]
-    solution2 = [numbers[i] for i in ans[2]]
-    print("Solution 1:", solution1)
-    print("Sum 1:", sum(solution1))
-    print("Solution 2:", solution2)
-    print("Sum 2:", sum(solution2))
-
-
-if __name__ == "__main__":
-    main()

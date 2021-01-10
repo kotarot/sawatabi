@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from sawatabi.utils.functions import Functions
+from sawatabi.utils.npp import solve_dp
 from sawatabi.utils.time import (
     current_time,
     current_time_as_int,
