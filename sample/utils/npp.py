@@ -21,10 +21,10 @@ import sawatabi
 def main():
     numbers = [1, 1, 2, 3, 5, 8, 13, 21]
 
+    # import numpy as np
     # np.random.seed(12345)
     # numbers = list(np.random.randint(low=1, high=99, size=100))
 
-    n = len(numbers)
     s2 = sum(numbers)
     s = int(s2 / 2)
 
