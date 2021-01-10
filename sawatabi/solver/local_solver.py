@@ -27,7 +27,7 @@ class LocalSolver(AbstractSolver):
         self._exact = exact
         super().__init__()
 
-    def solve(self, model, num_reads=1, num_sweeps=1000, seed=None):
+    def solve(self, model, num_reads=1, num_sweeps=1000, seed=None, initial_states=None):
         self._check_argument_type("model", model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
@@ -59,7 +59,7 @@ class LocalSolver(AbstractSolver):
             # Simulated annealing (SA)
             sampler = neal.SimulatedAnnealingSampler()
             # TODO: Deal with other SA parameters
-            sampleset = sampler.sample(bqm, num_reads=num_reads, num_sweeps=num_sweeps, seed=seed)
+            sampleset = sampler.sample(bqm, num_reads=num_reads, num_sweeps=num_sweeps, seed=seed, initial_states=initial_states)
 
         # Update the timing
         elapsed_sec = time.time() - start_time
