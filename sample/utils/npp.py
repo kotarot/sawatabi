@@ -33,7 +33,7 @@ def main():
     print("Half of Sum:", s)
     print("")
 
-    ans = sawatabi.utils.npp.solve_dp(numbers)
+    ans = sawatabi.utils.solve_npp_with_dp(numbers)
 
     print("Answer:", ans)
     solution1 = [numbers[i] for i in ans[1]]

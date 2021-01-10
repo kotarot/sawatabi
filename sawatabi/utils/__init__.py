@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from sawatabi.utils.functions import Functions
-from sawatabi.utils.npp import solve_dp
+from sawatabi.utils.npp import solve_npp_with_dp
 from sawatabi.utils.time import (
     current_time,
     current_time_as_int,
@@ -27,6 +27,8 @@ from sawatabi.utils.time import (
 from sawatabi.utils.profile import profile
 
 __all__ = [
+    "Functions",
+    "solve_npp_with_dp",
     "current_time",
     "current_time_as_int",
     "current_time_ms",
@@ -35,6 +37,5 @@ __all__ = [
     "current_time_us_as_int",
     "current_time_ns",
     "current_time_ns_as_int",
-    "Functions",
     "profile",
 ]

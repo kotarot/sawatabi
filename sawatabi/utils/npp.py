@@ -23,7 +23,7 @@ Note that `partitions` represents a pair of lists of indices of the input number
 """
 
 
-def solve_dp(numbers, print_dp_table=False):
+def solve_npp_with_dp(numbers, print_dp_table=False):
     n = len(numbers)
     s2 = sum(numbers)
     s = int(s2 / 2)
