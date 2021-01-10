@@ -22,7 +22,8 @@ If not, return (False, partitions) such that the diff of partitions is minimized
 Note that `partitions` represents a pair of lists of indices of the input numbers list.
 """
 
-def solve_dp(numbers, print_dp=False):
+
+def solve_dp(numbers, print_dp_table=False):
     n = len(numbers)
     s2 = sum(numbers)
     s = int(s2 / 2)
@@ -52,7 +53,7 @@ def solve_dp(numbers, print_dp=False):
             if (numbers[j - 1] <= i) and dp[i - current_val][j - 1][0]:
                 dp[i][j] = (True, dp[i - current_val][j - 1][1] + [j - 1])
 
-    if print_dp:
+    if print_dp_table:
         print("dp:")
         print("    0", end="")
         for j in range(n):
