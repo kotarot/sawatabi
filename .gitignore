@@ -193,6 +193,7 @@ notebook/figs/tmp_*
 #sample/trial/hamlet.txt
 #sample/trial/input.txt
 sample/trial/output.txt*
+sample/trial/*.png
 
 tests/algorithm/output.txt*
 

@@ -47,7 +47,7 @@ class OptiganSolver(AbstractSolver):
             raise ValueError("Model cannot be empty.")
 
         if model.get_mtype() == constants.MODEL_ISING:
-            raise ValueError("Ising model is not supported yet.")
+            raise ValueError("Ising model is not supported yet. Please try to convert the logical model to QUBO beforehand.")
 
         # Converts to polynomial (model representation for Optigan)
         polynomial = model.to_polynomial()
