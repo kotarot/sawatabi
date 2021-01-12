@@ -27,6 +27,8 @@ import sawatabi
 # Default font size is 12
 plt.rcParams['font.size'] = 14
 
+optimal_cache = {}
+
 
 def run(window_size, window_period, batches, numbers_range_lower=1, numbers_range_upper=99, local_solver_num_reads=1000, local_solver_num_sweeps=100, use_prev_states=False, seed=None):
     if seed:
@@ -113,7 +115,11 @@ def run(window_size, window_period, batches, numbers_range_lower=1, numbers_rang
 
         ################################
         # With Optimal Solver
-        optimal = sawatabi.utils.solve_npp_with_dp(numbers)
+        if str(numbers) in optimal_cache:
+            optimal = optimal_cache[str(numbers)]
+        else:
+            optimal = sawatabi.utils.solve_npp_with_dp(numbers)
+            optimal_cache[str(numbers)] = optimal
         # print(optimal)
         opt_s_1 = [numbers[i] for i in optimal[1]]
         opt_s_2 = [numbers[i] for i in optimal[2]]
