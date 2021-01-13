@@ -25,6 +25,7 @@ def test_sawatabi_solver_ising():
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
     model.add_interaction((s[0], s[1]), coefficient=-3.0)
+    model._offset = 10.0
     physical = model.to_physical()
     solver = SawatabiSolver()
     resultset = solver.solve(physical, num_reads=2, num_sweeps=100, num_coolings=10, cooling_rate=0.9, initial_temperature=10.0, seed=12345)
@@ -34,7 +35,7 @@ def test_sawatabi_solver_ising():
 
     # Check the ground state
     assert np.array_equal(resultset.record[0][0], [-1, 1])
-    assert resultset.record[0][1] == -4.0  # energy
+    assert resultset.record[0][1] == 6.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
 
 
@@ -44,6 +45,7 @@ def test_sawatabi_solver_qubo():
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
+    model._offset = 10.0
     physical = model.to_physical()
     solver = SawatabiSolver()
     resultset = solver.solve(physical, num_sweeps=1000, num_coolings=101, seed=12345)
@@ -53,7 +55,7 @@ def test_sawatabi_solver_qubo():
 
     # Check the ground state
     assert np.array_equal(resultset.record[0][0], [0, 1])
-    assert resultset.record[0][1] == -2.0  # energy
+    assert resultset.record[0][1] == 8.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
 
 

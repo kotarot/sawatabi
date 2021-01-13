@@ -63,6 +63,7 @@ def test_local_solver_sa_ising():
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
     model.add_interaction((s[0], s[1]), coefficient=-3.0)
+    model._offset = 10.0
     physical = model.to_physical()
     solver = LocalSolver()
     resultset = solver.solve(physical, seed=12345)
@@ -72,7 +73,7 @@ def test_local_solver_sa_ising():
 
     # Check the ground state
     assert np.array_equal(resultset.record[0][0], [-1, 1])
-    assert resultset.record[0][1] == -4.0  # energy
+    assert resultset.record[0][1] == 6.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
 
 
@@ -82,6 +83,7 @@ def test_local_solver_sa_qubo():
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
+    model._offset = 10.0
     physical = model.to_physical()
     solver = LocalSolver(exact=False)
     resultset = solver.solve(physical, seed=12345)
@@ -91,7 +93,7 @@ def test_local_solver_sa_qubo():
 
     # Check the ground state
     assert np.array_equal(resultset.record[0][0], [0, 1])
-    assert resultset.record[0][1] == -2.0  # energy
+    assert resultset.record[0][1] == 8.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
 
 
