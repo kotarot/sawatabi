@@ -16,5 +16,6 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 from sawatabi.solver.local_solver import LocalSolver
 from sawatabi.solver.dwave_solver import DWaveSolver
 from sawatabi.solver.optigan_solver import OptiganSolver
+from sawatabi.solver.sawatabi_solver import SawatabiSolver
 
-__all__ = ["AbstractSolver", "LocalSolver", "DWaveSolver", "OptiganSolver"]
+__all__ = ["AbstractSolver", "LocalSolver", "DWaveSolver", "OptiganSolver", "SawatabiSolver"]

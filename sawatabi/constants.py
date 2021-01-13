@@ -34,3 +34,7 @@ ALGORITHM_DELTA = "delta"
 ALGORITHM_INCREMENTAL = "incremental"
 ALGORITHM_PARTIAL = "partial"
 ALGORITHM_WINDOW = "window"
+
+# Pick-up mode for Sawatabi Solver
+PICKUP_MODE_RANDOM = "random"
+PICKUP_MODE_SEQUENTIAL = "sequential"

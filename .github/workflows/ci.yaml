@@ -85,6 +85,8 @@ jobs:
     # Solver
     - name: Run sample/solver/local_solver.py
       run: python sample/solver/local_solver.py
+    - name: Run sample/solver/sawatabi_solver.py
+      run: python sample/solver/sawatabi_solver.py
 
     # Algorithm
     - name: Run sample/algorithm/npp_incremental.py (local file)

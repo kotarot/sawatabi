@@ -19,7 +19,7 @@ def _create_ising_model():
     # Optimal solution of this ising model:
     #   - x[1][0] and x[1][1]: -1
     #   - The others: +1
-    #   - Energy = -16.0
+    #   - Energy = -10.0
     model = sawatabi.model.LogicalModel(mtype="ising")
 
     # print("\nSet shape to (1, 2)")
@@ -40,6 +40,9 @@ def _create_ising_model():
     model.add_interaction((x[2, 0], x[2, 1]), coefficient=5.0)
     # print(model)
 
+    # Add offset so that the final energy becomes -10.0
+    model._offset = 6.0
+
     # print("\nPhysical model")
     physical = model.to_physical()
     # print(physical)
@@ -51,7 +54,7 @@ def _create_qubo_model():
     # Optimal solution of this qubo model:
     #   - Only one of the variables: 1
     #   - The others: 0
-    #   - Energy = -1.0
+    #   - Energy = 0.0
     model = sawatabi.model.LogicalModel(mtype="qubo")
 
     # print("\nOne-hot constraint for an array of (4,)")
@@ -60,11 +63,40 @@ def _create_qubo_model():
     model.n_hot_constraint(a, n=1)
     # print(model)
 
+    # Add offset so that the final energy becomes 0.0
+    model._offset = 1.0
+
     # print("\nPhysical model")
     physical = model.to_physical()
     # print(physical)
 
     return physical
+
+
+def _create_simple_ising_model_with_only_1_body():
+    # Optimal solution of this ising model:
+    #   - All spins: -1
+    #   - Energy = -12.0
+    model = sawatabi.model.LogicalModel(mtype="ising")
+
+    x = model.variables("x", shape=(12,))
+    for i in range(12):
+        model.add_interaction(x[i], coefficient=-1.0)
+
+    return model.to_physical()
+
+
+def _create_simple_ising_model_with_only_2_body():
+    # Optimal solution of this ising model:
+    #   - All spins: +1 or -1
+    #   - Energy = -11.0
+    model = sawatabi.model.LogicalModel(mtype="ising")
+
+    x = model.variables("x", shape=(12,))
+    for i in range(11):
+        model.add_interaction((x[i], x[i + 1]), coefficient=1.0)
+
+    return model.to_physical()
 
 
 def _print_resultset(resultset):
