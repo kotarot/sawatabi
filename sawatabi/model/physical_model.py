@@ -42,15 +42,15 @@ class PhysicalModel(AbstractModel):
     # Converts to another model
     ################################
 
-    def to_bqm(self):
+    def to_bqm(self, sign=-1.0):
         # Signs for BQM are opposite from our (sawatabi's) definition.
         # - BQM:      H =   sum( J_{ij} * x_i * x_j ) + sum( h_{i} * x_i )
         # - Sawatabi: H = - sum( J_{ij} * x_i * x_j ) - sum( h_{i} * x_i )
         linear, quadratic = {}, {}
         for k, v in self._raw_interactions[constants.INTERACTION_LINEAR].items():
-            linear[k] = -1.0 * v
+            linear[k] = sign * v
         for k, v in self._raw_interactions[constants.INTERACTION_QUADRATIC].items():
-            quadratic[k] = -1.0 * v
+            quadratic[k] = sign * v
 
         if self.get_mtype() == constants.MODEL_ISING:
             vartype = dimod.SPIN
