@@ -187,3 +187,13 @@ def test_sawatabi_solver_with_initial_states_fails():
     initial_states = [{"x[0]": 1, "x[1]": 1}]
     with pytest.raises(ValueError):
         solver.solve(model.to_physical(), num_reads=2, initial_states=initial_states)
+
+
+def test_sawatabi_solver_invalid_pickup_mode():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(2,))
+    for i in range(2):
+        model.add_interaction(x[i], coefficient=-1.0)
+    solver = SawatabiSolver()
+    with pytest.raises(ValueError):
+        solver.solve(model.to_physical(), pickup_mode="invalid")
