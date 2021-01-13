@@ -186,4 +186,4 @@ def test_sawatabi_solver_with_initial_states_fails():
     solver = SawatabiSolver()
     initial_states = [{"x[0]": 1, "x[1]": 1}]
     with pytest.raises(ValueError):
-        resultset = solver.solve(model.to_physical(), num_reads=2, initial_states=initial_states)
+        solver.solve(model.to_physical(), num_reads=2, initial_states=initial_states)
