@@ -17,7 +17,10 @@
 
 import logging
 
-from _solver_helper import _create_ising_model, _create_simple_ising_model_with_only_1_body, _create_simple_ising_model_with_only_2_body, _create_qubo_model, _print_resultset
+# fmt: off
+from _solver_helper import (_create_ising_model, _create_qubo_model, _create_simple_ising_model_with_only_1_body, _create_simple_ising_model_with_only_2_body,
+                            _print_resultset)
+# fmt: on
 
 import sawatabi
 

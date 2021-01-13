@@ -34,7 +34,18 @@ class SawatabiSolver(AbstractSolver):
         self._rng = None
         super().__init__()
 
-    def solve(self, model, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, initial_states=None, pickup_mode=constants.PICKUP_MODE_RANDOM, seed=None):
+    def solve(
+        self,
+        model,
+        num_reads=1,
+        num_sweeps=1000,
+        num_coolings=100,
+        cooling_rate=0.9,
+        initial_temperature=100.0,
+        initial_states=None,
+        pickup_mode=constants.PICKUP_MODE_RANDOM,
+        seed=None,
+    ):
         self._check_argument_type("model", model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
