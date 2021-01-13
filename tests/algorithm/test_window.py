@@ -178,9 +178,10 @@ def test_window_algorithm_npp_unmap_fails(capfd):
         pipeline_args=pipeline_args,
     )
 
-    # Run the pipeline
-    result = pipeline.run()  # noqa: F841
-    # result.wait_until_finish()
+    with pytest.warns(UserWarning):
+        # Run the pipeline
+        result = pipeline.run()  # noqa: F841
+        # result.wait_until_finish()
 
     out, err = capfd.readouterr()
 
@@ -207,9 +208,10 @@ def test_window_algorithm_npp_solve_fails(capfd):
         pipeline_args=pipeline_args,
     )
 
-    # Run the pipeline
-    result = pipeline.run()  # noqa: F841
-    # result.wait_until_finish()
+    with pytest.warns(UserWarning):
+        # Run the pipeline
+        result = pipeline.run()  # noqa: F841
+        # result.wait_until_finish()
 
     out, err = capfd.readouterr()
 
