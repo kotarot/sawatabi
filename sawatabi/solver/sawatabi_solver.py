@@ -118,11 +118,17 @@ class SawatabiSolver(AbstractSolver):
         num_inners = math.ceil(num_sweeps / num_coolings)
         sweep = 0
 
+        sweep_finished = False
         for cool in range(num_coolings):  # outer loop
             logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature})")
 
             for inner in range(num_inners):  # inner loop
-                logger.debug(f"sweep: {sweep + 1}/{num_sweeps}")
+                sweep += 1
+                if num_sweeps < sweep:
+                    sweep_finished = True
+                    break
+
+                logger.debug(f"sweep: {sweep}/{num_sweeps}")
 
                 # Pick up a spin (variable) randomly
                 if pickup_mode == constants.PICKUP_MODE_RANDOM:
@@ -140,9 +146,9 @@ class SawatabiSolver(AbstractSolver):
                     logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
                 logger.debug(f"energy: {energy}")
 
-                sweep += 1
-                if num_sweeps <= sweep:
-                    break
+            if sweep_finished:
+                logger.info("No more sweeps left.")
+                break
 
             temperature *= cooling_rate
 

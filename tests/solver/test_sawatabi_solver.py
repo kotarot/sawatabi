@@ -38,7 +38,7 @@ def test_sawatabi_solver_ising():
     assert resultset.record[0][2] == 1  # num of occurrences
 
 
-def test_sawatabi_solver_sa_qubo():
+def test_sawatabi_solver_qubo():
     model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(2,))
     model.add_interaction(x[0], coefficient=1.0)
@@ -46,7 +46,7 @@ def test_sawatabi_solver_sa_qubo():
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
     physical = model.to_physical()
     solver = SawatabiSolver()
-    resultset = solver.solve(physical, seed=12345)
+    resultset = solver.solve(physical, num_sweeps=1000, num_coolings=101, seed=12345)
 
     assert resultset.variables == ["x[0]", "x[1]"]
     assert len(resultset.record) == 1

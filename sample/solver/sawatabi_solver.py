@@ -53,7 +53,7 @@ def sawatabi_solver_ising():
     physical = _create_ising_model()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=101, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
@@ -63,7 +63,7 @@ def sawatabi_solver_qubo():
     physical = _create_qubo_model()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=99, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
