@@ -142,6 +142,7 @@ def test_sawatabi_solver_with_empty_model_fails():
     with pytest.raises(ValueError):
         solver.solve(physical, seed=12345)
 
+
 def test_sawatabi_solver_with_initial_states():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(12,))
@@ -173,3 +174,14 @@ def test_sawatabi_solver_with_initial_states():
     assert np.array_equal(resultset.record[0][0], [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1])
     assert resultset.record[0][1] == -12.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
+
+
+def test_sawatabi_solver_with_initial_states_fails():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(2,))
+    for i in range(2):
+        model.add_interaction(x[i], coefficient=-1.0)
+    solver = SawatabiSolver()
+    initial_states = [{"x[0]": 1, "x[1]": 1}]
+    with pytest.raises(ValueError):
+        resultset = solver.solve(model.to_physical(), num_reads=2, initial_states=initial_states)
