@@ -96,7 +96,7 @@ class OptiganSolver(AbstractSolver):
         for spins in result["spins"]:
             sample = dict(zip(list(model._index_to_label.values()), spins))
             samples.append(sample)
-        sampleset = dimod.SampleSet.from_samples(samples, dimod.BINARY, energy=result["energies"])
+        sampleset = dimod.SampleSet.from_samples(samples, dimod.BINARY, energy=result["energies"], aggregate_samples=True, sort_labels=True)
         sampleset._info = result
 
         return sampleset
