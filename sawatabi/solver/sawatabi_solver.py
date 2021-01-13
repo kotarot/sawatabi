@@ -51,6 +51,9 @@ class SawatabiSolver(AbstractSolver):
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")
 
+        if initial_states and (len(initial_states) != num_reads):
+            raise ValueError("Length of initial_states must be the same as num_reads.")
+
         allowed_pickup_mode = [constants.PICKUP_MODE_RANDOM, constants.PICKUP_MODE_SEQUENTIAL]
         if pickup_mode not in allowed_pickup_mode:
             raise ValueError(f"pickup_mode must be one of {allowed_pickup_mode}")
@@ -75,13 +78,16 @@ class SawatabiSolver(AbstractSolver):
         samples = []
         energies = []
         for r in range(num_reads):
+            initial_states_for_this_read = None
+            if initial_states:
+                initial_states_for_this_read = initial_states[r]
             sample, energy = self.annealing(
                 num_reads=num_reads,
                 num_sweeps=num_sweeps,
                 num_coolings=num_coolings,
                 cooling_rate=cooling_rate,
                 initial_temperature=initial_temperature,
-                initial_states=initial_states,
+                initial_states=initial_states_for_this_read,
                 pickup_mode=pickup_mode,
             )
             # These samples and energies are in the Ising (SPIN) format
@@ -106,7 +112,10 @@ class SawatabiSolver(AbstractSolver):
         if initial_states is None:
             x = ((self._rng.randint(2, size=self._bqm.num_variables) - 0.5) * 2).astype(int)  # -1 or +1
         else:
-            raise NotImplementedError
+            x = np.ones(shape=(self._bqm.num_variables), dtype=int)
+            for v in self._bqm.variables:
+                idx = self._model._label_to_index[v]
+                x[idx] = initial_states[v]
 
         initial_sample = dict(zip(list(self._model._index_to_label.values()), x))
         logger.info(f"initial_spins: {initial_sample}")
@@ -135,7 +144,7 @@ class SawatabiSolver(AbstractSolver):
                     idx = self._rng.randint(self._bqm.num_variables)
                 # Pick up a spin (variable) sequentially
                 elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
-                    idx = sweep % self._bqm.num_variables
+                    idx = (sweep - 1) % self._bqm.num_variables
 
                 # `diff` represents a gained energy value after flipping
                 diff = self.calc_energy_diff(idx, x)
