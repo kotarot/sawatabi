@@ -63,7 +63,6 @@ class OptiganSolver(AbstractSolver):
             endpoint = self._endpoint
             token = self._token
 
-        endpoint = "http://{}/solve".format(endpoint)
         headers = {
             "Authorization": "Bearer {}".format(token),
             "X-Accept": "application/json",

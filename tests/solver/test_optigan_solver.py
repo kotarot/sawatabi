@@ -73,6 +73,17 @@ def test_optigan_solver(mocker, physical):
         assert sample == {"x[0]": 1, "x[1]": 0}
 
 
+def test_optigan_solver_with_auth_parameters(mocker, physical):
+    solver = OptiganSolver(endpoint="http://0.0.0.0/method", token="xxxx")
+
+    response_mock = ResponseMock()
+    mocker.patch("requests.post", return_value=response_mock)
+
+    resultset = solver.solve(physical, duplicate=True)
+
+    assert isinstance(resultset, dimod.SampleSet)
+
+
 def test_optigan_solver_without_gzip(mocker, physical):
     directory = os.path.dirname(__file__)
     solver = OptiganSolver(config=f"{directory}/.optigan.yml")

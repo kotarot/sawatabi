@@ -43,7 +43,7 @@ You can also give these parameters directly in the sawatabi.solver.DWaveSolver()
 Set up a API Token in `~/.optigan.yml`:
 ```
 api:
-    endpoint: optigan.example.com
+    endpoint: http://optigan.example.com/method
     token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
