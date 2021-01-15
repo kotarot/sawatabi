@@ -31,6 +31,7 @@ class OptiganSolver(AbstractSolver):
         super().__init__()
         home_dir = os.path.expanduser("~")
         home_config_filename = f"{home_dir}/.optigan.yml"
+        self._config_filename = None
         if config:
             self._config_filename = config
         elif os.path.exists(home_config_filename):
@@ -55,13 +56,13 @@ class OptiganSolver(AbstractSolver):
         # Converts to polynomial (model representation for Optigan)
         polynomial = model.to_polynomial()
 
-        if self._config_filename:
+        if self._endpoint and self._token:
+            endpoint = self._endpoint
+            token = self._token
+        elif self._config_filename:
             config = self.get_config()
             endpoint = config["api"]["endpoint"]
             token = config["api"]["token"]
-        else:
-            endpoint = self._endpoint
-            token = self._token
 
         headers = {
             "Authorization": "Bearer {}".format(token),
