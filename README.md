@@ -36,14 +36,18 @@ Default solver [skip]: Advantage_system1.1
 Configuration saved.
 ```
 
+You can also give these parameters directly in the sawatabi.solver.DWaveSolver() constructor arguments.
+
 ### If you use the Fixstars GPU solver (Optigan)
 
 Set up a API Token in `~/.optigan.yml`:
 ```
 api:
-    host: optigan.example.com
+    endpoint: http://optigan.example.com/method
     token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
+
+You can also give these parameters directly in the sawatabi.solver.OptiganSolver() constructor arguments.
 
 ### For Developers
 

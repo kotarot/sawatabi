@@ -35,7 +35,7 @@ def solver_dwave_long_schedule():
     physical = _create_ising_model()
 
     solver = sawatabi.solver.DWaveSolver(solver="Advantage_system1.1")
-    resultset = solver.solve(physical, chain_strength=2, annealing_time=1000, num_reads=1000)
+    resultset = solver.solve(physical, chain_strength=2, annealing_time=50, num_reads=1000)
 
     _print_resultset(resultset)
 

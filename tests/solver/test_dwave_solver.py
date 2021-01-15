@@ -63,6 +63,23 @@ def test_dwave_solver(mocker, physical):
         assert sample == {"x[0]": 1, "x[1]": -1}
 
 
+def test_dwave_solver_with_auth_parameters(mocker, physical):
+    solver = DWaveSolver(endpoint="http://0.0.0.0/method", token="xxxx", solver="Advantage_system1.1")
+
+    sampleset = dimod.SampleSet.from_samples([{"x[0]": 1, "x[1]": -1}], dimod.SPIN, energy=[-2.0])
+    sampleset._info = {
+        "timing": {"qpu_sampling_time": 12345},
+        "problem_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    }
+
+    mocker.patch("dwave.system.samplers.DWaveSampler.__init__", return_value=None)
+    mocker.patch("dwave.system.composites.EmbeddingComposite.__init__", return_value=None)
+    mocker.patch("dwave.system.composites.EmbeddingComposite.sample", return_value=sampleset)
+    resultset = solver.solve(physical)
+
+    assert isinstance(resultset, dimod.SampleSet)
+
+
 def test_dwave_default_solver_name():
     solver = DWaveSolver()
     assert solver._solver == "Advantage_system1.1"
