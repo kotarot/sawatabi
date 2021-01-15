@@ -21,8 +21,10 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 
 
 class DWaveSolver(AbstractSolver):
-    def __init__(self, solver="Advantage_system1.1"):
+    def __init__(self, endpoint=None, token=None, solver="Advantage_system1.1"):
         super().__init__()
+        self._endpoint = endpoint
+        self._token = token
         self._solver = solver
 
     def solve(self, model, seed=None, chain_strength=2.0, annealing_time=20, num_reads=1000, answer_mode="histogram", **kwargs):
@@ -35,7 +37,11 @@ class DWaveSolver(AbstractSolver):
         bqm = model.to_bqm()
 
         # TODO: Deal with reverse annealing.
-        solver = EmbeddingComposite(DWaveSampler(solver=self._solver))
-        sampleset = solver.sample(bqm, chain_strength=chain_strength, annealing_time=20, num_reads=num_reads, answer_mode=answer_mode, **kwargs)
+        if (self._endpoint is not None) and (self._token is not None):
+            sampler = DWaveSampler(endpoint=self._endpoint, token=self._token, solver=self._solver)
+        else:
+            sampler = DWaveSampler(solver=self._solver)
+        solver = EmbeddingComposite(sampler)
+        sampleset = solver.sample(bqm, chain_strength=chain_strength, annealing_time=annealing_time, num_reads=num_reads, answer_mode=answer_mode, **kwargs)
 
         return sampleset

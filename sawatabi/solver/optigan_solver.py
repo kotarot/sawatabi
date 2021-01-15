@@ -27,16 +27,19 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 
 
 class OptiganSolver(AbstractSolver):
-    def __init__(self, config=None):
+    def __init__(self, config=None, endpoint=None, token=None):
         super().__init__()
+        home_dir = os.path.expanduser("~")
+        home_config_filename = f"{home_dir}/.optigan.yml"
         if config:
-            self.config_filename = config
-        else:
-            home_dir = os.path.expanduser("~")
-            self.config_filename = f"{home_dir}/.optigan.yml"
+            self._config_filename = config
+        elif os.path.exists(home_config_filename):
+            self._config_filename = home_config_filename
+        self._endpoint = endpoint
+        self._token = token
 
     def get_config(self):
-        with open(self.config_filename, "r") as f:
+        with open(self._config_filename, "r") as f:
             config = yaml.load(f, Loader=yaml.SafeLoader)
         return config
 
@@ -52,10 +55,17 @@ class OptiganSolver(AbstractSolver):
         # Converts to polynomial (model representation for Optigan)
         polynomial = model.to_polynomial()
 
-        config = self.get_config()
-        endpoint = "http://{}/solve".format(config["api"]["host"])
+        if self._config_filename:
+            config = self.get_config()
+            endpoint = config["api"]["endpoint"]
+            token = config["api"]["token"]
+        else:
+            endpoint = self._endpoint
+            token = self._token
+
+        endpoint = "http://{}/solve".format(endpoint)
         headers = {
-            "Authorization": "Bearer {}".format(config["api"]["token"]),
+            "Authorization": "Bearer {}".format(token),
             "X-Accept": "application/json",
         }
         payload = {
