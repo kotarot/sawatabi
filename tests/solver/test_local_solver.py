@@ -183,7 +183,24 @@ def test_local_solver_with_logical_model_fails():
 
 def test_local_solver_with_empty_model_fails():
     model = LogicalModel(mtype="ising")
-    physical = model.to_physical()
     solver = LocalSolver()
     with pytest.raises(ValueError):
-        solver.solve(physical, seed=12345)
+        solver.solve(model.to_physical(), seed=12345)
+
+
+def test_local_solver_default_beta_range():
+    model = LogicalModel(mtype="ising")
+    s = model.variables("s", shape=(2,))
+    model.add_interaction(s[0], coefficient=1.0)
+    model.add_interaction(s[1], coefficient=2.0)
+    model.add_interaction((s[0], s[1]), coefficient=-3.0)
+    solver = LocalSolver()
+    beta_range = solver.default_beta_range(model.to_physical())
+    assert beta_range == [0.13862943611198905, 4.605170185988092]
+
+
+def test_local_solver_default_beta_range_fails():
+    model = LogicalModel(mtype="ising")
+    solver = LocalSolver()
+    with pytest.raises(ValueError):
+        solver.default_beta_range(model.to_physical())
