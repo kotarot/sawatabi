@@ -79,6 +79,9 @@ setup(
             "plotly>=4.12.0,<5.0.0",
             "seaborn>=0.11.0,<1.0.0",
         ],
+        "trial": [
+            "python-Levenshtein>=0.12.0,<1.0.0",
+        ],
     },
     author="Kotaro Terada",
     author_email="kotarot@apache.org",
