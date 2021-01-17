@@ -18,8 +18,8 @@
 import copy
 import datetime
 
-import numpy as np
 import Levenshtein
+import numpy as np
 
 import sawatabi
 
