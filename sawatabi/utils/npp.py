@@ -21,7 +21,7 @@ Note that `partitions` represents a pair of lists of indices of the input number
 """
 
 
-def solve_npp_with_dp(numbers, print_dp_table=False):
+def solve_npp_with_dp(numbers, enumerate_all=False, print_dp_table=False):
     n = len(numbers)
     s2 = sum(numbers)
     s = int(s2 / 2)
@@ -43,34 +43,54 @@ def solve_npp_with_dp(numbers, print_dp_table=False):
     # Fill the DP table in bottom up manner
     for i in range(1, s + 1):
         for j in range(1, n + 1):
-            # Rule 1
+            # Rule 1: Copy its left element
             dp[i][j] = dp[i][j - 1]
 
-            # Rule 2
+            # Rule 2: Add current number to the sub-problem answers
             current_val = numbers[j - 1]
-            if (numbers[j - 1] <= i) and dp[i - current_val][j - 1][0]:
-                dp[i][j] = (True, dp[i - current_val][j - 1][1] + [j - 1])
+            if (current_val <= i) and dp[i - current_val][j - 1][0]:
+                if not enumerate_all:
+                    dp[i][j] = (True, dp[i - current_val][j - 1][1] + [j - 1])
+                else:
+                    if i == current_val:
+                        dp[i][j] = (True, dp[i][j][1] + [[j - 1]])
+                    else:
+                        solution = []
+                        for prev in dp[i - current_val][j - 1][1]:
+                            solution.append(prev + [j - 1])
+                        if len(dp[i][j][1]) != 0:
+                            solution.extend(dp[i][j][1])
+                        dp[i][j] = (True, solution)
 
     if print_dp_table:
         print("dp:")
-        print("    0", end="")
+        print("    0        ", end="")
         for j in range(n):
-            print(f" {numbers[j]:20}", end="")
+            print(f" {numbers[j]:27} (idx={j})", end="")
         print("")
         for i in range(s + 1):
             print(f"{i:3}", end="")
             for j in range(n + 1):
-                print(f" {str(dp[i][j]):20}", end="")
+                print(f" {str(dp[i][j]):35}", end="")
             print("")
 
-    def find_another_partition(p, n):
+    def find_the_other_partition(p, n):
         a = set([i for i in range(n)])
         return list(a - set(p))
 
     # The bottom right element (dp[s][n]) is the exact answer
+    the_others = []
     if (s2 % 2 == 0) and dp[s][n][0]:
-        return (True, dp[s][n][1], find_another_partition(dp[s][n][1], n))
+        if not enumerate_all:
+            dp[s][n] = (dp[s][n][0], [dp[s][n][1]])
+        for p in dp[s][n][1]:
+            the_others.append(find_the_other_partition(p, n))
+        return (True, dp[s][n][1], the_others)
     else:
         for i in range(s, -1, -1):
             if dp[i][n][0]:
-                return (False, dp[i][n][1], find_another_partition(dp[i][n][1], n))
+                if not enumerate_all:
+                    dp[i][n] = (dp[i][n][0], [dp[i][n][1]])
+                for p in dp[i][n][1]:
+                    the_others.append(find_the_other_partition(p, n))
+                return (False, dp[i][n][1], the_others)

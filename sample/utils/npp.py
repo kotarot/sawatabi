@@ -33,15 +33,18 @@ def main():
     print("Half of Sum:", s)
     print("")
 
-    ans = sawatabi.utils.solve_npp_with_dp(numbers)
+    # ans = sawatabi.utils.solve_npp_with_dp(numbers, print_dp_table=True)
+    ans = sawatabi.utils.solve_npp_with_dp(numbers, enumerate_all=True, print_dp_table=True)
 
     print("Answer:", ans)
-    solution1 = [numbers[i] for i in ans[1]]
-    solution2 = [numbers[i] for i in ans[2]]
-    print("Solution 1:", solution1)
-    print("Sum 1:", sum(solution1))
-    print("Solution 2:", solution2)
-    print("Sum 2:", sum(solution2))
+
+    for a in range(len(ans[1])):
+        solution1 = [numbers[i] for i in ans[1][a]]
+        solution2 = [numbers[i] for i in ans[2][a]]
+        print(f"Solution of {a}-1:", solution1)
+        print(f"Sum of {a}-1:", sum(solution1))
+        print(f"Solution of {a}-2:", solution2)
+        print(f"Sum of {a}-2:", sum(solution2))
 
 
 if __name__ == "__main__":
