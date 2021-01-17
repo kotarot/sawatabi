@@ -33,9 +33,12 @@ def test_local_solver_exact_ising():
     assert len(resultset.record) == 4
     for r in resultset.record:
         # Check the ground state
-        if np.array_equal(r[0], [-1, 1]):
-            assert r[1] == -4.0  # energy
-            assert r[2] == 1  # num of occurrences
+        if np.array_equal(r.sample, [-1, 1]):
+            assert r.energy == -4.0
+            assert r.num_occurrences == 1
+            break
+    else:
+        assert False
 
 
 def test_local_solver_exact_qubo():
@@ -52,9 +55,12 @@ def test_local_solver_exact_qubo():
     assert len(resultset.record) == 4
     for r in resultset.record:
         # Check the ground state
-        if np.array_equal(r[0], [0, 1]):
-            assert r[1] == -2.0  # energy
-            assert r[2] == 1  # num of occurrences
+        if np.array_equal(r.sample, [0, 1]):
+            assert r.energy == -2.0
+            assert r.num_occurrences == 1
+            break
+    else:
+        assert False
 
 
 def test_local_solver_sa_ising():

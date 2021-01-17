@@ -56,3 +56,11 @@ class LocalSolver(AbstractSolver):
         }
 
         return sampleset
+
+    def default_beta_range(self, model):
+        self._check_argument_type("model", model, PhysicalModel)
+
+        if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
+            raise ValueError("Model cannot be empty.")
+
+        return neal.default_beta_range(model.to_bqm())

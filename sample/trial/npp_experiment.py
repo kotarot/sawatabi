@@ -29,6 +29,9 @@ plt.rcParams['font.size'] = 14
 
 optimal_cache = {}
 
+#import logging
+#logging.basicConfig(level=logging.INFO)
+
 
 def run_windowing(window_size, window_period, batches, numbers_range_lower=1, numbers_range_upper=99, num_reads=1000, num_sweeps=100, prev_states_usage=-1.0, seed=None):
     if seed:
@@ -63,7 +66,8 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
         ################################
         # With Annealing Solver
 
-        # Local
+        # LocalSolver
+        '''
         solver = sawatabi.solver.LocalSolver(exact=False)
         if not prev_sampleset:
             resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, seed=1 * (r + 1))
@@ -71,12 +75,12 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
             initial_states = []
 
             # Set initial_states based on the previous sampleset
-            record = sorted(prev_sampleset.record, key=lambda r: r[1])  # sort by energy
+            record = sorted(prev_sampleset.record, key=lambda r: r.energy)  # sort by energy
             prev_usage_count = 0
             prev_usage_finished = False
             for r in record:
-                sample = dict(zip(prev_sampleset.variables, r[0]))
-                for occurrence in range(r[2]):
+                sample = dict(zip(prev_sampleset.variables, r.sample))
+                for occurrence in range(r.num_occurrences):
                     this_initial_state = {}
                     for i in range(window_size - window_period):
                         this_initial_state[f"x[{i}]"] = sample[f"x[{i + window_period}]"]
@@ -99,24 +103,44 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
 
             #print("Initialized with previous states.")
             assert len(initial_states) == num_reads
-            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, initial_states=initial_states, initial_states_generator="none", seed=2 * (r + 1))
+
+            # When using initial_states, use new beta_range to utilize the initial states
+            physical = model.to_physical()
+            default_beta_range = solver.default_beta_range(physical)
+            beta_range = (default_beta_range[0] * 10, default_beta_range[1])  # Tighten the initial temperature than the default temperature
+            resultset = solver.solve(physical, num_reads=num_reads, num_sweeps=num_sweeps, initial_states=initial_states, initial_states_generator="none", seed=2 * (r + 1), beta_range=beta_range)
+        '''
 
         # D-Wave
-        #solver = sawatabi.solver.DWaveSolver()
-        #resultset = solver.solve(model.to_physical(), chain_strength=2, num_reads=100)
+        '''
+        solver = sawatabi.solver.DWaveSolver()
+        resultset = solver.solve(model.to_physical(), chain_strength=2, num_reads=100)
+        '''
 
         # Optigan
-        #solver = sawatabi.solver.OptiganSolver()
-        #model.to_qubo()
-        #resultset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
+        '''
+        solver = sawatabi.solver.OptiganSolver()
+        model.to_qubo()
+        resultset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
+        '''
+
+        # Sawatabi Solver
+        solver = sawatabi.solver.SawatabiSolver()
+        if not prev_sampleset:
+            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=1 * (r + 1))
+        else:
+            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=2 * (r + 1))
 
         #print(resultset)
 
+        # Store the resultset to use it in the next batch
         if 0.0 < prev_states_usage:
             prev_sampleset = resultset
 
+        # Get minimum diff from obtained samples from the solver
         diffs = []
-        for sample in resultset.samples():
+        for r in resultset.record:
+            sample = dict(zip(resultset.variables, r.sample))
             s_1, s_2 = [], []
             for i, n in enumerate(numbers):
                 if sample[f"x[{i}]"] == 1:
@@ -127,7 +151,9 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
             #print(f"S_1  : sum={sum(s_1)}, elements={s_1}")
             #print(f"S_2  : sum={sum(s_2)}, elements={s_2}")
             #print("diff :", diff)
-            diffs.append(diff)
+            for _ in range(r.num_occurrences):
+                diffs.append(diff)
+        assert len(diffs) == num_reads
         diff_min = min(diffs)
         #print("diff (min):", diff_min)
 
@@ -138,9 +164,9 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
         else:
             optimal = sawatabi.utils.solve_npp_with_dp(numbers)
             optimal_cache[str(numbers)] = optimal
-        # print(optimal)
-        opt_s_1 = [numbers[i] for i in optimal[1]]
-        opt_s_2 = [numbers[i] for i in optimal[2]]
+        #print(optimal)
+        opt_s_1 = [numbers[i] for i in optimal[1][0]]
+        opt_s_2 = [numbers[i] for i in optimal[2][0]]
         opt_diff = abs(sum(opt_s_1) - sum(opt_s_2))
         #print("diff (opt):", opt_diff)
 
@@ -152,6 +178,7 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
         # TTS (time to solution) in sweeps unit
         P = 0.99
         p = occurrences_opt / num_reads
+        #print(p)
         if 0.999 < p:
             p = 0.999
         if p < 0.001:
@@ -287,11 +314,11 @@ def main():
 
     # Experiment 2:
     # Compare TTS between incremental rates just using one problem
-    sizes = [10, 20, 50, 100]
-    incremental_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    sizes = [10]  # [10, 20, 50, 100]
+    incremental_rate = [0.1]  # [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     for size in sizes:
-        experiment2(incremental_rate=incremental_rate, window_size=size, batches=50)
-
+        #experiment2(incremental_rate=incremental_rate, window_size=size, batches=50)
+        experiment2(incremental_rate=incremental_rate, window_size=size, batches=2)
 
 if __name__ == "__main__":
     main()
