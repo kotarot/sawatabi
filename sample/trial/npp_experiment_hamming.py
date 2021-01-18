@@ -65,13 +65,26 @@ def experiment_hamming(window_size, window_period, batches, numbers_range_lower=
         print("Optimal (bit-arrays):", optimal_bitarrays)
         print("Prev (bit-arrays):   ", prev_bitarrays)
 
-        print("Hamming distance between previous and current optimal solutions:")
         if prev_bitarrays:
+            print("Hamming distance between previous and current optimal solutions:")
+            dists_min = []
+            # If prev bitarrays is a random array...
+            #prev_bitarrays = []
+            #for _ in range(1000):
+            #    p = ""
+            #    for b in np.random.randint(low=0, high=2, size=window_size):
+            #        p += str(b)
+            #    prev_bitarrays.append(p)
             for p in prev_bitarrays:
+                dists = []
                 for o in optimal_bitarrays:
                     dist = Levenshtein.hamming(p, o)
-                    print(p, o, dist)
-                print("----")
+                    dists.append(dist)
+                    #print(p, o, dist)
+                dists_min.append(min(dists))
+                #print("----")
+            dist_avg = np.average(dists_min)
+            print("dist (avg):", dist_avg)
 
         prev_bitarrays = copy.copy(optimal_bitarrays)
 
