@@ -29,8 +29,11 @@ plt.rcParams['font.size'] = 14
 
 optimal_cache = {}
 
+#import logging
+#logging.basicConfig(level=logging.INFO)
 
-def run(window_size, window_period, batches, numbers_range_lower=1, numbers_range_upper=99, local_solver_num_reads=1000, local_solver_num_sweeps=100, use_prev_states=False, seed=None):
+
+def run_windowing(window_size, window_period, batches, numbers_range_lower=1, numbers_range_upper=99, num_reads=1000, num_sweeps=100, prev_states_usage=-1.0, seed=None):
     if seed:
         np.random.seed(seed)
         random.seed(seed)
@@ -39,11 +42,10 @@ def run(window_size, window_period, batches, numbers_range_lower=1, numbers_rang
     all_size = window_size + window_period * (batches - 1)
     all_numbers = list(np.random.randint(low=numbers_range_lower, high=numbers_range_upper, size=all_size))
     #all_numbers = list(range(1, all_size + 1))
-    #np.random.shuffle(all_numbers)
     #print("All Numbers:", all_numbers)
 
     tts_history = []
-    prev_states_samples = None
+    prev_sampleset = None
 
     # Windowing manually
     for r in range(batches):
@@ -63,40 +65,82 @@ def run(window_size, window_period, batches, numbers_range_lower=1, numbers_rang
 
         ################################
         # With Annealing Solver
-        begin = sawatabi.utils.current_time()
 
-        # Local
+        # LocalSolver
+        '''
         solver = sawatabi.solver.LocalSolver(exact=False)
-        if not prev_states_samples:
-            resultset = solver.solve(model.to_physical(), num_reads=local_solver_num_reads, num_sweeps=local_solver_num_sweeps, seed=1 * (r + 1))
+        if not prev_sampleset:
+            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, seed=1 * (r + 1))
         else:
             initial_states = []
-            for sample in prev_states_samples:
-                this_initial_states = {}
-                for i in range(window_size - window_period):
-                    this_initial_states[f"x[{i}]"] = sample[f"x[{i + window_period}]"]
-                for i in range(window_size - window_period, window_size):
-                    this_initial_states[f"x[{i}]"] = random.choice([1, -1])
-                initial_states.append(this_initial_states)
+
+            # Set initial_states based on the previous sampleset
+            record = sorted(prev_sampleset.record, key=lambda r: r.energy)  # sort by energy
+            prev_usage_count = 0
+            prev_usage_finished = False
+            for r in record:
+                sample = dict(zip(prev_sampleset.variables, r.sample))
+                for occurrence in range(r.num_occurrences):
+                    this_initial_state = {}
+                    for i in range(window_size - window_period):
+                        this_initial_state[f"x[{i}]"] = sample[f"x[{i + window_period}]"]
+                    for i in range(window_size - window_period, window_size):
+                        this_initial_state[f"x[{i}]"] = random.choice([1, -1])
+                    initial_states.append(this_initial_state)
+                    prev_usage_count += 1
+                    if num_reads * prev_states_usage < prev_usage_count:
+                        prev_usage_finished = True
+                        break
+                if prev_usage_finished:
+                    break
+
+            # Set states of the remaining samples randomly
+            for r in range(num_reads - len(initial_states)):
+                this_initial_state = {}
+                for i in range(window_size):
+                    this_initial_state[f"x[{i}]"] = random.choice([1, -1])
+                initial_states.append(this_initial_state)
+
             #print("Initialized with previous states.")
-            resultset = solver.solve(model.to_physical(), num_reads=local_solver_num_reads, num_sweeps=local_solver_num_sweeps, initial_states=initial_states, initial_states_generator="none", seed=2 * (r + 1))
+            assert len(initial_states) == num_reads
+
+            # When using initial_states, use new beta_range to utilize the initial states
+            physical = model.to_physical()
+            default_beta_range = solver.default_beta_range(physical)
+            beta_range = (default_beta_range[0] * 10, default_beta_range[1])  # Tighten the initial temperature than the default temperature
+            resultset = solver.solve(physical, num_reads=num_reads, num_sweeps=num_sweeps, initial_states=initial_states, initial_states_generator="none", seed=2 * (r + 1), beta_range=beta_range)
+        '''
 
         # D-Wave
-        #solver = sawatabi.solver.DWaveSolver()
-        #resultset = solver.solve(model.to_physical(), chain_strength=2, num_reads=100)
+        '''
+        solver = sawatabi.solver.DWaveSolver()
+        resultset = solver.solve(model.to_physical(), chain_strength=2, num_reads=100)
+        '''
 
         # Optigan
-        #solver = sawatabi.solver.OptiganSolver()
-        #model.to_qubo()
-        #resultset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
+        '''
+        solver = sawatabi.solver.OptiganSolver()
+        model.to_qubo()
+        resultset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
+        '''
+
+        # Sawatabi Solver
+        solver = sawatabi.solver.SawatabiSolver()
+        if not prev_sampleset:
+            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=1 * (r + 1))
+        else:
+            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=2 * (r + 1))
 
         #print(resultset)
 
-        if use_prev_states:
-            prev_states_samples = resultset.samples()
+        # Store the resultset to use it in the next batch
+        if 0.0 < prev_states_usage:
+            prev_sampleset = resultset
 
+        # Get minimum diff from obtained samples from the solver
         diffs = []
-        for sample in resultset.samples():
+        for r in resultset.record:
+            sample = dict(zip(resultset.variables, r.sample))
             s_1, s_2 = [], []
             for i, n in enumerate(numbers):
                 if sample[f"x[{i}]"] == 1:
@@ -107,11 +151,11 @@ def run(window_size, window_period, batches, numbers_range_lower=1, numbers_rang
             #print(f"S_1  : sum={sum(s_1)}, elements={s_1}")
             #print(f"S_2  : sum={sum(s_2)}, elements={s_2}")
             #print("diff :", diff)
-            diffs.append(diff)
+            for _ in range(r.num_occurrences):
+                diffs.append(diff)
+        assert len(diffs) == num_reads
         diff_min = min(diffs)
         #print("diff (min):", diff_min)
-
-        end = sawatabi.utils.current_time()
 
         ################################
         # With Optimal Solver
@@ -120,29 +164,29 @@ def run(window_size, window_period, batches, numbers_range_lower=1, numbers_rang
         else:
             optimal = sawatabi.utils.solve_npp_with_dp(numbers)
             optimal_cache[str(numbers)] = optimal
-        # print(optimal)
-        opt_s_1 = [numbers[i] for i in optimal[1]]
-        opt_s_2 = [numbers[i] for i in optimal[2]]
+        #print(optimal)
+        opt_s_1 = [numbers[i] for i in optimal[1][0]]
+        opt_s_2 = [numbers[i] for i in optimal[2][0]]
         opt_diff = abs(sum(opt_s_1) - sum(opt_s_2))
         #print("diff (opt):", opt_diff)
 
         occurrences_min = diffs.count(diff_min)
         occurrences_opt = diffs.count(opt_diff)
-        #print(f"occurrences (min): {occurrences_min} / {local_solver_num_reads}")
-        #print(f"occurrences (opt): {occurrences_opt} / {local_solver_num_reads}")
+        #print(f"occurrences (min): {occurrences_min} / {num_reads}")
+        #print(f"occurrences (opt): {occurrences_opt} / {num_reads}")
 
         # TTS (time to solution) in sweeps unit
         P = 0.99
-        p = occurrences_opt / local_solver_num_reads
+        p = occurrences_opt / num_reads
+        #print(p)
         if 0.999 < p:
             p = 0.999
         if p < 0.001:
             p = 0.001
-        tts = local_solver_num_sweeps * math.log(1 - P) / math.log(1 - p)
+        tts = num_sweeps * math.log(1 - P) / math.log(1 - p)
         #print("TTS:", tts)
         tts_history.append(tts)
 
-        # print("Time :", end - begin)
         # print("")
 
     return tts_history
@@ -150,7 +194,7 @@ def run(window_size, window_period, batches, numbers_range_lower=1, numbers_rang
 
 def experiment1(window_size, window_period, batches):
     NUMBERS_RANGE_UPPER = 99
-    LOCAL_SOLVER_NUM_SWEEPS = 100
+    NUM_SWEEPS = 100
 
     print(f"[{datetime.datetime.today()}] Experimenting window_size={window_size} window_period={window_period} batches={batches} ...")
 
@@ -171,7 +215,7 @@ def experiment1(window_size, window_period, batches):
     print("  Running againt 10 different problems without previous states ...")
     tts_hists_without_states = []
     for seed in range(10, 110, 10):
-        tts_hist_without_states = run(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, local_solver_num_sweeps=LOCAL_SOLVER_NUM_SWEEPS, use_prev_states=False, seed=seed)
+        tts_hist_without_states = run_windowing(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, num_sweeps=NUM_SWEEPS, seed=seed)
         #print(tts_hist_without_states)
         tts_hists_without_states.append(tts_hist_without_states)
     tts_result_without_states = calc_average_and_standard_error(tts_hists_without_states)
@@ -182,7 +226,7 @@ def experiment1(window_size, window_period, batches):
     print("  Running againt 10 different problems with previous states ...")
     tts_hists_with_states = []
     for seed in range(10, 110, 10):
-        tts_hist_with_states = run(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, local_solver_num_sweeps=LOCAL_SOLVER_NUM_SWEEPS, use_prev_states=True, seed=seed)
+        tts_hist_with_states = run_windowing(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, num_sweeps=NUM_SWEEPS, prev_states_usage=0.9, seed=seed)
         #print(tts_hist_with_states)
         tts_hists_with_states.append(tts_hist_with_states)
     tts_result_with_states = calc_average_and_standard_error(tts_hists_with_states)
@@ -202,14 +246,15 @@ def experiment1(window_size, window_period, batches):
     plt.ylabel("TTS (sweeps)")
     plt.legend(["w/o previous states", "w/ previous states"])
     plt.title(f"Using previous states (window_size={window_size} window_period={window_period})")
-    plt.savefig(f"use_prev_states_size{window_size}_period{window_period}_upper{NUMBERS_RANGE_UPPER}_sweeps{LOCAL_SOLVER_NUM_SWEEPS}.png")
+    plt.savefig(f"use_prev_states_size{window_size}_period{window_period}_upper{NUMBERS_RANGE_UPPER}_sweeps{NUM_SWEEPS}.png")
     print("  Plot generated.")
     print("")
 
 
 def experiment2(incremental_rate, window_size, batches):
     NUMBERS_RANGE_UPPER = 99
-    LOCAL_SOLVER_NUM_SWEEPS = 100
+    NUM_SWEEPS = 100
+    PREV_STATES_USAGE = 0.9
 
     tts_result_without_states_avg = []
     tts_result_without_states_se = []
@@ -218,9 +263,9 @@ def experiment2(incremental_rate, window_size, batches):
 
     for rate in incremental_rate:
         window_period = int(window_size * rate)
-        print(f"[{datetime.datetime.today()}] Experimenting window_size={window_size} window_period={window_period} batches={batches} ...")
+        print(f"[{datetime.datetime.today()}] Experimenting window_size={window_size} window_period={window_period} batches={batches} num_sweeps={NUM_SWEEPS} prev_states_usage={PREV_STATES_USAGE} ...")
 
-        tts_without_states = run(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, local_solver_num_sweeps=LOCAL_SOLVER_NUM_SWEEPS, use_prev_states=False, seed=12345)
+        tts_without_states = run_windowing(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, num_sweeps=NUM_SWEEPS, seed=12345)
         #print(tts_without_states)
         tts_without_states_avg = np.average(tts_without_states)
         tts_without_states_se = np.std(tts_without_states, ddof=1) / np.sqrt(len(tts_without_states))
@@ -228,7 +273,7 @@ def experiment2(incremental_rate, window_size, batches):
         tts_result_without_states_se.append(tts_without_states_se)
         print(f"  w/o: avg={tts_without_states_avg} se={tts_without_states_se}")
 
-        tts_with_states = run(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, local_solver_num_sweeps=LOCAL_SOLVER_NUM_SWEEPS, use_prev_states=True, seed=12345)
+        tts_with_states = run_windowing(window_size=window_size, window_period=window_period, batches=batches, numbers_range_upper=NUMBERS_RANGE_UPPER, num_sweeps=NUM_SWEEPS, prev_states_usage=PREV_STATES_USAGE, seed=12345)
         #print(tts_with_states)
         tts_with_states_avg = np.average(tts_with_states)
         tts_with_states_se = np.std(tts_with_states, ddof=1) / np.sqrt(len(tts_with_states))
@@ -245,12 +290,12 @@ def experiment2(incremental_rate, window_size, batches):
     #ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
     plt.ylim(ymin=0)
     #plt.yscale("log")
-    #plt.ylim(ymin=LOCAL_SOLVER_NUM_SWEEPS)
+    #plt.ylim(ymin=NUM_SWEEPS)
     plt.xlabel("Incremental step rate")
     plt.ylabel("TTS (sweeps)")
-    plt.legend(["w/o previous states", "w/ previous states"])
+    plt.legend(["w/o previous states", "w/ previous states"], loc="lower right")
     plt.title(f"Using previous states (window_size={window_size} batches={batches})")
-    plt.savefig(f"use_prev_states_size{window_size}_batches{batches}_upper{NUMBERS_RANGE_UPPER}_sweeps{LOCAL_SOLVER_NUM_SWEEPS}.png")
+    plt.savefig(f"use_prev_states_size{window_size}_batches{batches}_upper{NUMBERS_RANGE_UPPER}_sweeps{NUM_SWEEPS}_prevusage{PREV_STATES_USAGE}.png")
     print("  Plot generated.")
     print("")
 
@@ -269,11 +314,11 @@ def main():
 
     # Experiment 2:
     # Compare TTS between incremental rates just using one problem
-    sizes = [10, 20, 50, 100]
-    incremental_rate = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    sizes = [10]  # [10, 20, 50, 100]
+    incremental_rate = [0.1]  # [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     for size in sizes:
-        experiment2(incremental_rate=incremental_rate, window_size=size, batches=50)
-
+        #experiment2(incremental_rate=incremental_rate, window_size=size, batches=50)
+        experiment2(incremental_rate=incremental_rate, window_size=size, batches=2)
 
 if __name__ == "__main__":
     main()

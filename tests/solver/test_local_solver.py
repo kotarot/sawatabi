@@ -33,9 +33,12 @@ def test_local_solver_exact_ising():
     assert len(resultset.record) == 4
     for r in resultset.record:
         # Check the ground state
-        if np.array_equal(r[0], [-1, 1]):
-            assert r[1] == -4.0  # energy
-            assert r[2] == 1  # num of occurrences
+        if np.array_equal(r.sample, [-1, 1]):
+            assert r.energy == -4.0
+            assert r.num_occurrences == 1
+            break
+    else:
+        assert False
 
 
 def test_local_solver_exact_qubo():
@@ -52,9 +55,12 @@ def test_local_solver_exact_qubo():
     assert len(resultset.record) == 4
     for r in resultset.record:
         # Check the ground state
-        if np.array_equal(r[0], [0, 1]):
-            assert r[1] == -2.0  # energy
-            assert r[2] == 1  # num of occurrences
+        if np.array_equal(r.sample, [0, 1]):
+            assert r.energy == -2.0
+            assert r.num_occurrences == 1
+            break
+    else:
+        assert False
 
 
 def test_local_solver_sa_ising():
@@ -177,7 +183,24 @@ def test_local_solver_with_logical_model_fails():
 
 def test_local_solver_with_empty_model_fails():
     model = LogicalModel(mtype="ising")
-    physical = model.to_physical()
     solver = LocalSolver()
     with pytest.raises(ValueError):
-        solver.solve(physical, seed=12345)
+        solver.solve(model.to_physical(), seed=12345)
+
+
+def test_local_solver_default_beta_range():
+    model = LogicalModel(mtype="ising")
+    s = model.variables("s", shape=(2,))
+    model.add_interaction(s[0], coefficient=1.0)
+    model.add_interaction(s[1], coefficient=2.0)
+    model.add_interaction((s[0], s[1]), coefficient=-3.0)
+    solver = LocalSolver()
+    beta_range = solver.default_beta_range(model.to_physical())
+    assert beta_range == [0.13862943611198905, 4.605170185988092]
+
+
+def test_local_solver_default_beta_range_fails():
+    model = LogicalModel(mtype="ising")
+    solver = LocalSolver()
+    with pytest.raises(ValueError):
+        solver.default_beta_range(model.to_physical())
