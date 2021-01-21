@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.model.abstract_model import AbstractModel
-from sawatabi.model.logical_model import LogicalModel
-from sawatabi.model.physical_model import PhysicalModel
-from sawatabi.model import constraint
+from sawatabi.model.constraint.abstract_constraint import AbstractConstraint
+from sawatabi.model.constraint.n_hot_constraint import NHotConstraint
+from sawatabi.model.constraint.dependency_constraint import DependencyConstraint
 
-__all__ = ["AbstractModel", "LogicalModel", "PhysicalModel", "constraint"]
+__all__ = ["AbstractConstraint", "NHotConstraint", "DependencyConstraint"]

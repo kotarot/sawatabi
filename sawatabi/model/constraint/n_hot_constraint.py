@@ -14,7 +14,7 @@
 
 import numbers
 
-from sawatabi.model.abstract_constraint import AbstractConstraint
+from sawatabi.model.constraint.abstract_constraint import AbstractConstraint
 
 
 class NHotConstraint(AbstractConstraint):
@@ -35,7 +35,7 @@ class NHotConstraint(AbstractConstraint):
 
     def add_variable(self, variable):
         self._check_argument_type("variable", variable, set)
-        # avoid duplicate variable (so we use set())
+        # Avoid duplicate variable (so we use set())
         self._variables = self._variables.union(variable)
 
     def get_n(self):

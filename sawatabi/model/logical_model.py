@@ -23,8 +23,8 @@ import pyqubo
 
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
-from sawatabi.model.dependency_constraint import DependencyConstraint
-from sawatabi.model.n_hot_constraint import NHotConstraint
+from sawatabi.model.constraint.dependency_constraint import DependencyConstraint
+from sawatabi.model.constraint.n_hot_constraint import NHotConstraint
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.utils.functions import Functions
 from sawatabi.utils.time import current_time

@@ -14,7 +14,7 @@
 
 import pytest
 
-from sawatabi.model import NHotConstraint
+from sawatabi.model.constraint import NHotConstraint
 
 ################################
 # N-Hot Constraint

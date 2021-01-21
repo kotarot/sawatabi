@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.model.abstract_constraint import AbstractConstraint
+from sawatabi.model.constraint.abstract_constraint import AbstractConstraint
 
 
 class DependencyConstraint(AbstractConstraint):
