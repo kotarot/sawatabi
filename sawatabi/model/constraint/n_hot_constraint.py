@@ -30,7 +30,7 @@ class NHotConstraint(AbstractConstraint):
         variables_set = self._check_variables_and_to_set(variables)
         self._variables = self._variables.union(variables_set)
 
-    def delete_variable(self, variables):
+    def remove_variable(self, variables):
         variables_set = self._check_variables_and_to_set(variables)
         self._variables = self._variables.difference(variables_set)
 

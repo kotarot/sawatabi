@@ -66,7 +66,7 @@ class AbstractConstraint(BaseMixin):
     def add_variable(self):
         raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
 
-    def delete_variable(self):
+    def remove_variable(self):
         raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
 
     def to_model(self):

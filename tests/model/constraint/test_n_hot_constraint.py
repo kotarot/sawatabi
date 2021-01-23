@@ -84,6 +84,9 @@ def test_n_hot_constraint_valueerror(n):
     with pytest.raises(ValueError):
         NHotConstraint(n=n)
 
+    with pytest.raises(ValueError):
+        NHotConstraint(label="")
+
 
 def test_n_hot_constraint_typeerror():
     with pytest.raises(TypeError):

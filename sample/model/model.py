@@ -127,7 +127,7 @@ def model_constraints():
     _print_utf8(model)
 
     print("\nDelete a[0].")
-    constraint.delete_variable(variables=a[0])
+    constraint.remove_variable(variables=a[0])
     _print_utf8(model)
 
     print("\nMerge the constraint model.")

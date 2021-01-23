@@ -304,6 +304,17 @@ def test_logical_model_n_hot_constraint_y(ising):
     assert ising.get_constraints_by_label("my label")._n == 2
 
 
+def test_logical_model_n_hot_constraint_remove(ising):
+    y = ising.variables("y", shape=(2, 2))
+
+    ising.add_constraint(NHotConstraint(variables=y, n=1, label="my label"))
+    assert len(ising.get_constraints()) == 1
+    assert "my label" in ising.get_constraints()
+
+    ising.remove_constraint(label="my label")
+    assert len(ising.get_constraints()) == 0
+
+
 def test_logical_model_multi_n_hot_constraints(ising):
     x = ising.variables("x", shape=(2, 4))
 

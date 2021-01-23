@@ -353,7 +353,7 @@ class LogicalModel(AbstractModel):
 
         # Deal with constraints
         for k, v in self.get_constraints().items():
-            v.delete_variable(target)
+            v.remove_variable(variables=target)
 
         # Remove related interations
         removed = self.select_interactions_by_variable(target)
