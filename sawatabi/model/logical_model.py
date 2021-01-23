@@ -862,7 +862,7 @@ class LogicalModel(AbstractModel):
         if self._interactions.empty:
             s += "'interactions': 'Empty', "
         else:
-            s += "'interactions': " + self._interactions.to_json(orient='values') + ", "
+            s += "'interactions': " + self._interactions.to_json(orient="values") + ", "
         s += "'offset': " + str(self._offset) + ", "
         s += "'constraints': " + str(self._constraints) + "})"
 

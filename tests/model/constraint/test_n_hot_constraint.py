@@ -150,7 +150,6 @@ def test_n_hot_constraint_repr():
     assert "'strength':" in c.__repr__()
 
 
-
 def test_n_hot_constraint_str():
     c = NHotConstraint()
     assert isinstance(c.__str__(), str)

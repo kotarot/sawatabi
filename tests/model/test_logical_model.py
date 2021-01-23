@@ -422,8 +422,8 @@ def test_logical_model_repr(ising):
     assert "'mtype':" in ising.__repr__()
     assert "'variables':" in ising.__repr__()
     assert "'x':" in ising.__repr__()
-    assert "'interactions': [[1,\"x[0][0]\",\"x[0][0]\",\"x[0][0]\",null," in ising.__repr__()
-    assert ",[2,\"x[1][0]*x[1][1]\",[\"x[1][0]\",\"x[1][1]\"],\"x[1][0]\",\"x[1][1]\"," in ising.__repr__()
+    assert '\'interactions\': [[1,"x[0][0]","x[0][0]","x[0][0]",null,' in ising.__repr__()
+    assert ',[2,"x[1][0]*x[1][1]",["x[1][0]","x[1][1]"],"x[1][0]","x[1][1]",' in ising.__repr__()
     assert "'offset':" in ising.__repr__()
     assert "'constraints':" in ising.__repr__()
 
