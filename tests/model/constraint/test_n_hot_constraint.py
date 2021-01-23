@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pyqubo
 import pytest
 
-import pyqubo
-
 from sawatabi.model.constraint import NHotConstraint
-
 
 ################################
 # N-Hot Constraint
