@@ -15,7 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import platform
+import sys
+
 import sawatabi
+
+
+def _print_utf8(model):
+    """
+    Util function for Windows (GitHub Actions)
+    """
+    if platform.system() == "Windows":
+        sys.stdout.buffer.write(str(model).encode("utf-8"))
+    else:
+        print(model)
 
 
 def n_hot_s_of_n_ising(s, n):
@@ -29,8 +42,8 @@ def n_hot_s_of_n_ising(s, n):
     constraint = sawatabi.model.constraint.NHotConstraint(variables=x, n=n, label="n-hot")
     model.add_constraint(constraint)
 
-    print(model)
-    print(model.to_physical())
+    _print_utf8(model)
+    _print_utf8(model.to_physical())
 
 
 def n_hot_s_of_n_qubo(s, n):
@@ -44,8 +57,8 @@ def n_hot_s_of_n_qubo(s, n):
     constraint = sawatabi.model.constraint.NHotConstraint(variables=x, n=n, label="n-hot")
     model.add_constraint(constraint)
 
-    print(model)
-    print(model.to_physical())
+    _print_utf8(model)
+    _print_utf8(model.to_physical())
 
 
 def main():
