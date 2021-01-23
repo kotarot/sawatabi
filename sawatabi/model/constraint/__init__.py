@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from sawatabi.model.constraint.abstract_constraint import AbstractConstraint
+from sawatabi.model.constraint.equality_constraint import EqualityConstraint
 from sawatabi.model.constraint.n_hot_constraint import NHotConstraint
 
-__all__ = ["AbstractConstraint", "NHotConstraint"]
+__all__ = ["AbstractConstraint", "EqualityConstraint", "NHotConstraint"]

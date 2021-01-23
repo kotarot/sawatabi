@@ -18,7 +18,7 @@ import pytest
 
 import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
-from sawatabi.model.constraint import NHotConstraint
+from sawatabi.model.constraint import EqualityConstraint, NHotConstraint
 from sawatabi.solver import LocalSolver
 
 
@@ -315,7 +315,7 @@ def test_logical_model_n_hot_constraint_remove(ising):
     assert len(ising.get_constraints()) == 0
 
 
-def test_logical_model_multi_n_hot_constraints(ising):
+def test_logical_model_multiple_constraints_n_hot_and_n_hot(ising):
     x = ising.variables("x", shape=(2, 4))
 
     ising.add_constraint(NHotConstraint(variables=x[0, :], n=1, label="l1"))
@@ -332,6 +332,25 @@ def test_logical_model_multi_n_hot_constraints(ising):
     assert "l2" in ising.get_constraints()
     assert ising.get_constraints_by_label("l1")._n == 1
     assert ising.get_constraints_by_label("l2")._n == 1
+
+
+def test_logical_model_multiple_constraints_n_hot_and_equality(ising):
+    x = ising.variables("x", shape=(3, 4))
+
+    ising.add_constraint(NHotConstraint(variables=x[0, :], n=1, label="l1"))
+    assert len(ising.get_constraints()) == 1
+    assert "l1" in ising.get_constraints()
+    assert "l2" not in ising.get_constraints()
+    assert isinstance(ising.get_constraints_by_label("l1"), NHotConstraint)
+    assert ising.get_constraints_by_label("l1")._n == 1
+    with pytest.raises(KeyError):
+        ising.get_constraints_by_label("l2")
+
+    ising.add_constraint(EqualityConstraint(variables_1=x[1, :], variables_2=x[2, :], label="l2"))
+    assert len(ising.get_constraints()) == 2
+    assert "l1" in ising.get_constraints()
+    assert "l2" in ising.get_constraints()
+    assert isinstance(ising.get_constraints_by_label("l2"), EqualityConstraint)
 
 
 def test_logical_model_n_hot_constraint_typeerror(ising):

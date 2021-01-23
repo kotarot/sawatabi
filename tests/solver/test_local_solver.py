@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 from sawatabi.model import LogicalModel
-from sawatabi.model.constraint import NHotConstraint
+from sawatabi.model.constraint import EqualityConstraint, NHotConstraint
 from sawatabi.solver import LocalSolver
 
 
@@ -79,7 +79,7 @@ def test_local_solver_sa_ising():
     assert len(resultset.record) == 1
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0][0], [-1, 1])
+    assert np.array_equal(resultset.record[0].sample, [-1, 1])
     assert resultset.record[0][1] == 6.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
 
@@ -99,7 +99,7 @@ def test_local_solver_sa_qubo():
     assert len(resultset.record) == 1
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0][0], [0, 1])
+    assert np.array_equal(resultset.record[0].sample, [0, 1])
     assert resultset.record[0][1] == 8.0  # energy
     assert resultset.record[0][2] == 1  # num of occurrences
 
@@ -112,15 +112,16 @@ def test_local_solver_n_hot_ising(n, s):
     model.add_constraint(NHotConstraint(variables=x, n=n))
 
     solver = LocalSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    for seed in [11, 22, 33, 44, 55]:
+        resultset = solver.solve(model.to_physical(), seed=seed)
 
-    result = np.array(resultset.record[0][0])
-    assert np.count_nonzero(result == 1) == n
-    assert np.count_nonzero(result == -1) == s - n
+        result = np.array(resultset.record[0].sample)
+        assert np.count_nonzero(result == 1) == n
+        assert np.count_nonzero(result == -1) == s - n
 
-    # Execution time should be within 5 sec.
-    assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-    assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within seconds (5 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 100)])
@@ -131,15 +132,16 @@ def test_local_solver_n_hot_qubo(n, s):
     model.add_constraint(NHotConstraint(variables=x, n=n))
 
     solver = LocalSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    for seed in [11, 22, 33, 44, 55]:
+        resultset = solver.solve(model.to_physical(), seed=seed)
 
-    result = np.array(resultset.record[0][0])
-    assert np.count_nonzero(result == 1) == n
-    assert np.count_nonzero(result == 0) == s - n
+        result = np.array(resultset.record[0].sample)
+        assert np.count_nonzero(result == 1) == n
+        assert np.count_nonzero(result == 0) == s - n
 
-    # Execution time should be within 5 sec...
-    assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-    assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within seconds (5 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
 
 
 @pytest.mark.parametrize("n,s,i", [(1, 4, 0), (1, 4, 1), (1, 4, 2), (1, 4, 3), (2, 10, 5)])
@@ -151,14 +153,19 @@ def test_local_solver_n_hot_ising_with_deleting(n, s, i):
     model.delete_variable(x[i])
 
     solver = LocalSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    for seed in [11, 22, 33, 44, 55]:
+        resultset = solver.solve(model.to_physical(), seed=seed)
 
-    result = np.array(resultset.record[0][0])
-    assert np.count_nonzero(result == 1) == n
-    assert np.count_nonzero(result == -1) == s - n - 1
+        result = np.array(resultset.record[0].sample)
+        assert np.count_nonzero(result == 1) == n
+        assert np.count_nonzero(result == -1) == s - n - 1
+
+        # Execution time should be within seconds (5 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
 
 
-@pytest.mark.parametrize("n,s,i,j", [(1, 4, 0, 1), (1, 4, 2, 3), (2, 10, 5, 6)])
+@pytest.mark.parametrize("n,s,i,j", [(1, 4, 0, 1), (1, 4, 2, 3), (2, 10, 5, 8)])
 def test_local_solver_n_hot_qubo_with_deleting(n, s, i, j):
     # n out of (s - 2) variables should be 1
     model = LogicalModel(mtype="qubo")
@@ -168,11 +175,58 @@ def test_local_solver_n_hot_qubo_with_deleting(n, s, i, j):
     model.delete_variable(x[j])
 
     solver = LocalSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    for seed in [11, 22, 33, 44, 55]:
+        resultset = solver.solve(model.to_physical(), seed=seed)
 
-    result = np.array(resultset.record[0][0])
-    assert np.count_nonzero(result == 1) == n
-    assert np.count_nonzero(result == 0) == s - n - 2
+        result = np.array(resultset.record[0].sample)
+        assert np.count_nonzero(result == 1) == n
+        assert np.count_nonzero(result == 0) == s - n - 2
+
+        # Execution time should be within seconds (5 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+
+
+@pytest.mark.parametrize("m,n", [(2, 2), (10, 10), (10, 20), (50, 50)])
+def test_local_solver_equality_ising(m, n):
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(m,))
+    y = model.variables("y", shape=(n,))
+    model.add_constraint(EqualityConstraint(variables_1=x, variables_2=y))
+
+    solver = LocalSolver()
+    for seed in [11, 22, 33, 44, 55]:
+        resultset = solver.solve(model.to_physical(), seed=seed)
+
+        result = np.array(resultset.record[0].sample)
+        result_1 = result[0:m]
+        result_2 = result[m : (m + n)]  # noqa: E203
+        assert np.count_nonzero(result_1 == 1) == np.count_nonzero(result_2 == 1)
+
+        # Execution time should be within 5 sec.
+        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+
+
+@pytest.mark.parametrize("m,n", [(2, 2), (10, 10), (10, 20), (50, 50)])
+def test_local_solver_equality_qubo(m, n):
+    model = LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(m,))
+    y = model.variables("y", shape=(n,))
+    model.add_constraint(EqualityConstraint(variables_1=x, variables_2=y))
+
+    solver = LocalSolver()
+    for seed in [11, 22, 33, 44, 55]:
+        resultset = solver.solve(model.to_physical(), seed=seed)
+
+        result = np.array(resultset.record[0].sample)
+        result_1 = result[0:m]
+        result_2 = result[m : (m + n)]  # noqa: E203
+        assert np.count_nonzero(result_1 == 1) == np.count_nonzero(result_2 == 1)
+
+        # Execution time should be within 5 sec...
+        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
 
 
 def test_local_solver_with_logical_model_fails():

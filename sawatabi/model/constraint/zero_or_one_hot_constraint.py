@@ -19,15 +19,8 @@ from sawatabi.model.constraint.abstract_constraint import AbstractConstraint
 
 class NHotConstraint(AbstractConstraint):
     def __init__(self, variables=None, n=1, label=constants.DEFAULT_LABEL_N_HOT, strength=1.0):
-        super().__init__(label=label, strength=strength)
+        super().__init__(variables=variables, label=label, strength=strength)
         self._constraint_class = self.__class__.__name__
-
-        # Avoid duplicate variable, so we use set() for variables
-        if variables is None:
-            self._variables = set()
-        else:
-            self._variables = self._check_variables_and_to_set(variables)
-
         self._check_argument_type("n", n, int)
         if n <= 0:
             raise ValueError("'n' must be a positive integer.")
@@ -39,13 +32,7 @@ class NHotConstraint(AbstractConstraint):
 
     def remove_variable(self, variables):
         variables_set = self._check_variables_and_to_set(variables)
-        for v in variables_set:
-            if v not in self._variables:
-                raise ValueError(f"Variable '{v}' does not exist in the constraint variables.")
         self._variables = self._variables.difference(variables_set)
-
-    def get_variables(self):
-        return self._variables
 
     def get_n(self):
         return self._n
@@ -53,15 +40,14 @@ class NHotConstraint(AbstractConstraint):
     def to_model(self):
         model = sawatabi.model.LogicalModel(mtype="qubo")
 
-        # N-hot constraint:
-        #   E = ( \sum{ x_i } - 1 )^2
+        # For QUBO model, only interactions of additinal variables are taken care.
         for var in self._variables:
             coeff = -1.0 * self._strength * (1 - 2 * self._n)
-            model.add_interaction(var, name=f"{var.label} ({self._label})", coefficient=coeff)
+            model.add_interaction(var, name=f"{var.label} ({self._label})", coefficient=coeff, attributes={"_constraint": True})
             for adj in self._variables:
                 if var.label < adj.label:
                     coeff = -2.0 * self._strength
-                    model.add_interaction((var, adj), name=f"{var.label}*{adj.label} ({self._label})", coefficient=coeff)
+                    model.add_interaction((var, adj), name=f"{var.label}*{adj.label} ({self._label})", coefficient=coeff, attributes={"_constraint": True})
 
         return model
 

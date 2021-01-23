@@ -25,10 +25,4 @@ def test_abstract_constraint():
     constraint = AbstractConstraint(label="test constraint")
 
     with pytest.raises(NotImplementedError):
-        constraint.add_variable()
-
-    with pytest.raises(NotImplementedError):
-        constraint.remove_variable()
-
-    with pytest.raises(NotImplementedError):
         constraint.to_model()

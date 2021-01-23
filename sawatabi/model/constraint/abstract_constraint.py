@@ -21,14 +21,8 @@ from sawatabi.utils.functions import Functions
 
 
 class AbstractConstraint(BaseMixin):
-    def __init__(self, variables=None, label="", strength=1.0):
+    def __init__(self, label="", strength=1.0):
         self._constraint_class = None
-
-        # Avoid duplicate variable, so we use set() for variables
-        if variables is None:
-            self._variables = set()
-        else:
-            self._variables = self._check_variables_and_to_set(variables)
 
         self._check_argument_type("label", label, str)
         if label == "":
@@ -54,20 +48,11 @@ class AbstractConstraint(BaseMixin):
     def get_constraint_class(self):
         return self._constraint_class
 
-    def get_variables(self):
-        return self._variables
-
     def get_label(self):
         return self._label
 
     def get_strength(self):
         return self._strength
-
-    def add_variable(self):
-        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
-
-    def remove_variable(self):
-        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
 
     def to_model(self):
         raise NotImplementedError("#{self.class}##{__method__} must be implemented.")

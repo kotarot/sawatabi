@@ -46,9 +46,16 @@ def test_n_hot_constraint():
     assert c.get_variables() == set([x0, x1, x2])
     assert len(c.get_variables()) == 3
 
-    c.add_variable(set([x0, x1]))
+    c.add_variable(variables=[x0, x1])
     assert c.get_variables() == set([x0, x1, x2])
     assert len(c.get_variables()) == 3
+
+    c.remove_variable(variables=[x0])
+    assert c.get_variables() == set([x1, x2])
+    assert len(c.get_variables()) == 2
+
+    with pytest.raises(ValueError):
+        c.remove_variable(variables=[x0])
 
 
 def test_n_hot_constraint_constructors():
