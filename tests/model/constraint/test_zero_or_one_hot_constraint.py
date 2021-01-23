@@ -15,19 +15,18 @@
 import pyqubo
 import pytest
 
-from sawatabi.model.constraint import NHotConstraint
+from sawatabi.model.constraint import ZeroOrOneHotConstraint
 
 ################################
-# N-Hot Constraint
+# Zero-or-One-Hot Constraint
 ################################
 
 
-def test_n_hot_constraint():
-    c = NHotConstraint()
-    assert c.get_constraint_class() == "NHotConstraint"
+def test_zero_or_one_hot_constraint():
+    c = ZeroOrOneHotConstraint()
+    assert c.get_constraint_class() == "ZeroOrOneHotConstraint"
     assert c.get_variables() == set()
-    assert c.get_n() == 1
-    assert c.get_label() == "Default N-hot Constraint"
+    assert c.get_label() == "Default Zero-or-One-hot Constraint"
     assert c.get_strength() == 1.0
 
     x0 = pyqubo.Spin("x0")
@@ -58,61 +57,37 @@ def test_n_hot_constraint():
         c.remove_variable(variables=[x0])
 
 
-def test_n_hot_constraint_constructors():
+def test_zero_or_one_hot_constraint_constructors():
     a = pyqubo.Array.create("a", shape=(2, 2), vartype="SPIN")
 
-    c1 = NHotConstraint(variables=a)
+    c1 = ZeroOrOneHotConstraint(variables=a)
     assert c1.get_variables() == set([a[0, 0], a[0, 1], a[1, 0], a[1, 1]])
-    assert c1.get_n() == 1
-    assert c1.get_label() == "Default N-hot Constraint"
+    assert c1.get_label() == "Default Zero-or-One-hot Constraint"
     assert c1.get_strength() == 1.0
 
-    c2 = NHotConstraint(n=2)
+    c2 = ZeroOrOneHotConstraint(label="my label")
     assert c2.get_variables() == set()
-    assert c2.get_n() == 2
-    assert c2.get_label() == "Default N-hot Constraint"
+    assert c2.get_label() == "my label"
     assert c2.get_strength() == 1.0
 
-    c3 = NHotConstraint(label="my label")
+    c3 = ZeroOrOneHotConstraint(strength=20)
     assert c3.get_variables() == set()
-    assert c3.get_n() == 1
-    assert c3.get_label() == "my label"
-    assert c3.get_strength() == 1.0
-
-    c4 = NHotConstraint(strength=20)
-    assert c4.get_variables() == set()
-    assert c4.get_n() == 1
-    assert c4.get_label() == "Default N-hot Constraint"
-    assert c4.get_strength() == 20.0
+    assert c3.get_label() == "Default Zero-or-One-hot Constraint"
+    assert c3.get_strength() == 20.0
 
 
-@pytest.mark.parametrize("n", [-10, 0])
-def test_n_hot_constraint_valueerror(n):
-    with pytest.raises(ValueError):
-        NHotConstraint(n=n)
-
-    with pytest.raises(ValueError):
-        NHotConstraint(label="")
-
-
-def test_n_hot_constraint_typeerror():
+def test_zero_or_one_hot_constraint_typeerror():
     with pytest.raises(TypeError):
-        NHotConstraint(variables="invalid type")
+        ZeroOrOneHotConstraint(variables="invalid type")
 
     with pytest.raises(TypeError):
-        NHotConstraint(variables=set([1, 2, 3]))
+        ZeroOrOneHotConstraint(variables=set([1, 2, 3]))
 
     with pytest.raises(TypeError):
-        NHotConstraint(n="invalid type")
+        ZeroOrOneHotConstraint(label=12345)
 
     with pytest.raises(TypeError):
-        NHotConstraint(n=1.0)
-
-    with pytest.raises(TypeError):
-        NHotConstraint(label=12345)
-
-    with pytest.raises(TypeError):
-        NHotConstraint(strength="invalid type")
+        ZeroOrOneHotConstraint(strength="invalid type")
 
 
 ################################
@@ -120,27 +95,26 @@ def test_n_hot_constraint_typeerror():
 ################################
 
 
-def test_n_hot_constraint_eq():
-    assert NHotConstraint() == NHotConstraint()
+def test_zero_or_one_hot_constraint_eq():
+    assert ZeroOrOneHotConstraint() == ZeroOrOneHotConstraint()
 
     a = pyqubo.Spin("a")
     b = pyqubo.Binary("b")
-    c1 = NHotConstraint(variables=set([a, b]), n=2, label="my label", strength=20)
-    c2 = NHotConstraint(variables=[a, b], n=2, label="my label", strength=2 * 10)
+    c1 = ZeroOrOneHotConstraint(variables=set([a, b]), label="my label", strength=20)
+    c2 = ZeroOrOneHotConstraint(variables=[a, b], label="my label", strength=2 * 10)
     assert c1 == c2
 
 
-def test_n_hot_constraint_ne():
+def test_zero_or_one_hot_constraint_ne():
     a = pyqubo.Spin("a")
     b = pyqubo.Binary("b")
     c = []
-    c.append(NHotConstraint())
-    c.append(NHotConstraint(variables=[a, b], n=2, label="my label", strength=20))
-    c.append(NHotConstraint(variables=set([a, b])))
-    c.append(NHotConstraint(variables=a))
-    c.append(NHotConstraint(n=2))
-    c.append(NHotConstraint(label="my label"))
-    c.append(NHotConstraint(strength=20))
+    c.append(ZeroOrOneHotConstraint())
+    c.append(ZeroOrOneHotConstraint(variables=[a, b], label="my label", strength=20))
+    c.append(ZeroOrOneHotConstraint(variables=set([a, b])))
+    c.append(ZeroOrOneHotConstraint(variables=a))
+    c.append(ZeroOrOneHotConstraint(label="my label"))
+    c.append(ZeroOrOneHotConstraint(strength=20))
     c.append("another type")
 
     for i in range(len(c) - 1):
@@ -148,22 +122,20 @@ def test_n_hot_constraint_ne():
             assert c[i] != c[j]
 
 
-def test_n_hot_constraint_repr():
-    c = NHotConstraint()
+def test_zero_or_one_hot_constraint_repr():
+    c = ZeroOrOneHotConstraint()
     assert isinstance(c.__repr__(), str)
-    assert "NHotConstraint({" in c.__repr__()
+    assert "ZeroOrOneHotConstraint({" in c.__repr__()
     assert "'constraint_class':" in c.__repr__()
     assert "'variables'" in c.__repr__()
-    assert "'n':" in c.__repr__()
     assert "'label'" in c.__repr__()
     assert "'strength':" in c.__repr__()
 
 
-def test_n_hot_constraint_str():
-    c = NHotConstraint()
+def test_zero_or_one_hot_constraint_str():
+    c = ZeroOrOneHotConstraint()
     assert isinstance(c.__str__(), str)
     assert "'constraint_class':" in c.__str__()
     assert "'variables'" in c.__str__()
-    assert "'n':" in c.__str__()
     assert "'label'" in c.__str__()
     assert "'strength':" in c.__str__()
