@@ -63,7 +63,7 @@ class EqualityConstraint(AbstractConstraint):
     def to_model(self):
         model = sawatabi.model.LogicalModel(mtype="qubo")
 
-        # N-hot constraint:
+        # Equality constraint:
         #   E = ( \sum{ x_i } - \sum{ y_i } )^2
         for var in self._variables_1.union(self._variables_2):
             coeff = -1.0 * self._strength

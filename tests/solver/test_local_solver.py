@@ -298,7 +298,7 @@ def test_local_solver_zero_or_one_hot_ising(n):
         resultset = solver.solve(physical, seed=seed)
 
         result = np.array(resultset.record[0].sample)
-        assert (np.count_nonzero(result == 1) == 0) or (np.count_nonzero(result == 1) == 1)
+        assert np.count_nonzero(result == 1) in [0, 1]
 
         # Execution time should be within seconds (5 sec).
         assert resultset.info["timing"]["elapsed_sec"] <= 5.0
@@ -317,7 +317,7 @@ def test_local_solver_zero_or_one_hot_qubo(n):
         resultset = solver.solve(physical, seed=seed)
 
         result = np.array(resultset.record[0].sample)
-        assert (np.count_nonzero(result == 1) == 0) or (np.count_nonzero(result == 1) == 1)
+        assert np.count_nonzero(result == 1) in [0, 1]
 
         # Execution time should be within seconds (5 sec).
         assert resultset.info["timing"]["elapsed_sec"] <= 5.0

@@ -320,5 +320,6 @@ def main():
         #experiment2(incremental_rate=incremental_rate, window_size=size, batches=50)
         experiment2(incremental_rate=incremental_rate, window_size=size, batches=2)
 
+
 if __name__ == "__main__":
     main()
