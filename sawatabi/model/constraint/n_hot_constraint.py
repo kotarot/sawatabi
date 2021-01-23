@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numbers
-
 import sawatabi
 import sawatabi.constants as constants
 from sawatabi.model.constraint.abstract_constraint import AbstractConstraint

@@ -25,8 +25,6 @@ import pyqubo
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
 from sawatabi.model.constraint import AbstractConstraint
-from sawatabi.model.constraint.dependency_constraint import DependencyConstraint
-from sawatabi.model.constraint.n_hot_constraint import NHotConstraint
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.utils.functions import Functions
 from sawatabi.utils.time import current_time
@@ -465,7 +463,7 @@ class LogicalModel(AbstractModel):
         label = constraint.get_label()
         self._constraints[label] = constraint
 
-    def remove_constraint(self, lable):
+    def remove_constraint(self, label):
         self._check_argument_type("label", label, str)
         self._constraints.pop(label)
 

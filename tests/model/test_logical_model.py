@@ -324,7 +324,7 @@ def test_logical_model_multi_n_hot_constraints(ising):
 
 
 def test_logical_model_n_hot_constraint_typeerror(ising):
-    z = ising.variables("z", shape=(4, 4, 4))
+    ising.variables("z", shape=(4, 4, 4))
 
     # TODO: This error should be raises, but not implemented yet.
     # a = pyqubo.Spin("a")
