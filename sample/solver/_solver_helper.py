@@ -59,8 +59,8 @@ def _create_qubo_model():
 
     # print("\nOne-hot constraint for an array of (4,)")
     a = model.variables("a", shape=(4,))
-    # model.add_interaction(a[0], coefficient=10.0)
-    model.n_hot_constraint(a, n=1)
+    constraint = sawatabi.model.constraint.NHotConstraint(variables=a, n=1)
+    model.add_constraint(constraint)
     # print(model)
 
     # Add offset so that the final energy becomes 0.0

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import collections
+import copy
 import numbers
 import pprint
 import warnings
@@ -23,6 +24,7 @@ import pyqubo
 
 import sawatabi.constants as constants
 from sawatabi.model.abstract_model import AbstractModel
+from sawatabi.model.constraint import AbstractConstraint
 from sawatabi.model.constraint.dependency_constraint import DependencyConstraint
 from sawatabi.model.constraint.n_hot_constraint import NHotConstraint
 from sawatabi.model.physical_model import PhysicalModel
@@ -41,7 +43,7 @@ class LogicalModel(AbstractModel):
         self._fixed = {}
         self._constraints = {}
         self._interactions = None
-        self._default_keys = ["body", "name", "key", "key.0", "key.1", "interacts", "coefficient", "scale", "timestamp", "dirty", "removed"]
+        self._default_keys = ["body", "name", "key", "key_0", "key_1", "interacts", "coefficient", "scale", "timestamp", "dirty", "removed"]
         self._interactions_array = {k: [] for k in self._default_keys}
         self._interactions_attrs = []
         self._interactions_length = 0
@@ -112,7 +114,7 @@ class LogicalModel(AbstractModel):
 
         # Find interactions which interacts with the given variable.
         self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
-        return self._interactions[(self._interactions["key.0"] == target.label) | (self._interactions["key.1"] == target.label)]["name"].values
+        return self._interactions[(self._interactions["key_0"] == target.label) | (self._interactions["key_1"] == target.label)]["name"].values
 
     ################################
     # Add
@@ -162,8 +164,8 @@ class LogicalModel(AbstractModel):
         self._interactions_array["body"].append(body)
         self._interactions_array["name"].append(internal_name)
         self._interactions_array["key"].append(interaction_info["key"])
-        self._interactions_array["key.0"].append(keys[0])
-        self._interactions_array["key.1"].append(keys[1])
+        self._interactions_array["key_0"].append(keys[0])
+        self._interactions_array["key_1"].append(keys[1])
         self._interactions_array["interacts"].append(interaction_info["interacts"])
         self._interactions_array["coefficient"].append(coefficient)
         self._interactions_array["scale"].append(scale)
@@ -353,8 +355,7 @@ class LogicalModel(AbstractModel):
 
         # Deal with constraints
         for k, v in self.get_constraints().items():
-            if v._constraint_type == "NHotConstraint":
-                self.n_hot_constraint(target, n=v._n, strength=v._strength, label=v._label, delete_flag=True)
+            v.delete_variable(target)
 
         # Remove related interations
         removed = self.select_interactions_by_variable(target)
@@ -459,75 +460,14 @@ class LogicalModel(AbstractModel):
     # Constraints
     ################################
 
-    def n_hot_constraint(self, target, n=1, strength=1.0, label=constants.DEFAULT_LABEL_N_HOT, delete_flag=False):
-        self._check_argument_type("target", target, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary, list))
-        self._check_argument_type("n", n, int)
-        self._check_argument_type("strength", strength, numbers.Number)
+    def add_constraint(self, constraint):
+        self._check_argument_type("constraint", constraint, AbstractConstraint)
+        label = constraint.get_label()
+        self._constraints[label] = constraint
+
+    def remove_constraint(self, lable):
         self._check_argument_type("label", label, str)
-
-        if isinstance(target, list):
-            self._check_argument_type_in_list("target", target, (pyqubo.Spin, pyqubo.Binary))
-        if not (isinstance(target, pyqubo.Array) or isinstance(target, list)):
-            target = [target]
-        if label not in self._constraints:
-            self._constraints[label] = NHotConstraint(n, strength, label)
-        original_variables = self._constraints[label]._variables
-        added_variables = set()
-        for t in target:
-            added_variables = added_variables.union(set([t]))
-            self._constraints[label].add_variable(set([t]))
-
-        # If delete_flag is set, the target variable will be deleted from the constraint.
-        if delete_flag:
-            remaining_variables = original_variables - added_variables
-            self._constraints[label]._variables -= added_variables
-            if self._mtype == constants.MODEL_QUBO:
-                # Do nothing for QUBO model (only remove adjacent interactions)
-                pass
-            elif self._mtype == constants.MODEL_ISING:
-                # For Ising model, all linear interactions of variables for the constraint are taken care.
-                num_variables = len(remaining_variables)
-                for rvar in remaining_variables:
-                    coeff = -1.0 * strength * (num_variables - 2 * n)
-                    self.update_interaction(name=f"{rvar.label} ({label})", coefficient=coeff)
-
-        else:
-            additional_variables = added_variables - original_variables
-            if self._mtype == constants.MODEL_QUBO:
-                # For QUBO model, only interactions of additinal variables are taken care.
-                for avar in additional_variables:
-                    coeff = -1.0 * strength * (1 - 2 * n)
-                    self.add_interaction(avar, name=f"{avar.label} ({label})", coefficient=coeff)
-                    for adj in additional_variables:
-                        if avar.label < adj.label:
-                            coeff = -2.0 * strength
-                            self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
-                    for adj in original_variables:
-                        coeff = -2.0 * strength
-                        self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
-
-            elif self._mtype == constants.MODEL_ISING:
-                # For Ising model, all interactions of variables for the constraint are taken care.
-                num_variables = len(original_variables) + len(additional_variables)
-                for ovar in original_variables:
-                    coeff = -1.0 * strength * (num_variables - 2 * n)
-                    self.update_interaction(name=f"{ovar.label} ({label})", coefficient=coeff)
-                for avar in additional_variables:
-                    coeff = -1.0 * strength * (num_variables - 2 * n)
-                    self.add_interaction(avar, name=f"{avar.label} ({label})", coefficient=coeff)
-                    for adj in additional_variables:
-                        if avar.label < adj.label:
-                            coeff = -1.0 * strength
-                            self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
-                    for adj in original_variables:
-                        coeff = -1.0 * strength
-                        self.add_interaction((avar, adj), name=f"{avar.label}*{adj.label} ({label})", coefficient=coeff)
-
-    def dependency_constraint(self, target_src, target_dst, strength=1.0, label=constants.DEFAULT_LABEL_DEPENDENCY):
-        self._check_argument_type("strength", strength, numbers.Number)
-        self._check_argument_type("label", label, str)
-        _ = DependencyConstraint()
-        raise NotImplementedError
+        self._constraints.pop(label)
 
     ################################
     # Converts
@@ -538,6 +478,21 @@ class LogicalModel(AbstractModel):
 
         linear, quadratic = {}, {}
         will_remove = []
+
+        # Save the model before merging constraints to restore it later
+        # original_variables = copy.deepcopy(self._variables)  # Variables will not be changed
+        original_offset = self._offset
+        original_deleted = copy.deepcopy(self._deleted)
+        original_fixed = copy.deepcopy(self._fixed)
+        # original_constraints = copy.deepcopy(self._constraints)  # Constraints will not be changed
+        original_interactions_array = copy.deepcopy(self._interactions_array)
+        original_interactions_attrs = copy.deepcopy(self._interactions_attrs)
+        original_interactions_length = self._interactions_length
+
+        # Resolve constraints, and convert them to the interactions
+        for label, constraint in self._constraints.items():
+            constraint_model = constraint.to_model()
+            self.merge(constraint_model)
 
         # label_to_index / index_to_label
         current_index = 0
@@ -555,12 +510,7 @@ class LogicalModel(AbstractModel):
                 will_remove.append(self._interactions_array["name"][i])
                 continue
 
-            # TODO: Calc difference from previous physical model by referencing dirty flags.
-            if self._interactions_array["dirty"][i]:
-                self._interactions_array["dirty"][i] = False
-
             # Resolve placeholders for coefficients and scales, using PyQUBO.
-
             # Firstly resolve placeholders if the coefficient is already Coefficient type
             coeff_i = self._interactions_array["coefficient"][i]
             scale_i = self._interactions_array["scale"][i]
@@ -585,13 +535,6 @@ class LogicalModel(AbstractModel):
                 else:
                     quadratic[self._interactions_array["key"][i]] = coeff
 
-        # TODO: Physically remove the logically removed interactions
-        for rm in will_remove:
-            idx = self._interactions_array["name"].index(rm)
-            for k in self._interactions_array.keys():
-                self._interactions_array[k].pop(idx)
-            self._interactions_length -= 1
-
         # set to physical
         for k, v in linear.items():
             if v != 0.0:
@@ -604,6 +547,30 @@ class LogicalModel(AbstractModel):
         # save the last physical model
         self._previous_physical_model = physical
 
+        # Restore the model before adding constraints
+        # self._variables = original_variables  # Variables were not changed
+        self._offset = original_offset
+        self._deleted = original_deleted
+        self._fixed = original_fixed
+        # self._constraints = original_constraints  # Constraints were not changed
+        self._interactions_array = original_interactions_array
+        self._interactions_attrs = original_interactions_attrs
+        self._interactions_length = original_interactions_length
+
+        # Remove interactions
+        # TODO: Physically remove the logically removed interactions
+        for rm in will_remove:
+            idx = self._interactions_array["name"].index(rm)
+            for k in self._interactions_array.keys():
+                self._interactions_array[k].pop(idx)
+            self._interactions_length -= 1
+
+        # Set dirty flag
+        for i in range(self._interactions_length):
+            # TODO: Calc difference from previous physical model by referencing dirty flags.
+            if self._interactions_array["dirty"][i]:
+                self._interactions_array["dirty"][i] = False
+
         return physical
 
     def merge(self, other):
@@ -611,8 +578,7 @@ class LogicalModel(AbstractModel):
 
         # Check type
         if self._mtype != other._mtype:
-            # Currently...
-            raise ValueError("Cannot merge different model type.")
+            other._convert_mtype()
 
         # Check variables
         for key, value in self._variables.items():
@@ -727,10 +693,10 @@ class LogicalModel(AbstractModel):
                 coeff = J["coefficient"]
                 self.update_interaction(name=J["name"], coefficient=coeff * 0.25)
                 self.add_interaction(
-                    target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25
+                    target=J["interacts"][0], name=f"{J['key_0']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25
                 )
                 self.add_interaction(
-                    target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25
+                    target=J["interacts"][1], name=f"{J['key_1']} from {J['name']} (mtype additional {current_time()})", coefficient=coeff * 0.25
                 )
                 self._offset += coeff * 0.25
         else:
@@ -762,10 +728,10 @@ class LogicalModel(AbstractModel):
                 coeff = J["coefficient"]
                 self.update_interaction(name=J["name"], coefficient=J["coefficient"] * 4.0)
                 self.add_interaction(
-                    target=J["interacts"][0], name=f"{J['key.0']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0
+                    target=J["interacts"][0], name=f"{J['key_0']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0
                 )
                 self.add_interaction(
-                    target=J["interacts"][1], name=f"{J['key.1']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0
+                    target=J["interacts"][1], name=f"{J['key_1']} from {J['name']} (mtype additional {current_time()})", coefficient=-coeff * 2.0
                 )
                 self._offset += coeff
         else:
@@ -893,9 +859,13 @@ class LogicalModel(AbstractModel):
         s = "LogicalModel({"
         s += "'mtype': '" + str(self._mtype) + "', "
         s += "'variables': " + self.remove_leading_spaces(str(self._variables)) + ", "
-        s += "'interactions': " + str(self._interactions) + ", "
+        if self._interactions.empty:
+            s += "'interactions': 'Empty', "
+        else:
+            s += "'interactions': " + self._interactions.to_json(orient='values') + ", "
         s += "'offset': " + str(self._offset) + ", "
         s += "'constraints': " + str(self._constraints) + "})"
+
         return s
 
     def __str__(self):
@@ -911,7 +881,10 @@ class LogicalModel(AbstractModel):
             s.append("┃  name: " + name)
             s.append(self.append_prefix(str(vars), length=4))
         s.append("┣━ interactions:")
-        s.append(self.append_prefix(pprint.pformat(self._interactions), length=4))
+        if self._interactions.empty:
+            s.append(self.append_prefix("Empty", length=4))
+        else:
+            s.append(self.append_prefix(pprint.pformat(self._interactions), length=4))
         s.append("┣━ offset: " + str(self._offset))
         s.append("┣━ constraints:")
         s.append(self.append_prefix(pprint.pformat(self._constraints), length=4))

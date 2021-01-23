@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 from sawatabi.model import LogicalModel
+from sawatabi.model.constraint import NHotConstraint
 from sawatabi.solver import LocalSolver
 
 
@@ -108,10 +109,10 @@ def test_local_solver_n_hot_ising(n, s):
     # n out of s spins should be +1
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(s,))
-    model.n_hot_constraint(x, n=n)
-    physical = model.to_physical()
+    model.add_constraint(NHotConstraint(variables=x, n=n))
+
     solver = LocalSolver()
-    resultset = solver.solve(physical, seed=12345)
+    resultset = solver.solve(model.to_physical(), seed=12345)
 
     result = np.array(resultset.record[0][0])
     assert np.count_nonzero(result == 1) == n
@@ -127,10 +128,10 @@ def test_local_solver_n_hot_qubo(n, s):
     # n out of s variables should be 1
     model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(s,))
-    model.n_hot_constraint(x, n=n)
-    physical = model.to_physical()
+    model.add_constraint(NHotConstraint(variables=x, n=n))
+
     solver = LocalSolver()
-    resultset = solver.solve(physical, seed=12345)
+    resultset = solver.solve(model.to_physical(), seed=12345)
 
     result = np.array(resultset.record[0][0])
     assert np.count_nonzero(result == 1) == n
@@ -146,11 +147,11 @@ def test_local_solver_n_hot_ising_with_deleting(n, s, i):
     # n out of (s - 1) variables should be 1
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(s,))
-    model.n_hot_constraint(x, n=n)
+    model.add_constraint(NHotConstraint(variables=x, n=n))
     model.delete_variable(x[i])
-    physical = model.to_physical()
+
     solver = LocalSolver()
-    resultset = solver.solve(physical, seed=12345)
+    resultset = solver.solve(model.to_physical(), seed=12345)
 
     result = np.array(resultset.record[0][0])
     assert np.count_nonzero(result == 1) == n
@@ -162,12 +163,12 @@ def test_local_solver_n_hot_qubo_with_deleting(n, s, i, j):
     # n out of (s - 2) variables should be 1
     model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(s,))
-    model.n_hot_constraint(x, n=n)
+    model.add_constraint(NHotConstraint(variables=x, n=n))
     model.delete_variable(x[i])
     model.delete_variable(x[j])
-    physical = model.to_physical()
+
     solver = LocalSolver()
-    resultset = solver.solve(physical, seed=12345)
+    resultset = solver.solve(model.to_physical(), seed=12345)
 
     result = np.array(resultset.record[0][0])
     assert np.count_nonzero(result == 1) == n

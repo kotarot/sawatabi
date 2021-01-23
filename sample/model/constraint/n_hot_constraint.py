@@ -19,18 +19,44 @@ import sawatabi
 
 
 def n_hot_s_of_n_ising(s, n):
-    print("=== N-hot (s of n) ising ===")
+    print("\n=== N-hot (s of n) ising ===")
     print("s =", s)
     print("n =", n)
 
     model = sawatabi.model.LogicalModel(mtype="ising")
     x = model.variables("x", shape=(s,))
 
-    model.n_hot_constraint(x, n=n)
+    constraint = sawatabi.model.constraint.NHotConstraint(variables=x, n=n, label="n-hot")
+    model.add_constraint(constraint)
+
+    print(model)
+    print(model.to_physical())
+
+
+def n_hot_s_of_n_qubo(s, n):
+    print("\n=== N-hot (s of n) qubo ===")
+    print("s =", s)
+    print("n =", n)
+
+    model = sawatabi.model.LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(s,))
+
+    constraint = sawatabi.model.constraint.NHotConstraint(variables=x, n=n, label="n-hot")
+    model.add_constraint(constraint)
+
+    print(model)
+    print(model.to_physical())
 
 
 def main():
     n_hot_s_of_n_ising(s=100, n=1)
+    n_hot_s_of_n_qubo(s=100, n=1)
+
+    n_hot_s_of_n_ising(s=4, n=1)
+    n_hot_s_of_n_qubo(s=4, n=1)
+
+    n_hot_s_of_n_ising(s=4, n=2)
+    n_hot_s_of_n_qubo(s=4, n=2)
 
 
 if __name__ == "__main__":

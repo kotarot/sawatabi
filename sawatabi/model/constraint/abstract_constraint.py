@@ -12,24 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numbers
+
+import pyqubo
+
 from sawatabi.base_mixin import BaseMixin
+from sawatabi.utils.functions import Functions
 
 
 class AbstractConstraint(BaseMixin):
-    def __init__(self, strength=1.0, label="", variables=set()):
-        self._constraint_type = None
-        self._strength = strength
+    def __init__(self, variables=None, label="", strength=1.0):
+        self._constraint_class = None
+
+        # Avoid duplicate variable, so we use set() for variables
+        if variables is None:
+            self._variables = set()
+        else:
+            self._variables = self._check_variables_and_to_set(variables)
+
+        self._check_argument_type("label", label, str)
+        if label == "":
+            raise ValueError("'label' must not be empty.")
+        self._check_argument_type("strength", strength, numbers.Number)
+
         self._label = label
-        self._variables = variables
+        self._strength = strength
 
-    def get_constraint_type(self):
-        return self._constraint_type
+    def _check_variables_and_to_set(self, variables):
+        self._check_argument_type("variables", variables, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary, list, set))
+        if isinstance(variables, list) or isinstance(variables, set):
+            self._check_argument_type_in_list("variables", variables, (pyqubo.Spin, pyqubo.Binary))
+        if isinstance(variables, set):
+            return variables
+        else:
+            if isinstance(variables, pyqubo.Array):
+                variables = list(Functions._flatten(variables.bit_list))
+            elif isinstance(variables, pyqubo.Spin) or isinstance(variables, pyqubo.Binary):
+                variables = [variables]
+            return set(variables)
 
-    def get_strength(self):
-        return self._strength
+    def get_constraint_class(self):
+        return self._constraint_class
+
+    def get_variables(self):
+        return self._variables
 
     def get_label(self):
         return self._label
 
-    def get_variables(self):
-        return self._variables
+    def get_strength(self):
+        return self._strength
+
+    def add_variable(self):
+        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
+
+    def delete_variable(self):
+        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
+
+    def to_model(self):
+        raise NotImplementedError("#{self.class}##{__method__} must be implemented.")
