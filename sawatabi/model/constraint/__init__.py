@@ -14,6 +14,5 @@
 
 from sawatabi.model.constraint.abstract_constraint import AbstractConstraint
 from sawatabi.model.constraint.n_hot_constraint import NHotConstraint
-from sawatabi.model.constraint.dependency_constraint import DependencyConstraint
 
-__all__ = ["AbstractConstraint", "NHotConstraint", "DependencyConstraint"]
+__all__ = ["AbstractConstraint", "NHotConstraint"]
