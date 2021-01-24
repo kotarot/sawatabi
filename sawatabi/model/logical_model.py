@@ -698,7 +698,7 @@ class LogicalModel(AbstractModel):
                 )
                 self._offset += coeff * 0.25
         else:
-            warnings.warn("The model is already a QUBO model.")
+            warnings.warn("The model is already an Ising model.")
 
     def to_qubo(self):
         """
