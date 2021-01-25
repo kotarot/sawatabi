@@ -45,7 +45,7 @@ class OptiganSolver(AbstractSolver):
         return config
 
     def solve(self, model, num_unit_steps=10, timeout=10000, duplicate=False, gzip_request=True, gzip_response=True):
-        self._check_argument_type("model", model, PhysicalModel)
+        self._check_argument_type(model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")

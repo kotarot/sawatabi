@@ -28,7 +28,7 @@ class LocalSolver(AbstractSolver):
         super().__init__()
 
     def solve(self, model, **kwargs):
-        self._check_argument_type("model", model, PhysicalModel)
+        self._check_argument_type(model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")
@@ -58,7 +58,7 @@ class LocalSolver(AbstractSolver):
         return sampleset
 
     def default_beta_range(self, model):
-        self._check_argument_type("model", model, PhysicalModel)
+        self._check_argument_type(model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")

@@ -61,22 +61,33 @@ def test_vartype_to_modeltype():
 def test_check_argument():
     base = BaseMixin()
 
-    base._check_argument_type(name="name", value="string", atype=str)
-    with pytest.raises(TypeError):
-        base._check_argument_type("name", "string", int)
-    base._check_argument_type("name", "string", (str, int))
-    base._check_argument_type("name", 12345, (str, int))
+    testvar_str = "test variable"
+    testvar_int = 12345
 
-    base._check_argument_type_in_tuple(name="name", values=("string"), atype=str)
+    base._check_argument_type(value=testvar_str, atype=str)
     with pytest.raises(TypeError):
-        base._check_argument_type_in_tuple("name", (), str)
-    with pytest.raises(TypeError):
-        base._check_argument_type_in_tuple("name", ("string", 12345), str)
-    base._check_argument_type_in_tuple("name", ("string", 12345), (str, int))
+        base._check_argument_type(testvar_str, int)
+    base._check_argument_type(testvar_str, (str, int))
+    base._check_argument_type(testvar_int, (str, int))
 
-    base._check_argument_type_in_list(name="name", values=["string"], atype=str)
+    testvar_tuple_str = ("test variable",)
+    testvar_tuple_empty = ()
+    testvar_tuple_str_int = ("test variable", 12345)
+
+    base._check_argument_type_in_tuple(values=testvar_tuple_str, atype=str)
     with pytest.raises(TypeError):
-        base._check_argument_type_in_list("name", [], str)
+        base._check_argument_type_in_tuple(testvar_tuple_empty, str)
     with pytest.raises(TypeError):
-        base._check_argument_type_in_list("name", ["string", 12345], str)
-    base._check_argument_type_in_list("name", ["string", 12345], (str, int))
+        base._check_argument_type_in_tuple(testvar_tuple_str_int, str)
+    base._check_argument_type_in_tuple(testvar_tuple_str_int, (str, int))
+
+    testvar_list_str = ["test variable"]
+    testvar_list_empty = []
+    testvar_list_str_int = ["test variable", 12345]
+
+    base._check_argument_type_in_list(values=testvar_list_str, atype=str)
+    with pytest.raises(TypeError):
+        base._check_argument_type_in_list(testvar_list_empty, str)
+    with pytest.raises(TypeError):
+        base._check_argument_type_in_list(testvar_list_str_int, str)
+    base._check_argument_type_in_list(testvar_list_str_int, (str, int))
