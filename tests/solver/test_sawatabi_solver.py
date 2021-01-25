@@ -172,7 +172,7 @@ def test_sawatabi_solver_qubo_without_active_var():
     # Check the ground state
     assert np.array_equal(resultset.record[0].sample, [1, 1, 1])
     assert resultset.record[0].energy == -3.0
-    assert resultset.record[0].num_occurences == 1
+    assert resultset.record[0].num_occurrences == 1
 
 
 def test_sawatabi_solver_with_logical_model_fails():

@@ -114,7 +114,7 @@ def _create_simple_2x2_ising_model_without_active_var():
     return model.to_physical()
 
 
-def _create_simple_2x2_qubo_model_without_acitve_var():
+def _create_simple_2x2_qubo_model_without_active_var():
     # Optimal solution of this qubo model:
     #   - All spins (except a[0][0]): +1
     #   - Energy = 0.0
