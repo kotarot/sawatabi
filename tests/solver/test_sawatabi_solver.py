@@ -26,7 +26,7 @@ def test_sawatabi_solver_ising():
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
     model.add_interaction((s[0], s[1]), coefficient=-3.0)
-    model._offset = 10.0
+    model.offset(10.0)
 
     solver = SawatabiSolver()
     resultset = solver.solve(model.to_physical(), num_reads=2, num_sweeps=100, num_coolings=10, cooling_rate=0.9, initial_temperature=10.0, seed=12345)
@@ -46,7 +46,7 @@ def test_sawatabi_solver_qubo():
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
-    model._offset = 10.0
+    model.offset(10.0)
 
     solver = SawatabiSolver()
     resultset = solver.solve(model.to_physical(), num_sweeps=1000, num_coolings=101, seed=12345)

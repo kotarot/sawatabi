@@ -288,7 +288,7 @@ def test_logical_model_to_physical_with_fixed_variables(ising):
     assert physical._index_to_label[0] == "x[1]"
     assert len(physical._index_to_label) == 1
 
-    assert physical._offset == -100.0
+    assert physical.get_offset() == -100.0
 
 
 def test_logical_model_to_physical_with_non_active_variables(ising):
@@ -351,7 +351,7 @@ def test_logical_model_convert_model_type(qubo):
     assert qubo._interactions_array["coefficient"][6] == 3.0
 
     # - Check offset
-    assert qubo._offset == 2.5
+    assert qubo.get_offset() == 2.5
 
     # Convert to Physical
     physical_ising = qubo.to_physical()
@@ -401,7 +401,7 @@ def test_logical_model_convert_model_type(qubo):
     assert qubo._interactions_array["coefficient"][7] == -6.0
 
     # - Check offset
-    assert qubo._offset == 0.0
+    assert qubo.get_offset() == 0.0
 
     # Convert to Physical
     physical_qubo = qubo.to_physical()
@@ -637,7 +637,7 @@ def test_logical_model_merge_x22_and_a22(ising_x22, qubo_a22):
     assert ising_x22.select_interaction("body == 1 and key_0 == 'a[0][0]'")["coefficient"].values[1] == 2.75
     assert ising_x22.select_interaction("body == 1 and key_0 == 'a[1][1]'")["coefficient"].values[0] == 2.75
     assert ising_x22.select_interaction("body == 2 and key_0 == 'a[0][0]' and key_1 == 'a[1][1]'")["coefficient"].values[0] == 2.75
-    assert ising_x22._offset == 7.75
+    assert ising_x22.get_offset() == 7.75
 
 
 def test_logical_model_merge_a22_and_x22(qubo_a22, ising_x22):
@@ -652,7 +652,7 @@ def test_logical_model_merge_a22_and_x22(qubo_a22, ising_x22):
     assert qubo_a22.select_interaction("body == 1 and key_0 == 'x[0][0]'")["coefficient"].values[1] == -22.0
     assert qubo_a22.select_interaction("body == 1 and key_0 == 'x[1][1]'")["coefficient"].values[0] == -22.0
     assert qubo_a22.select_interaction("body == 2 and key_0 == 'x[0][0]' and key_1 == 'x[1][1]'")["coefficient"].values[0] == 44.0
-    assert qubo_a22._offset == 1.0
+    assert qubo_a22.get_offset() == 1.0
 
 
 def test_logical_model_merge_x22_x999_invalid(ising_x22, ising_x999):

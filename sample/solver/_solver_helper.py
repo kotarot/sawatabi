@@ -41,7 +41,7 @@ def _create_ising_model():
     # print(model)
 
     # Add offset so that the final energy becomes -10.0
-    model._offset = 6.0
+    model.offset(6.0)
 
     # print("\nPhysical model")
     physical = model.to_physical()
@@ -64,7 +64,7 @@ def _create_qubo_model():
     # print(model)
 
     # Add offset so that the final energy becomes 0.0
-    model._offset = 1.0
+    model.offset(1.0)
 
     # print("\nPhysical model")
     physical = model.to_physical()
@@ -109,7 +109,7 @@ def _create_simple_2x2_ising_model_without_active_var():
     model.add_interaction(a[0, 1], coefficient=2.0)
     model.add_interaction(a[1, 0], coefficient=2.0)
     model.add_interaction(a[1, 1], coefficient=2.0)
-    model._offset = 6.0
+    model.offset(6.0)
 
     return model.to_physical()
 
@@ -124,7 +124,7 @@ def _create_simple_2x2_qubo_model_without_active_var():
     model.add_interaction(a[0, 1], coefficient=2.0)
     model.add_interaction(a[1, 0], coefficient=2.0)
     model.add_interaction(a[1, 1], coefficient=2.0)
-    model._offset = 6.0
+    model.offset(6.0)
 
     return model.to_physical()
 

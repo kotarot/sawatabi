@@ -412,6 +412,35 @@ class LogicalModel(AbstractModel):
                     self.remove_interaction(name=s)
 
     ################################
+    # Constraints
+    ################################
+
+    def add_constraint(self, constraint):
+        self._check_argument_type("constraint", constraint, AbstractConstraint)
+        label = constraint.get_label()
+        self._constraints[label] = constraint
+
+    def remove_constraint(self, label):
+        self._check_argument_type("label", label, str)
+        self._constraints.pop(label)
+
+    ################################
+    # Offset
+    ################################
+
+    def offset(self, offset):
+        """
+        Sets the offset value.
+        """
+        self._offset = offset
+
+    def get_offset(self):
+        """
+        Returns the offset value.
+        """
+        return self._offset
+
+    ################################
     # PyQUBO
     ################################
 
@@ -453,19 +482,6 @@ class LogicalModel(AbstractModel):
                 self.add_interaction(target=(target_0, target_1), coefficient=coeff)
 
         self._offset = compiled_qubo.offset
-
-    ################################
-    # Constraints
-    ################################
-
-    def add_constraint(self, constraint):
-        self._check_argument_type("constraint", constraint, AbstractConstraint)
-        label = constraint.get_label()
-        self._constraints[label] = constraint
-
-    def remove_constraint(self, label):
-        self._check_argument_type("label", label, str)
-        self._constraints.pop(label)
 
     ################################
     # Converts
@@ -826,12 +842,6 @@ class LogicalModel(AbstractModel):
         Returns a list of constraints by the given label.
         """
         return self._constraints[label]
-
-    def get_offset(self):
-        """
-        Returns the offset value.
-        """
-        return self._offset
 
     ################################
     # Built-in functions

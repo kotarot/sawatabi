@@ -190,7 +190,7 @@ def test_logical_model_from_pyqubo_expression(qubo):
             assert qubo._interactions[qubo._interactions["name"] == f"y[{i}]*y[{j}]"]["coefficient"].values[0] == -2.0
             assert qubo._interactions[qubo._interactions["name"] == f"x[{i}]*y[{j}]"]["coefficient"].values[0] == 2.0
 
-    assert qubo._offset == 0.0
+    assert qubo.get_offset() == 0.0
 
 
 def test_logical_model_from_pyqubo_model_with_placeholder(qubo):
@@ -216,7 +216,7 @@ def test_logical_model_from_pyqubo_model_with_placeholder(qubo):
             assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"y[{i}][0]", f"y[{j}][0]")] == -4.0
             assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}][0]", f"y[{j}][0]")] == 4.0
 
-    assert physical._offset == 10.0
+    assert physical.get_offset() == 10.0
 
 
 def test_logical_model_from_pyqubo_spins(qubo):

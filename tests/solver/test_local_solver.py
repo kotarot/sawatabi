@@ -70,7 +70,7 @@ def test_local_solver_sa_ising():
     model.add_interaction(s[0], coefficient=1.0)
     model.add_interaction(s[1], coefficient=2.0)
     model.add_interaction((s[0], s[1]), coefficient=-3.0)
-    model._offset = 10.0
+    model.offset(10.0)
 
     solver = LocalSolver()
     resultset = solver.solve(model.to_physical(), seed=12345)
@@ -90,7 +90,7 @@ def test_local_solver_sa_qubo():
     model.add_interaction(x[0], coefficient=1.0)
     model.add_interaction(x[1], coefficient=2.0)
     model.add_interaction((x[0], x[1]), coefficient=-5.0)
-    model._offset = 10.0
+    model.offset(10.0)
 
     solver = LocalSolver(exact=False)
     resultset = solver.solve(model.to_physical(), seed=12345)
