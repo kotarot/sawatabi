@@ -70,7 +70,7 @@ def test_check_argument():
     base._check_argument_type(testvar_str, (str, int))
     base._check_argument_type(testvar_int, (str, int))
 
-    testvar_tuple_str = ("test variable")
+    testvar_tuple_str = ("test variable",)
     testvar_tuple_empty = ()
     testvar_tuple_str_int = ("test variable", 12345)
 
