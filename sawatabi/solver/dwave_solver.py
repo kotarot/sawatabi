@@ -36,7 +36,6 @@ class DWaveSolver(AbstractSolver):
         # Converts to BQM (model representation for D-Wave)
         bqm = model.to_bqm()
 
-        # TODO: Deal with reverse annealing.
         if (self._endpoint is not None) and (self._token is not None):
             sampler = DWaveSampler(endpoint=self._endpoint, token=self._token, solver=self._solver)
         else:
