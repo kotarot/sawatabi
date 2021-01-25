@@ -27,7 +27,7 @@ class DWaveSolver(AbstractSolver):
         self._token = token
         self._solver = solver
 
-    def solve(self, model, seed=None, chain_strength=2.0, annealing_time=20, num_reads=1000, answer_mode="histogram", **kwargs):
+    def solve(self, model, embedding_parameters=None, seed=None, chain_strength=2.0, annealing_time=20, num_reads=1000, answer_mode="histogram", **kwargs):
         self._check_argument_type("model", model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
@@ -41,7 +41,12 @@ class DWaveSolver(AbstractSolver):
             sampler = DWaveSampler(endpoint=self._endpoint, token=self._token, solver=self._solver)
         else:
             sampler = DWaveSampler(solver=self._solver)
-        solver = EmbeddingComposite(sampler)
+
+        if (embedding_parameters is not None) and isinstance(embedding_parameters, dict):
+            solver = EmbeddingComposite(sampler, embedding_parameters=embedding_parameters)
+        else:
+            solver = EmbeddingComposite(sampler)
+
         sampleset = solver.sample(bqm, chain_strength=chain_strength, annealing_time=annealing_time, num_reads=num_reads, answer_mode=answer_mode, **kwargs)
 
         return sampleset
