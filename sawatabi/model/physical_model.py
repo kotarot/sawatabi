@@ -28,6 +28,7 @@ class PhysicalModel(AbstractModel):
             constants.INTERACTION_QUADRATIC: {},  # quadratic (2-body)
         }
         self._offset = 0.0
+        self._variables_set = set()
         self._label_to_index = {}
         self._index_to_label = {}
 

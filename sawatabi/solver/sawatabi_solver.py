@@ -162,7 +162,8 @@ class SawatabiSolver(AbstractSolver):
             temperature *= cooling_rate
 
         sample = dict(zip(list(self._model._index_to_label.values()), x))
-        assert energy == self._bqm.energy(sample) * -1.0
+        recalc_energy = self._bqm.energy(sample) * -1.0
+        assert math.isclose(energy, recalc_energy, rel_tol=1e-9, abs_tol=1e-9)
 
         # Deal with offset
         energy += self._original_bqm.offset * 2

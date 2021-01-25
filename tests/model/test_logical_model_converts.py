@@ -218,12 +218,45 @@ def test_logical_model_to_physical_with_placeholder(ising):
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[6]"] == 360.0
 
 
+def test_logical_model_to_physical_label_and_index(ising):
+    x = ising.variables("x", shape=(3,))
+    y = ising.variables("y", shape=(2, 2))
+    for i in range(3):
+        ising.add_interaction(x[i], coefficient=i + 10)
+    for j in range(2):
+        ising.add_interaction((y[j, 0], y[j, 1]), coefficient=j + 10)
+    physical = ising.to_physical()
+
+    assert physical._label_to_index["x[0]"] == 0
+    assert physical._label_to_index["x[1]"] == 1
+    assert physical._label_to_index["x[2]"] == 2
+    assert physical._label_to_index["y[0][0]"] == 3
+    assert physical._label_to_index["y[0][1]"] == 4
+    assert physical._label_to_index["y[1][0]"] == 5
+    assert physical._label_to_index["y[1][1]"] == 6
+    assert len(physical._label_to_index) == 7
+
+    assert physical._index_to_label[0] == "x[0]"
+    assert physical._index_to_label[1] == "x[1]"
+    assert physical._index_to_label[2] == "x[2]"
+    assert physical._index_to_label[3] == "y[0][0]"
+    assert physical._index_to_label[4] == "y[0][1]"
+    assert physical._index_to_label[5] == "y[1][0]"
+    assert physical._index_to_label[6] == "y[1][1]"
+    assert len(physical._index_to_label) == 7
+
+
 def test_logical_model_to_physical_with_deleted_variables(ising):
     x = ising.variables("x", shape=(3,))
-    y = ising.variables("y", shape=(2, 2))  # noqa: F841
+    y = ising.variables("y", shape=(2, 2))
+    for i in range(3):
+        ising.add_interaction(x[i], coefficient=i + 10)
+    for j in range(2):
+        ising.add_interaction((y[j, 0], y[j, 1]), coefficient=j + 10)
     ising.delete_variable(x[0])
     physical = ising.to_physical()
 
+    assert "x[0]" not in physical._label_to_index
     assert physical._label_to_index["x[1]"] == 0
     assert physical._label_to_index["x[2]"] == 1
     assert physical._label_to_index["y[0][0]"] == 2
@@ -244,18 +277,37 @@ def test_logical_model_to_physical_with_deleted_variables(ising):
 def test_logical_model_to_physical_with_fixed_variables(ising):
     x = ising.variables("x", shape=(2,))
     ising.add_interaction(x[0], coefficient=100.0)
+    ising.add_interaction(x[1], coefficient=1.0)
     ising.fix_variable(x[0], 1)
     physical = ising.to_physical()
 
-    assert physical._label_to_index["x[0]"] == 0
-    assert physical._label_to_index["x[1]"] == 1
-    assert len(physical._label_to_index) == 2
+    assert "x[0]" not in physical._label_to_index
+    assert physical._label_to_index["x[1]"] == 0
+    assert len(physical._label_to_index) == 1
 
-    assert physical._index_to_label[0] == "x[0]"
-    assert physical._index_to_label[1] == "x[1]"
-    assert len(physical._index_to_label) == 2
+    assert physical._index_to_label[0] == "x[1]"
+    assert len(physical._index_to_label) == 1
 
     assert physical._offset == -100.0
+
+
+def test_logical_model_to_physical_with_non_active_variables(ising):
+    x = ising.variables("x", shape=(2, 2))
+    ising.add_interaction(x[0, 1], coefficient=1.0)
+    ising.add_interaction(x[1, 0], coefficient=2.0)
+    ising.add_interaction(x[1, 1], coefficient=3.0)
+    physical = ising.to_physical()
+
+    assert "x[0, 0]" not in physical._label_to_index
+    assert physical._label_to_index["x[0][1]"] == 0
+    assert physical._label_to_index["x[1][0]"] == 1
+    assert physical._label_to_index["x[1][1]"] == 2
+    assert len(physical._label_to_index) == 3
+
+    assert physical._index_to_label[0] == "x[0][1]"
+    assert physical._index_to_label[1] == "x[1][0]"
+    assert physical._index_to_label[2] == "x[1][1]"
+    assert len(physical._index_to_label) == 3
 
 
 def test_logical_model_convert_model_type(qubo):
