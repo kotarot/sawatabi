@@ -28,7 +28,7 @@ class DWaveSolver(AbstractSolver):
         self._solver = solver
 
     def solve(self, model, embedding_parameters=None, **kwargs):
-        self._check_argument_type("model", model, PhysicalModel)
+        self._check_argument_type(model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")
