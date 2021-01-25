@@ -15,15 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from _solver_helper import (
-    _create_ising_model,
-    _create_qubo_model,
-    _create_simple_2x2_ising_model_without_active_var,
-    _create_simple_2x2_qubo_model_without_active_var,
-    _print_resultset,
-)
+# fmt: off
+from _solver_helper import (_create_ising_model, _create_qubo_model, _create_simple_2x2_ising_model_without_active_var,
+                            _create_simple_2x2_qubo_model_without_active_var, _print_resultset)
 
 import sawatabi
+
+# fmt: on
 
 
 def solver_local_ising():
