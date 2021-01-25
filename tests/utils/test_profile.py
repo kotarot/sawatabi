@@ -40,8 +40,8 @@ def _create_n_variable_random_complete_model(n=4, seed=None):
 def test_create_n_variable_random_complete_model(n):
     result = _create_n_variable_random_complete_model(n=n, seed=12345)
 
-    # execution time should be less than 5 sec
-    assert result["profile"]["elapsed_sec"] < 5.0
+    # Execution time should be within practical seconds (10 sec).
+    assert result["profile"]["elapsed_sec"] < 10.0
 
 
 @profile
@@ -66,5 +66,5 @@ def _create_nxn_random_lattice_model(n=4, seed=None):
 def test_create_nxn_random_lattice_model(n):
     result = _create_nxn_random_lattice_model(n=n, seed=12345)
 
-    # execution time should be less than 5 sec
-    assert result["profile"]["elapsed_sec"] < 5.0
+    # Execution time should be within practical seconds (10 sec).
+    assert result["profile"]["elapsed_sec"] < 10.0

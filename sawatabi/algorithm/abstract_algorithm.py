@@ -55,6 +55,7 @@ class AbstractAlgorithm(BaseMixin):
             map_fn=None,
             unmap_fn=None,
             solve_fn=None,
+            initial_mtype=sawatabi.constants.MODEL_ISING,
         ):
             _, elements = value
 
@@ -78,7 +79,7 @@ class AbstractAlgorithm(BaseMixin):
             else:
                 prev_elements = elements_state_as_list[-1]
             if len(model_state_as_list) == 0:
-                prev_model = sawatabi.model.LogicalModel(mtype="ising")
+                prev_model = sawatabi.model.LogicalModel(mtype=initial_mtype)
             else:
                 prev_model = model_state_as_list[-1]
 
@@ -163,8 +164,14 @@ class AbstractAlgorithm(BaseMixin):
         solve_fn=None,
         unmap_fn=None,
         output_fn=None,
+        initial_mtype=sawatabi.constants.MODEL_ISING,
         pipeline_args=["--runner=DirectRunner"],
     ):
+        cls._check_argument_type(initial_mtype, str)
+        valid_initial_mtypes = [sawatabi.constants.MODEL_ISING, sawatabi.constants.MODEL_QUBO]
+        if initial_mtype not in valid_initial_mtypes:
+            raise ValueError(f"'initial_mtype' must be one of {valid_initial_mtypes}.")
+
         pipeline_options = PipelineOptions(pipeline_args)
         p = beam.Pipeline(options=pipeline_options)
 
@@ -202,7 +209,9 @@ class AbstractAlgorithm(BaseMixin):
 
         solved = (algorithm_transformed
             | "Make windows to key-value pairs for stateful DoFn" >> beam.Map(lambda element: (None, element))
-            | "Solve" >> beam.ParDo(sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn))
+            | "Solve" >> beam.ParDo(
+                sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn, initial_mtype=initial_mtype
+            ))
 
         # --------------------------------
         # Output part

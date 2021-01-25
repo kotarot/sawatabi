@@ -157,6 +157,7 @@ def npp_window(
         solve_fn=npp_solving,
         unmap_fn=npp_unmapping,
         output_fn=output_fn,
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 
