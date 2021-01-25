@@ -158,6 +158,7 @@ def npp_window(
         unmap_fn=npp_unmapping,
         output_fn=output_fn,
         pipeline_args=pipeline_args,
+        initial_mtype="ising",
     )
 
     # Run the pipeline
