@@ -209,7 +209,9 @@ class AbstractAlgorithm(BaseMixin):
 
         solved = (algorithm_transformed
             | "Make windows to key-value pairs for stateful DoFn" >> beam.Map(lambda element: (None, element))
-            | "Solve" >> beam.ParDo(sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn, initial_mtype=initial_mtype))
+            | "Solve" >> beam.ParDo(
+                sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn, initial_mtype=initial_mtype
+            ))
 
         # --------------------------------
         # Output part
