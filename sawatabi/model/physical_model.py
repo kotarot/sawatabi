@@ -40,6 +40,16 @@ class PhysicalModel(AbstractModel):
         self._raw_interactions[body][name] = coefficient
 
     ################################
+    # Offset
+    ################################
+
+    def get_offset(self):
+        """
+        Returns the offset value.
+        """
+        return self._offset
+
+    ################################
     # Converts to another model
     ################################
 
