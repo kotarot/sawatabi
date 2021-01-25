@@ -161,9 +161,9 @@ def test_local_solver_n_hot_ising(n, s):
         assert np.count_nonzero(result == 1) == n
         assert np.count_nonzero(result == -1) == s - n
 
-        # Execution time should be within seconds (5 sec).
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 100)])
@@ -182,9 +182,9 @@ def test_local_solver_n_hot_qubo(n, s):
         assert np.count_nonzero(result == 1) == n
         assert np.count_nonzero(result == 0) == s - n
 
-        # Execution time should be within seconds (5 sec).
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
 
 
 @pytest.mark.parametrize("n,s,i", [(1, 4, 0), (1, 4, 1), (1, 4, 2), (1, 4, 3), (2, 10, 5)])
@@ -204,9 +204,9 @@ def test_local_solver_n_hot_ising_with_deleting(n, s, i):
         assert np.count_nonzero(result == 1) == n
         assert np.count_nonzero(result == -1) == s - n - 1
 
-        # Execution time should be within seconds (5 sec).
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
 
 
 @pytest.mark.parametrize("n,s,i,j", [(1, 4, 0, 1), (1, 4, 2, 3), (2, 10, 5, 8)])
@@ -227,9 +227,9 @@ def test_local_solver_n_hot_qubo_with_deleting(n, s, i, j):
         assert np.count_nonzero(result == 1) == n
         assert np.count_nonzero(result == 0) == s - n - 2
 
-        # Execution time should be within seconds (5 sec).
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
 
 
 ################################
@@ -254,9 +254,9 @@ def test_local_solver_equality_ising(m, n):
         result_2 = result[m : (m + n)]  # noqa: E203
         assert np.count_nonzero(result_1 == 1) == np.count_nonzero(result_2 == 1)
 
-        # Execution time should be within 5 sec.
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
 
 
 @pytest.mark.parametrize("m,n", [(2, 2), (10, 10), (10, 20), (50, 50)])
@@ -276,9 +276,9 @@ def test_local_solver_equality_qubo(m, n):
         result_2 = result[m : (m + n)]  # noqa: E203
         assert np.count_nonzero(result_1 == 1) == np.count_nonzero(result_2 == 1)
 
-        # Execution time should be within 5 sec...
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
 
 
 ################################
@@ -300,9 +300,9 @@ def test_local_solver_zero_or_one_hot_ising(n):
         result = np.array(resultset.record[0].sample)
         assert np.count_nonzero(result == 1) in [0, 1]
 
-        # Execution time should be within seconds (5 sec).
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
 
 
 @pytest.mark.parametrize("n", [2, 3, 4, 10, 100])
@@ -319,6 +319,6 @@ def test_local_solver_zero_or_one_hot_qubo(n):
         result = np.array(resultset.record[0].sample)
         assert np.count_nonzero(result == 1) in [0, 1]
 
-        # Execution time should be within seconds (5 sec).
-        assert resultset.info["timing"]["elapsed_sec"] <= 5.0
-        assert resultset.info["timing"]["elapsed_counter"] <= 5.0
+        # Execution time should be within practical seconds (10 sec).
+        assert resultset.info["timing"]["elapsed_sec"] <= 10.0
+        assert resultset.info["timing"]["elapsed_counter"] <= 10.0
