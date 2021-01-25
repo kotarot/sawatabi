@@ -18,9 +18,14 @@
 import platform
 import sys
 
+import pandas as pd
 from pyqubo import Array, Placeholder
 
 import sawatabi
+
+pd.options.display.max_columns = None
+pd.options.display.width = None
+pd.options.display.max_colwidth = 80
 
 
 def _print_utf8(model):
@@ -101,21 +106,33 @@ def model_2d():
 def model_constraints():
     print("\n=== model (constraints) ===")
 
-    print("\nSet variables x to shape (3,)")
+    print("\nSet variables x to shape (4,)")
     model = sawatabi.model.LogicalModel(mtype="qubo")
-    a = model.variables("a", shape=(3,))
+    a = model.variables("a", shape=(4,))
     _print_utf8(model)
 
     print("\nSet a one-hot constraint to a[0] and a[1]")
-    model.n_hot_constraint(a[(slice(0, 2),)], n=1, label="my constraint 1")
+    vset = set([a[0], a[1]])
+    constraint = sawatabi.model.constraint.NHotConstraint(variables=vset, n=1, label="my constraint 1", strength=1.0)
+    model.add_constraint(constraint=constraint)
     _print_utf8(model)
 
     print("\nSet the one-hot constraint to a[2]")
-    model.n_hot_constraint(a[2], n=1, label="my constraint 1")
+    vlist = [a[2]]
+    constraint.add_variable(variables=vlist)
     _print_utf8(model)
 
-    print("\nErase a[0].")
-    model.delete_variable(a[0])
+    print("\nSet the one-hot constraint to a[3]")
+    constraint.add_variable(variables=a[3])
+    _print_utf8(model)
+
+    print("\nDelete a[0].")
+    constraint.remove_variable(variables=a[0])
+    _print_utf8(model)
+
+    print("\nMerge the constraint model.")
+    constraint_model = constraint.to_model()
+    model.merge(constraint_model)
     _print_utf8(model)
 
 

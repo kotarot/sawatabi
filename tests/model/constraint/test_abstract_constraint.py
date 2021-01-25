@@ -12,9 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sawatabi.model.abstract_constraint import AbstractConstraint
+import pytest
+
+from sawatabi.model.constraint import AbstractConstraint
+
+################################
+# Abstract Constraint
+################################
 
 
-class DependencyConstraint(AbstractConstraint):
-    def __init__(self, strength=1.0, label="", variables=[]):
-        super().__init__(strength, label, variables)
+def test_abstract_constraint():
+    constraint = AbstractConstraint(label="test constraint")
+
+    with pytest.raises(NotImplementedError):
+        constraint.to_model()

@@ -15,8 +15,6 @@
 from sawatabi.model.abstract_model import AbstractModel
 from sawatabi.model.logical_model import LogicalModel
 from sawatabi.model.physical_model import PhysicalModel
-from sawatabi.model.abstract_constraint import AbstractConstraint
-from sawatabi.model.n_hot_constraint import NHotConstraint
-from sawatabi.model.dependency_constraint import DependencyConstraint
+from sawatabi.model import constraint
 
-__all__ = ["AbstractModel", "LogicalModel", "PhysicalModel", "AbstractConstraint", "NHotConstraint", "DependencyConstraint"]
+__all__ = ["AbstractModel", "LogicalModel", "PhysicalModel", "constraint"]

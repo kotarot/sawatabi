@@ -18,6 +18,7 @@ import pytest
 
 import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
+from sawatabi.model.constraint import EqualityConstraint, NHotConstraint
 from sawatabi.solver import LocalSolver
 
 
@@ -244,62 +245,80 @@ def test_logical_model_from_pyqubo_invalid(qubo):
 ################################
 
 
-def test_logical_model_n_hot_constraint_1(ising):
-    x = ising.variables("x", shape=(3,))
-
-    ising.n_hot_constraint(x[0], n=1)
-    assert len(ising.get_constraints()) == 1
-    assert "Default N-hot Constraint" in ising.get_constraints()
-    assert ising.get_constraints_by_label("Default N-hot Constraint")._n == 1
-
-    ising.n_hot_constraint(target=x[(slice(1, 3),)], n=1)
-    assert len(ising.get_constraints()) == 1
-    assert "Default N-hot Constraint" in ising.get_constraints()
-    assert ising.get_constraints_by_label("Default N-hot Constraint")._n == 1
-
-
-def test_logical_model_n_hot_constraint_2(ising):
-    y = ising.variables("y", shape=(2, 2))
-
-    ising.n_hot_constraint(y[0, :], n=2, label="my label")
-    assert len(ising.get_constraints()) == 1
-    assert "my label" in ising.get_constraints()
-    assert ising.get_constraints_by_label("my label")._n == 2
-
-    # targte in list representation
-    ising.n_hot_constraint(target=[y[1, 0], y[1, 1]], n=2, label="my label")
-    assert len(ising.get_constraints()) == 1
-    assert "my label" in ising.get_constraints()
-    assert ising.get_constraints_by_label("my label")._n == 2
-
-
-def test_logical_model_n_hot_constraint_3(ising):
+def test_logical_model_n_hot_constraint_x(ising):
     x = ising.variables("x", shape=(3,))
     default_label = "Default N-hot Constraint"
 
-    ising.n_hot_constraint(x, n=2)
+    ising.add_constraint(NHotConstraint(variables=x[0], n=1))
     assert len(ising.get_constraints()) == 1
     assert default_label in ising.get_constraints()
-    assert ising.get_constraints_by_label(default_label)._n == 2
-    assert len(ising.get_constraints_by_label(default_label)._variables) == 3
+    assert len(ising.get_constraints_by_label(default_label)._variables) == 1
+    assert ising.get_constraints_by_label(default_label)._n == 1
 
-    ising.n_hot_constraint(x, n=2)  # double
+    ising.add_constraint(NHotConstraint(variables=x[(slice(1, 3),)], n=1))
     assert len(ising.get_constraints()) == 1
     assert default_label in ising.get_constraints()
-    assert ising.get_constraints_by_label(default_label)._n == 2
-    assert len(ising.get_constraints_by_label(default_label)._variables) == 3
+    assert len(ising.get_constraints_by_label(default_label)._variables) == 2
+    assert ising.get_constraints_by_label(default_label)._n == 1
 
-    ising.n_hot_constraint(x, n=2)  # partially
+    ising.add_constraint(NHotConstraint(variables=x, n=2))  # n = 2
     assert len(ising.get_constraints()) == 1
     assert default_label in ising.get_constraints()
-    assert ising.get_constraints_by_label(default_label)._n == 2
     assert len(ising.get_constraints_by_label(default_label)._variables) == 3
+    assert ising.get_constraints_by_label(default_label)._n == 2
+
+    ising.add_constraint(NHotConstraint(variables=x, n=2))  # double
+    assert len(ising.get_constraints()) == 1
+    assert default_label in ising.get_constraints()
+    assert len(ising.get_constraints_by_label(default_label)._variables) == 3
+    assert ising.get_constraints_by_label(default_label)._n == 2
+
+    ising.add_constraint(NHotConstraint(variables=x, n=2))  # partially
+    assert len(ising.get_constraints()) == 1
+    assert default_label in ising.get_constraints()
+    assert len(ising.get_constraints_by_label(default_label)._variables) == 3
+    assert ising.get_constraints_by_label(default_label)._n == 2
 
 
-def test_logical_model_multi_n_hot_constraints(ising):
+def test_logical_model_n_hot_constraint_y(ising):
+    y = ising.variables("y", shape=(2, 2))
+
+    ising.add_constraint(NHotConstraint(variables=y[0, :], n=2, label="my label"))
+    assert len(ising.get_constraints()) == 1
+    assert "my label" in ising.get_constraints()
+    assert ising.get_constraints_by_label("my label")._n == 2
+
+    # variables in list representation
+    c = NHotConstraint(variables=[y[1, 0], y[1, 1]], n=2, label="my label")
+    ising.add_constraint(c)
+    assert len(ising.get_constraints()) == 1
+    assert "my label" in ising.get_constraints()
+    assert len(ising.get_constraints_by_label("my label")._variables) == 2
+    assert ising.get_constraints_by_label("my label")._n == 2
+
+    # Constraint content changes
+    c.add_variable(variables=[y[0, 0]])
+    assert len(ising.get_constraints()) == 1
+    assert "my label" in ising.get_constraints()
+    assert len(ising.get_constraints_by_label("my label")._variables) == 3
+    assert ising.get_constraints_by_label("my label")._n == 2
+
+
+def test_logical_model_n_hot_constraint_remove(ising):
+    y = ising.variables("y", shape=(2, 2))
+
+    ising.add_constraint(NHotConstraint(variables=y, n=1, label="my label"))
+    assert len(ising.get_constraints()) == 1
+    assert "my label" in ising.get_constraints()
+
+    ising.remove_constraint(label="my label")
+    assert len(ising.get_constraints()) == 0
+
+
+def test_logical_model_multiple_constraints_n_hot_and_n_hot(ising):
     x = ising.variables("x", shape=(2, 4))
 
-    ising.n_hot_constraint(x[0, :], n=1, label="l1")
+    ising.add_constraint(NHotConstraint(variables=x[0, :], n=1, label="l1"))
     assert len(ising.get_constraints()) == 1
     assert "l1" in ising.get_constraints()
     assert "l2" not in ising.get_constraints()
@@ -307,7 +326,7 @@ def test_logical_model_multi_n_hot_constraints(ising):
     with pytest.raises(KeyError):
         ising.get_constraints_by_label("l2")
 
-    ising.n_hot_constraint(x[1, :], n=1, label="l2")
+    ising.add_constraint(NHotConstraint(variables=x[1, :], n=1, label="l2"))
     assert len(ising.get_constraints()) == 2
     assert "l1" in ising.get_constraints()
     assert "l2" in ising.get_constraints()
@@ -315,48 +334,32 @@ def test_logical_model_multi_n_hot_constraints(ising):
     assert ising.get_constraints_by_label("l2")._n == 1
 
 
-def test_logical_model_n_hot_constraint_valueerror(ising):
-    x = ising.variables("x", shape=(10,))
+def test_logical_model_multiple_constraints_n_hot_and_equality(ising):
+    x = ising.variables("x", shape=(3, 4))
 
-    with pytest.raises(ValueError):
-        ising.n_hot_constraint(x[0], n=-10)
+    ising.add_constraint(NHotConstraint(variables=x[0, :], n=1, label="l1"))
+    assert len(ising.get_constraints()) == 1
+    assert "l1" in ising.get_constraints()
+    assert "l2" not in ising.get_constraints()
+    assert isinstance(ising.get_constraints_by_label("l1"), NHotConstraint)
+    assert ising.get_constraints_by_label("l1")._n == 1
+    with pytest.raises(KeyError):
+        ising.get_constraints_by_label("l2")
 
-    with pytest.raises(ValueError):
-        ising.n_hot_constraint(x[0], n=0)
+    ising.add_constraint(EqualityConstraint(variables_1=x[1, :], variables_2=x[2, :], label="l2"))
+    assert len(ising.get_constraints()) == 2
+    assert "l1" in ising.get_constraints()
+    assert "l2" in ising.get_constraints()
+    assert isinstance(ising.get_constraints_by_label("l2"), EqualityConstraint)
 
 
 def test_logical_model_n_hot_constraint_typeerror(ising):
-    z = ising.variables("z", shape=(4, 4, 4))
-
-    with pytest.raises(TypeError):
-        ising.n_hot_constraint("invalid type")
+    ising.variables("z", shape=(4, 4, 4))
 
     # TODO: This error should be raises, but not implemented yet.
     # a = pyqubo.Spin("a")
     # with pytest.raises(ValueError):
-    #     ising.n_hot_constraint(a)
-
-    with pytest.raises(TypeError):
-        ising.n_hot_constraint(z[0, 0, :], n="invalid type")
-
-    with pytest.raises(TypeError):
-        ising.n_hot_constraint(z[0, 0, :], scale="invalid type")
-
-    with pytest.raises(TypeError):
-        ising.n_hot_constraint(z[0, 0, :], label=12345)
-
-    with pytest.raises(TypeError):
-        ising.n_hot_constraint(z[0, 0, :], label=12345)
-
-    with pytest.raises(TypeError):
-        ising.n_hot_constraint(["a", "b"], n=1)
-
-
-def test_logical_model_dependency_constraint(ising):
-    x = ising.variables("x", shape=(2, 3))
-
-    with pytest.raises(NotImplementedError):
-        ising.dependency_constraint(x[0, :], x[1, :])
+    #     ising.add_constraint(NHotConstraint(a))
 
 
 ################################
@@ -434,12 +437,28 @@ def _create_ising_model_for_eq():
     model.remove_interaction(target=x[2])
     model.fix_variable(target=x[3], value=1)
 
-    model.n_hot_constraint(target=z, n=1)
+    model.add_constraint(NHotConstraint(variables=z, n=1))
 
     return model
 
 
 def test_logical_model_repr(ising):
+    x = ising.variables(name="x", shape=(10, 10))
+    ising.add_interaction(x[0][0], coefficient=10.0)
+    ising.add_interaction((x[1][0], x[1][1]), coefficient=11.0)
+
+    assert isinstance(ising.__repr__(), str)
+    assert "LogicalModel({" in ising.__repr__()
+    assert "'mtype':" in ising.__repr__()
+    assert "'variables':" in ising.__repr__()
+    assert "'x':" in ising.__repr__()
+    assert '\'interactions\': [[1,"x[0][0]","x[0][0]","x[0][0]",null,' in ising.__repr__()
+    assert ',[2,"x[1][0]*x[1][1]",["x[1][0]","x[1][1]"],"x[1][0]","x[1][1]",' in ising.__repr__()
+    assert "'offset':" in ising.__repr__()
+    assert "'constraints':" in ising.__repr__()
+
+
+def test_logical_model_repr_empty_interactions(ising):
     ising.variables(name="x", shape=(10, 10))
 
     assert isinstance(ising.__repr__(), str)
@@ -447,12 +466,30 @@ def test_logical_model_repr(ising):
     assert "'mtype':" in ising.__repr__()
     assert "'variables':" in ising.__repr__()
     assert "'x':" in ising.__repr__()
-    assert "'interactions':" in ising.__repr__()
+    assert "'interactions': 'Empty'" in ising.__repr__()
     assert "'offset':" in ising.__repr__()
     assert "'constraints':" in ising.__repr__()
 
 
 def test_logical_model_str(ising):
+    x = ising.variables(name="x", shape=(10, 10))
+    ising.add_interaction(x[0][0], coefficient=10.0)
+    ising.add_interaction((x[1][0], x[1][1]), coefficient=11.0)
+
+    assert isinstance(ising.__str__(), str)
+    assert "LOGICAL MODEL" in ising.__str__()
+    assert "mtype: ising" in ising.__str__()
+    assert "variables: ['x']" in ising.__str__()
+    assert "name: x" in ising.__str__()
+    assert "Array([[Spin(x[0][0])," in ising.__str__()
+    assert "interactions:" in ising.__str__()
+    assert "    0     1          x[0][0]             x[0][0]" in ising.__str__()
+    assert "    1     2  x[1][0]*x[1][1]  (x[1][0], x[1][1])" in ising.__str__()
+    assert "offset: 0.0" in ising.__str__()
+    assert "constraints:" in ising.__str__()
+
+
+def test_logical_model_str_empty_interactions(ising):
     ising.variables(name="x", shape=(10, 10))
 
     assert isinstance(ising.__str__(), str)
@@ -460,6 +497,8 @@ def test_logical_model_str(ising):
     assert "mtype: ising" in ising.__str__()
     assert "variables: ['x']" in ising.__str__()
     assert "name: x" in ising.__str__()
+    assert "Array([[Spin(x[0][0])," in ising.__str__()
     assert "interactions:" in ising.__str__()
-    assert "offset:" in ising.__str__()
+    assert "Empty" in ising.__str__()
+    assert "offset: 0.0" in ising.__str__()
     assert "constraints:" in ising.__str__()

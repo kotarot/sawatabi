@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 # Copyright 2021 Kotaro Terada
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,23 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sawatabi
+from sawatabi.model.constraint.abstract_constraint import AbstractConstraint
+from sawatabi.model.constraint.equality_constraint import EqualityConstraint
+from sawatabi.model.constraint.zero_or_one_hot_constraint import ZeroOrOneHotConstraint
+from sawatabi.model.constraint.n_hot_constraint import NHotConstraint
 
-
-def n_hot_s_of_n_ising(s, n):
-    print("=== N-hot (s of n) ising ===")
-    print("s =", s)
-    print("n =", n)
-
-    model = sawatabi.model.LogicalModel(mtype="ising")
-    x = model.variables("x", shape=(s,))
-
-    model.n_hot_constraint(x, n=n)
-
-
-def main():
-    n_hot_s_of_n_ising(s=100, n=1)
-
-
-if __name__ == "__main__":
-    main()
+__all__ = ["AbstractConstraint", "EqualityConstraint", "NHotConstraint", "ZeroOrOneHotConstraint"]

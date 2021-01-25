@@ -18,6 +18,7 @@ import pytest
 
 import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
+from sawatabi.model.constraint import NHotConstraint
 
 
 @pytest.fixture
@@ -126,7 +127,7 @@ def test_logical_model_to_physical_with_n_hot_constraint_qubo(n, s):
     # n out of s variables should be 1
     model = LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(s,))
-    model.n_hot_constraint(x, n=n)
+    model.add_constraint(NHotConstraint(x, n=n))
     physical = model.to_physical()
 
     for i in range(s):
@@ -144,12 +145,12 @@ def test_logical_model_to_physical_with_n_hot_constraint_ising(n, s):
     # n out of s spins should be +1
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(s,))
-    model.n_hot_constraint(x, n=n)
+    model.add_constraint(NHotConstraint(x, n=n))
     physical = model.to_physical()
 
     for i in range(s):
         if s != 2 * n:
-            assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == -1.0 * (s - 2 * n)
+            assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == -0.5 * (s - 2 * n)
         else:
             assert f"x[{i}]" not in physical._raw_interactions[constants.INTERACTION_LINEAR]
     for i in range(s):
@@ -157,15 +158,16 @@ def test_logical_model_to_physical_with_n_hot_constraint_ising(n, s):
             l1 = f"x[{i}]"
             l2 = f"x[{j}]"
             if l1 < l2:
-                assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(l1, l2)] == -1.0
+                assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(l1, l2)] == -0.5
 
 
 def test_logical_model_to_physical_with_n_hot_constraint_randomly_qubo(qubo):
     x = qubo.variables("x", shape=(4,))
-    qubo.n_hot_constraint(x[(slice(0, 2),)], n=1, strength=10)
-    qubo.n_hot_constraint(x[1], n=1, strength=10)
-    qubo.n_hot_constraint(x[2], n=1, strength=10)
-    qubo.n_hot_constraint(x, n=1, strength=10)
+    c = NHotConstraint(x[(slice(0, 2),)], n=1, strength=10)
+    qubo.add_constraint(c)
+    c.add_variable(x[1])
+    c.add_variable(x[2])
+    c.add_variable(x)
     physical = qubo.to_physical()
 
     for i in range(3):
@@ -177,20 +179,20 @@ def test_logical_model_to_physical_with_n_hot_constraint_randomly_qubo(qubo):
 
 def test_logical_model_to_physical_with_n_hot_constraint_randomly_ising(ising):
     x = ising.variables("x", shape=(4,))
-    ising.n_hot_constraint(x[(slice(0, 2),)], n=1)
+    c = NHotConstraint(x[(slice(0, 2),)], n=1)
+    ising.add_constraint(c)
+    c.add_variable(x[1])
     physical = ising.to_physical()
-    ising.n_hot_constraint(x[1], n=1)
+    c.add_variable(x[2])
     physical = ising.to_physical()
-    ising.n_hot_constraint(x[2], n=1)
-    physical = ising.to_physical()
-    ising.n_hot_constraint(x, n=1)
+    c.add_variable(x)
     physical = ising.to_physical()
 
     for i in range(3):
-        assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == -2.0
+        assert physical._raw_interactions[constants.INTERACTION_LINEAR][f"x[{i}]"] == -1.0
     for i in range(2):
         for j in range(i + 1, 3):
-            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -1.0
+            assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -0.5
 
 
 def test_logical_model_to_physical_with_placeholder(ising):
@@ -406,7 +408,7 @@ def ising_y22():
 def ising_z3():
     model = LogicalModel(mtype="ising")
     z = model.variables("z", shape=(3,))
-    model.n_hot_constraint(target=z, n=1)
+    model.add_constraint(NHotConstraint(variables=z, n=1))
     return model
 
 
@@ -503,12 +505,16 @@ def test_logical_model_merge_with_constraints(ising_x22, ising_z3):
     assert "Default N-hot Constraint" in ising_x22.get_constraints()
     assert ising_x22.get_constraints_by_label("Default N-hot Constraint")._n == 1
     assert len(ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
-    assert len(ising_x22._interactions_array["name"]) == 2 + 6
+    assert len(ising_x22._interactions_array["name"]) == 2
+
+    physical = ising_x22.to_physical()
+    assert len(physical._raw_interactions[constants.INTERACTION_LINEAR]) == 1 + 3
+    assert len(physical._raw_interactions[constants.INTERACTION_QUADRATIC]) == 1 + 3
 
 
 def test_logical_model_merge_with_constraints_both(ising_x22, ising_z3):
     z = ising_x22.variables("z", shape=(2,))
-    ising_x22.n_hot_constraint(z, n=2, label="my label")
+    ising_x22.add_constraint(NHotConstraint(z, n=2, label="my label"))
     ising_x22.merge(ising_z3)
 
     assert len(ising_x22._constraints) == 2
@@ -518,13 +524,17 @@ def test_logical_model_merge_with_constraints_both(ising_x22, ising_z3):
     assert len(ising_x22.get_constraints_by_label("Default N-hot Constraint")._variables) == 3
     assert ising_x22.get_constraints_by_label("my label")._n == 2
     assert len(ising_x22.get_constraints_by_label("my label")._variables) == 2
-    assert len(ising_x22._interactions_array["name"]) == 2 + 3 + 6
+    assert len(ising_x22._interactions_array["name"]) == 2
+
+    physical = ising_x22.to_physical()
+    assert len(physical._raw_interactions[constants.INTERACTION_LINEAR]) == 1 + 3
+    assert len(physical._raw_interactions[constants.INTERACTION_QUADRATIC]) == 1 + 3
 
 
 def test_logical_model_merge_with_constraints_both_invalid(ising_x22, ising_z3):
     # Both models have constraints with the same label name, cannot merge.
     z = ising_x22.variables("z", shape=(2,))
-    ising_x22.n_hot_constraint(z, n=1)
+    ising_x22.add_constraint(NHotConstraint(z, n=1))
     with pytest.raises(ValueError):
         ising_x22.merge(ising_z3)
 
@@ -563,12 +573,34 @@ def test_logical_model_merge_with_fix(ising_x22, ising_x44):
     assert ising_x22.get_offset() == 22.0 * 2.0
 
 
-def test_logical_model_merge_x22_a22_invalid(ising_x22, qubo_a22):
-    with pytest.raises(ValueError):
-        ising_x22.merge(qubo_a22)
+def test_logical_model_merge_x22_and_a22(ising_x22, qubo_a22):
+    # Merging QUBO model into Ising model
+    ising_x22.merge(qubo_a22)
 
-    with pytest.raises(ValueError):
-        qubo_a22.merge(ising_x22)
+    assert ising_x22.get_mtype() == constants.MODEL_ISING
+    assert list(ising_x22.get_variables().keys()) == ["x", "a"]
+    assert ising_x22.select_interaction("body == 1 and key_0 == 'x[0][0]'")["coefficient"].values[0] == 10.0
+    assert ising_x22.select_interaction("body == 2 and key_0 == 'x[0][0]' and key_1 == 'x[1][1]'")["coefficient"].values[0] == 11.0
+    assert ising_x22.select_interaction("body == 1 and key_0 == 'a[0][0]'")["coefficient"].values[0] == 5.0
+    assert ising_x22.select_interaction("body == 1 and key_0 == 'a[0][0]'")["coefficient"].values[1] == 2.75
+    assert ising_x22.select_interaction("body == 1 and key_0 == 'a[1][1]'")["coefficient"].values[0] == 2.75
+    assert ising_x22.select_interaction("body == 2 and key_0 == 'a[0][0]' and key_1 == 'a[1][1]'")["coefficient"].values[0] == 2.75
+    assert ising_x22._offset == 7.75
+
+
+def test_logical_model_merge_a22_and_x22(qubo_a22, ising_x22):
+    # Merging Ising model into QUBO model
+    qubo_a22.merge(ising_x22)
+
+    assert qubo_a22.get_mtype() == constants.MODEL_QUBO
+    assert list(qubo_a22.get_variables().keys()) == ["a", "x"]
+    assert qubo_a22.select_interaction("body == 1 and key_0 == 'a[0][0]'")["coefficient"].values[0] == 10.0
+    assert qubo_a22.select_interaction("body == 2 and key_0 == 'a[0][0]' and key_1 == 'a[1][1]'")["coefficient"].values[0] == 11.0
+    assert qubo_a22.select_interaction("body == 1 and key_0 == 'x[0][0]'")["coefficient"].values[0] == 20.0
+    assert qubo_a22.select_interaction("body == 1 and key_0 == 'x[0][0]'")["coefficient"].values[1] == -22.0
+    assert qubo_a22.select_interaction("body == 1 and key_0 == 'x[1][1]'")["coefficient"].values[0] == -22.0
+    assert qubo_a22.select_interaction("body == 2 and key_0 == 'x[0][0]' and key_1 == 'x[1][1]'")["coefficient"].values[0] == 44.0
+    assert qubo_a22._offset == 1.0
 
 
 def test_logical_model_merge_x22_x999_invalid(ising_x22, ising_x999):

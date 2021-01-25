@@ -16,7 +16,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import sawatabi.constants as constants
 from sawatabi.model import LogicalModel
+from sawatabi.model.constraint import NHotConstraint
 
 
 @pytest.fixture
@@ -532,7 +534,7 @@ def test_logical_model_delete_dealing_with_nhot_constraints_qubo():
     x = model.variables("x", shape=(4,))
     default_label = "Default N-hot Constraint"
 
-    model.n_hot_constraint(x, n=1, strength=1.0)
+    model.add_constraint(NHotConstraint(x, n=1, strength=1.0))
     assert len(model.get_constraints()) == 1
     assert default_label in model.get_constraints()
     assert model.get_constraints_by_label(default_label)._n == 1
@@ -544,8 +546,10 @@ def test_logical_model_delete_dealing_with_nhot_constraints_qubo():
     assert default_label in model.get_constraints()
     assert model.get_constraints_by_label(default_label)._n == 1
     assert len(model.get_constraints_by_label(default_label)._variables) == 3
-    assert model._interactions[model._interactions["name"] == f"x[1] ({default_label})"]["coefficient"].values[0] == 1.0
-    assert model._interactions[model._interactions["name"] == f"x[1]*x[2] ({default_label})"]["coefficient"].values[0] == -2.0
+
+    physical = model.to_physical()
+    assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[1]"] == 1.0
+    assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][("x[1]", "x[2]")] == -2.0
 
 
 def test_logical_model_delete_invalid_argument(ising):
