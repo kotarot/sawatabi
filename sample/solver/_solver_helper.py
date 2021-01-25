@@ -99,6 +99,36 @@ def _create_simple_ising_model_with_only_2_body():
     return model.to_physical()
 
 
+def _create_simple_2x2_ising_model_without_active_var():
+    # Optimal solution of this ising model:
+    #   - All spins (except a[0][0]): +1
+    #   - Energy = 0.0
+    model = sawatabi.model.LogicalModel(mtype="ising")
+
+    a = model.variables("a", shape=(2, 2))
+    model.add_interaction(a[0, 1], coefficient=2.0)
+    model.add_interaction(a[1, 0], coefficient=2.0)
+    model.add_interaction(a[1, 1], coefficient=2.0)
+    model._offset = 6.0
+
+    return model.to_physical()
+
+
+def _create_simple_2x2_qubo_model_without_acitve_var():
+    # Optimal solution of this qubo model:
+    #   - All spins (except a[0][0]): +1
+    #   - Energy = 0.0
+    model = sawatabi.model.LogicalModel(mtype="qubo")
+
+    a = model.variables("b", shape=(2, 2))
+    model.add_interaction(a[0, 1], coefficient=2.0)
+    model.add_interaction(a[1, 0], coefficient=2.0)
+    model.add_interaction(a[1, 1], coefficient=2.0)
+    model._offset = 6.0
+
+    return model.to_physical()
+
+
 def _print_resultset(resultset):
     print("\nresultset")
     print(resultset)

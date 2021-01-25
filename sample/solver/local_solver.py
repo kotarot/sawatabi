@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from _solver_helper import _create_ising_model, _create_qubo_model, _print_resultset
+from _solver_helper import _create_ising_model, _create_qubo_model, _create_simple_2x2_ising_model_without_active_var, _create_simple_2x2_qubo_model_without_active_var, _print_resultset
 
 import sawatabi
 
@@ -40,9 +40,31 @@ def solver_local_qubo():
     _print_resultset(resultset)
 
 
+def solver_local_simple_2x2_ising_without_active_var():
+    print("\n=== solver (simple ising 2x2) ===")
+    physical = _create_simple_2x2_ising_model_without_active_var()
+
+    solver = sawatabi.solver.LocalSolver(exact=False)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
+
+    _print_resultset(resultset)
+
+
+def solver_local_simple_2x2_qubo_without_active_var():
+    print("\n=== solver (simple qubo 2x2) ===")
+    physical = _create_simple_2x2_qubo_model_without_active_var()
+
+    solver = sawatabi.solver.LocalSolver(exact=False)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
+
+    _print_resultset(resultset)
+
+
 def main():
     solver_local_ising()
     solver_local_qubo()
+    solver_local_simple_2x2_ising_without_active_var()
+    solver_local_simple_2x2_qubo_without_active_var()
 
 
 if __name__ == "__main__":
