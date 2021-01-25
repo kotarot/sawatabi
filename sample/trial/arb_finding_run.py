@@ -15,17 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import math
 
 import numpy as np
 import optuna
+import pandas as pd
 
 import sawatabi
 
-#import logging
-#logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
-import pandas as pd
 pd.options.display.max_columns = None
 pd.options.display.width = None
 pd.options.display.max_colwidth = 80
