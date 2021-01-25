@@ -492,16 +492,6 @@ class LogicalModel(AbstractModel):
             constraint_model = constraint.to_model()
             self.merge(constraint_model)
 
-        # label_to_index / index_to_label
-        current_index = 0
-        for val in self._variables.values():
-            flattened = list(Functions._flatten(val.bit_list))
-            for v in flattened:
-                if v.label not in self._deleted:
-                    physical._label_to_index[v.label] = current_index
-                    physical._index_to_label[current_index] = v.label
-                    current_index += 1
-
         # group by key
         for i in range(self._interactions_length):
             if self._interactions_array["removed"][i]:
@@ -537,10 +527,23 @@ class LogicalModel(AbstractModel):
         for k, v in linear.items():
             if v != 0.0:
                 physical.add_interaction(k, body=constants.INTERACTION_LINEAR, coefficient=v)
+                physical._variables_set.add(k)
         for k, v in quadratic.items():
             if v != 0.0:
                 physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
+                physical._variables_set.add(k[0])
+                physical._variables_set.add(k[1])
         physical._offset = self._offset
+
+        # label_to_index / index_to_label
+        current_index = 0
+        for val in self._variables.values():
+            flattened = list(Functions._flatten(val.bit_list))
+            for v in flattened:
+                if (v.label not in self._deleted) and (v.label in physical._variables_set):
+                    physical._label_to_index[v.label] = current_index
+                    physical._index_to_label[current_index] = v.label
+                    current_index += 1
 
         # save the last physical model
         self._previous_physical_model = physical
