@@ -100,6 +100,39 @@ def test_window_algorithm_npp_10():
     os.remove(f"{output_path}-00000-of-00001")
 
 
+def test_window_algorithm_npp_invalid_mtype():
+    output_path = "tests/algorithm/output.txt"
+
+    algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "input.reassign_timestamp": True}
+
+    pipeline_args = ["--runner=DirectRunner"]
+    # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
+
+    with pytest.raises(ValueError):
+        Window.create_pipeline(
+            algorithm_options=algorithm_options,
+            input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_10.txt"),
+            map_fn=npp_window.npp_mapping,
+            solve_fn=npp_window.npp_solving,
+            unmap_fn=npp_window.npp_unmapping,
+            output_fn=IO.write_to_text(path=output_path),
+            initial_mtype="invalid",
+            pipeline_args=pipeline_args,
+        )
+
+    with pytest.raises(TypeError):
+        Window.create_pipeline(
+            algorithm_options=algorithm_options,
+            input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_10.txt"),
+            map_fn=npp_window.npp_mapping,
+            solve_fn=npp_window.npp_solving,
+            unmap_fn=npp_window.npp_unmapping,
+            output_fn=IO.write_to_text(path=output_path),
+            initial_mtype=123,
+            pipeline_args=pipeline_args,
+        )
+
+
 def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
     algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
 
