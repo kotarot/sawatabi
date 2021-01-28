@@ -31,45 +31,46 @@ pd.options.display.width = None
 pd.options.display.max_colwidth = 80
 
 
-def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=False):
-    print(f"\n== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, num_reads={num_reads}, num_sweeps={num_sweeps}, seed={seed}) ==")
+# Generate sample problem
+NUM_CURRENCIES = 5
+index_to_currency = {0: "CAD", 1: "CNY", 2: "EUR", 3: "JPY", 4: "USD"}
+currency_to_index = {"CAD": 0, "CNY": 1, "EUR": 2, "JPY": 3, "USD": 4}
+conversion_rates = {
+    "CAD": {
+        "CNY": 5.10327,
+        "EUR": 0.68853,
+        "JPY": 78.94,
+        "USD": 0.75799,
+    },
+    "CNY": {
+        "CAD": 0.19586,
+        "EUR": 0.13488,
+        "JPY": 15.47,
+        "USD": 0.14864,
+    },
+    "EUR": {
+        "CAD": 1.45193,
+        "CNY": 7.41088,
+        "JPY": 114.65,
+        "USD": 1.10185,
+    },
+    "JPY": {
+        "CAD": 0.01266,
+        "CNY": 0.06463,
+        "EUR": 0.00872,
+        "USD": 0.00961,
+    },
+    "USD": {
+        "CAD": 1.31904,
+        "CNY": 6.72585,
+        "EUR": 0.90745,
+        "JPY": 104.05,
+    },
+}
 
-    # Generate sample problem
-    NUM_CURRENCIES = 5
-    index_to_currency = {0: "CAD", 1: "CNY", 2: "EUR", 3: "JPY", 4: "USD"}
-    currency_to_index = {"CAD": 0, "CNY": 1, "EUR": 2, "JPY": 3, "USD": 4}
-    conversion_rates = {
-        "CAD": {
-            "CNY": 5.10327,
-            "EUR": 0.68853,
-            "JPY": 78.94,
-            "USD": 0.75799,
-        },
-        "CNY": {
-            "CAD": 0.19586,
-            "EUR": 0.13488,
-            "JPY": 15.47,
-            "USD": 0.14864,
-        },
-        "EUR": {
-            "CAD": 1.45193,
-            "CNY": 7.41088,
-            "JPY": 114.65,
-            "USD": 1.10185,
-        },
-        "JPY": {
-            "CAD": 0.01266,
-            "CNY": 0.06463,
-            "EUR": 0.00872,
-            "USD": 0.00961,
-        },
-        "USD": {
-            "CAD": 1.31904,
-            "CNY": 6.72585,
-            "EUR": 0.90745,
-            "JPY": 104.05,
-        },
-    }
+
+def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=False):
+    print(f"== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, num_reads={num_reads}, num_sweeps={num_sweeps}, seed={seed}, exact={exact}) ==")
 
     # Create model
     model = sawatabi.model.LogicalModel(mtype="qubo")
@@ -159,7 +160,8 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
         return True
 
     def interpret(sample, record, satisfied):
-        gain_max = -1.0
+        max_gain = -1.0
+        max_cycle = None
         num_feasible = num_profitable = num_optimal = 0
         for start in range(NUM_CURRENCIES):
             #print(f"starting with: {index_to_currency[start]} #{start}")
@@ -199,7 +201,9 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
                     c_to = index_to_currency[cycle[i + 1]]
                     gain *= conversion_rates[c_from][c_to]
                 #print(f"  gain #{start}: {gain}")
-                gain_max = max(gain_max, gain)
+                if max_gain < gain:
+                    max_cycle = cycle
+                max_gain = max(max_gain, gain)
 
                 if gain > 1.0:
                     #print(f"  cycle #{start}: {cycle}")
@@ -217,10 +221,17 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
         # - 1 if there is at least one feasible cycle, 0 otherwise,
         # - 1 if there is at least one cycle that can obtain a positive gain, 0 otherwise,
         # - 1 if there is at least one cycle that can obtain the maximum gain, 0 otherwise.
-        return min(num_feasible, 1), min(num_profitable, 1), min(num_optimal, 1), gain_max
+        return min(num_feasible, 1), min(num_profitable, 1), min(num_optimal, 1), max_gain, max_cycle
+
+    def cycle_in_currency_name(cycle):
+        names = []
+        for c in cycle:
+            names.append(index_to_currency[c])
+        return " -> ".join(names)
 
     energy_min = 999999.99
-    gain_max = -1.0
+    max_gain = -1.0
+    max_cycle = None
     num_feasible = num_profitable = num_optimal = 0
     for record in resultset.record:
         sample = dict(zip(resultset.variables, record.sample))
@@ -231,23 +242,27 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
         satisfied = check_constraints(sample, record)
         #print(satisfied)
         if satisfied:
-            nf, np, no, gain = interpret(sample, record, satisfied)
+            nf, np, no, gain, cycle = interpret(sample, record, satisfied)
             num_feasible += nf
             num_profitable += np
             num_optimal += no
-            gain_max = max(gain_max, gain)
+            if max_gain < gain:
+                max_cycle = cycle
+            max_gain = max(max_gain, gain)
 
     assert 0 <= num_feasible <= num_reads
     assert 0 <= num_profitable <= num_feasible
     assert 0 <= num_optimal <= num_profitable
 
     #print("energy_min:", energy_min)
-    print("num_feasible:", num_feasible)
-    print("num_profitable:", num_profitable)
-    print("num_optimal:", num_optimal)
-    print("gain_max:", gain_max)
+    if not exact:
+        print("num_feasible:", num_feasible)
+        print("num_profitable:", num_profitable)
+        print("num_optimal:", num_optimal)
+    print("profit:", max_gain)
+    print("cycle:", cycle_in_currency_name(max_cycle))
 
-    return num_optimal
+    return num_optimal, max_cycle
 
 
 def objective(trial):
@@ -258,19 +273,40 @@ def objective(trial):
 
     num_optimal = 0
     for seed in [11, 22, 33, 44, 55]:
-        num_optimal += arb_finding_run(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
+        opt, _ = arb_finding_run(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
+        num_optimal += opt
 
     return num_optimal
 
 
 def main():
     # Single run
-    arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
-    arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345)
+    #arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
+    #arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345)
+
+    # Update conversion rate one by one
+    np.random.seed(12345)
+    _, prev_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
+    print("")
+    for i in np.random.permutation(list(range(NUM_CURRENCIES))):
+        for j in np.random.permutation(list(range(NUM_CURRENCIES))):
+            if i != j:
+                change_rate = np.random.normal(loc=1.0, scale=0.001)
+                currency_i = index_to_currency[i]
+                currency_j = index_to_currency[j]
+                print(f"Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
+                conversion_rates[currency_i][currency_j] *= change_rate
+                print(f" to {conversion_rates[currency_i][currency_j]}")
+                _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
+                if prev_cycle == current_cycle:
+                    print("\033[32mcycle unchanged.\033[0m\n")
+                else:
+                    print("\033[31mcycle changed!\033[0m\n")
+                prev_cycle = current_cycle
 
     """
     Experiments Note:
-    - A bigger log_base is better, since energy decrement doesn't be steep when rate is small (near 0). Base is 100 for now.
+    - A bigger log_base is better, since energy decrement isn't be steep even if rate is small (near 0) if log_base is large. Base is 100 for now.
     - It's enough that M_0 = 1.
     - When M_0 = 1, good possible pairs of M_1 and M_2 are: (1.0, 2.0), (8.0, 8.0), (8.0, 16.0), (16.0, 16.0), (32.0, 32.0).
     """
