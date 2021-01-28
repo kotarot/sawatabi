@@ -26,6 +26,7 @@ packages = [
     package_name,
     package_name + ".algorithm",
     package_name + ".model",
+    package_name + ".model.constraint",
     package_name + ".solver",
     package_name + ".utils",
 ]
