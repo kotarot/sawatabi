@@ -279,14 +279,22 @@ def objective(trial):
     return num_optimal
 
 
-def main():
+def single_run():
     # Single run
-    #arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
-    #arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345)
+    arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
+    arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345)
 
+
+def update_conversion_rate_one_by_one():
     # Update conversion rate one by one
+    # and find the optimal solution.
+
+    # Experiment options
+    exact = False
+    use_state = False
+
     np.random.seed(12345)
-    _, prev_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
+    _, prev_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
     print("")
     for i in np.random.permutation(list(range(NUM_CURRENCIES))):
         for j in np.random.permutation(list(range(NUM_CURRENCIES))):
@@ -297,25 +305,30 @@ def main():
                 print(f"Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
                 conversion_rates[currency_i][currency_j] *= change_rate
                 print(f" to {conversion_rates[currency_i][currency_j]}")
-                _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=True)
+
+                _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
                 if prev_cycle == current_cycle:
                     print("\033[32mcycle unchanged.\033[0m\n")
                 else:
                     print("\033[31mcycle changed!\033[0m\n")
                 prev_cycle = current_cycle
 
+
+def find_parameters():
     """
     Experiments Note:
     - A bigger log_base is better, since energy decrement isn't be steep even if rate is small (near 0) if log_base is large. Base is 100 for now.
     - It's enough that M_0 = 1.
     - When M_0 = 1, good possible pairs of M_1 and M_2 are: (1.0, 2.0), (8.0, 8.0), (8.0, 16.0), (16.0, 16.0), (32.0, 32.0).
     """
-    #for m_0 in [1.0]:
-    #    for m_1 in [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0]:
-    #        for m_2 in [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0]:
-    #            if m_0 == 1.0 or m_1 == 1.0 or m_2 == 1.0:
-    #                arb_finding_run(log_base=100.0, M_0=m_0, M_1=m_1, M_2=m_2)
+    for m_0 in [1.0]:
+        for m_1 in [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0]:
+            for m_2 in [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0]:
+                if m_0 == 1.0 or m_1 == 1.0 or m_2 == 1.0:
+                    arb_finding_run(log_base=100.0, M_0=m_0, M_1=m_1, M_2=m_2)
 
+
+def find_parameters_using_optuna():
     # Tuning by Optuna
     """
     Environment: num_reads=1000, num_sweeps=1000
@@ -329,11 +342,18 @@ def main():
     Accuracy: 67.0
     Best hyperparameters: {'log_base': 52, 'm_0': 93, 'm_1': 62, 'm_2': 38}
     """
-    #study = optuna.create_study(direction="maximize")
-    #study.optimize(objective, n_trials=100)
-    #trial = study.best_trial
-    #print("Accuracy:", trial.value)
-    #print("Best hyperparameters:", trial.params)
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials=100)
+    trial = study.best_trial
+    print("Accuracy:", trial.value)
+    print("Best hyperparameters:", trial.params)
+
+
+def main():
+    #single_run()
+    update_conversion_rate_one_by_one()
+    #find_parameters()
+    #find_parameters_using_optuna()
 
 
 if __name__ == "__main__":
