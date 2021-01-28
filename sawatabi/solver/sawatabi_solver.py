@@ -46,7 +46,7 @@ class SawatabiSolver(AbstractSolver):
         pickup_mode=constants.PICKUP_MODE_RANDOM,
         seed=None,
     ):
-        self._check_argument_type(model, PhysicalModel)
+        self._check_argument_type("model", model, PhysicalModel)
 
         if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
             raise ValueError("Model cannot be empty.")

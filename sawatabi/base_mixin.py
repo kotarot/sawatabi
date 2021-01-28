@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import varname
-
 import sawatabi.constants as constants
 
 
@@ -31,8 +29,7 @@ class BaseMixin:
         return article
 
     @staticmethod
-    def _check_argument_type(value, atype):
-        name = varname.nameof(value)
+    def _check_argument_type(name, value, atype):
         if not isinstance(value, atype):
             if isinstance(atype, tuple):
                 typestr = [t.__name__ for t in atype]
@@ -43,8 +40,7 @@ class BaseMixin:
             raise TypeError(f"'{name}' must be {article} {typestr}.")
 
     @staticmethod
-    def _check_argument_type_in_tuple(values, atype):
-        name = varname.nameof(values)
+    def _check_argument_type_in_tuple(name, values, atype):
         if len(values) == 0:
             raise TypeError(f"'{name}' must not be an empty tuple.")
         if not isinstance(atype, tuple):
@@ -59,8 +55,7 @@ class BaseMixin:
                 raise TypeError(f"All elements in tuple '{name}' must be one of {atypestr}.")
 
     @staticmethod
-    def _check_argument_type_in_list(values, atype):
-        name = varname.nameof(values)
+    def _check_argument_type_in_list(name, values, atype):
         if len(values) == 0:
             raise TypeError(f"'{name}' must not be an empty list.")
         if not isinstance(atype, tuple):
