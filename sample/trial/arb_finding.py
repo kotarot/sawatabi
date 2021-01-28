@@ -69,8 +69,8 @@ conversion_rates = {
 }
 
 
-def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=False):
-    print(f"== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, num_reads={num_reads}, num_sweeps={num_sweeps}, seed={seed}, exact={exact}) ==")
+def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=False, prev_sampleset=None):
+    print(f"== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, num_reads={num_reads}, num_sweeps={num_sweeps}, seed={seed}, exact={exact}, prev_sampleset={prev_sampleset is not None}) ==")
 
     # Create model
     model = sawatabi.model.LogicalModel(mtype="qubo")
@@ -109,29 +109,47 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
     # LocalSolver
     #'''
     solver = sawatabi.solver.LocalSolver(exact=exact)
-    resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, seed=seed)
+    if not prev_sampleset:
+        sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, seed=seed)
+    else:
+        initial_states = []
+
+        # Set initial_states based on the previous sampleset
+        record = sorted(prev_sampleset.record, key=lambda r: r.energy)  # sort by energy
+        for r in record:
+            sample = dict(zip(prev_sampleset.variables, r.sample))
+            initial_states.append(sample)
+
+        #print("Initialized with previous states.")
+        assert len(initial_states) == num_reads
+
+        # When using initial_states, use new beta_range to utilize the initial states
+        physical = model.to_physical()
+        default_beta_range = solver.default_beta_range(physical)
+        beta_range = (default_beta_range[0] * 100, default_beta_range[1])  # Tighten the initial temperature than the default temperature
+        sampleset = solver.solve(physical, num_reads=num_reads, num_sweeps=num_sweeps, initial_states=initial_states, initial_states_generator="none", seed=seed, beta_range=beta_range)
     #'''
 
     # D-Wave
     '''
     solver = sawatabi.solver.DWaveSolver()
-    resultset = solver.solve(model.to_physical(), chain_strength=2, num_reads=1000)
+    sampleset = solver.solve(model.to_physical(), chain_strength=2, num_reads=1000)
     '''
 
     # Optigan
     '''
     solver = sawatabi.solver.OptiganSolver()
-    resultset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
+    sampleset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
     '''
 
     # Sawatabi Solver
     '''
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=seed)
+    sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=seed)
     '''
 
     #print("\n== Result ==")
-    #print(resultset)
+    #print(sampleset)
 
     ################################
     # Solution
@@ -233,8 +251,8 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
     max_gain = -1.0
     max_cycle = None
     num_feasible = num_profitable = num_optimal = 0
-    for record in resultset.record:
-        sample = dict(zip(resultset.variables, record.sample))
+    for record in sampleset.record:
+        sample = dict(zip(sampleset.variables, record.sample))
         #print("")
         #print(sample)
         #print(record)
@@ -262,7 +280,7 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
     print("profit:", max_gain)
     print("cycle:", cycle_in_currency_name(max_cycle))
 
-    return num_optimal, max_cycle
+    return sampleset, num_optimal, max_cycle
 
 
 def objective(trial):
@@ -273,7 +291,7 @@ def objective(trial):
 
     num_optimal = 0
     for seed in [11, 22, 33, 44, 55]:
-        opt, _ = arb_finding_run(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
+        _, opt, _ = arb_finding_run(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
         num_optimal += opt
 
     return num_optimal
@@ -294,24 +312,31 @@ def update_conversion_rate_one_by_one():
     use_state = False
 
     np.random.seed(12345)
-    _, prev_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
+    prev_sampleset, _, prev_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
     print("")
+    n = 1
     for i in np.random.permutation(list(range(NUM_CURRENCIES))):
         for j in np.random.permutation(list(range(NUM_CURRENCIES))):
             if i != j:
                 change_rate = np.random.normal(loc=1.0, scale=0.001)
                 currency_i = index_to_currency[i]
                 currency_j = index_to_currency[j]
-                print(f"Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
+                print(f"[{n}] Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
                 conversion_rates[currency_i][currency_j] *= change_rate
                 print(f" to {conversion_rates[currency_i][currency_j]}")
 
-                _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
+                if not use_state:
+                    sampleset, _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
+                else:
+                    sampleset, _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact, prev_sampleset=prev_sampleset)
                 if prev_cycle == current_cycle:
                     print("\033[32mcycle unchanged.\033[0m\n")
                 else:
                     print("\033[31mcycle changed!\033[0m\n")
+
+                prev_sampleset = sampleset
                 prev_cycle = current_cycle
+                n += 1
 
 
 def find_parameters():
