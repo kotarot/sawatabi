@@ -53,7 +53,6 @@ setup(
         "pandas>=1.1.4,<2.0.0",
         "pyqubo>=0.4.0,<1.0.0",
         "PyYAML>=5.3.1,<6.0.0",
-        "varname>=0.5.6,<1.0.0",
     ],
     extras_require={
         "dev": [

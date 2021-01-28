@@ -28,7 +28,7 @@ class NHotConstraint(AbstractConstraint):
         else:
             self._variables = self._check_variables_and_to_set(variables)
 
-        self._check_argument_type(n, int)
+        self._check_argument_type("n", n, int)
         if n <= 0:
             raise ValueError("'n' must be a positive integer.")
         self._n = n

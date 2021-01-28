@@ -66,18 +66,18 @@ class LogicalModel(AbstractModel):
             self._variables[this_name] = name
             return self._variables[this_name]
 
-        self._check_argument_type(name, str)
-        self._check_argument_type(shape, tuple)
-        self._check_argument_type_in_tuple(shape, int)
+        self._check_argument_type("name", name, str)
+        self._check_argument_type("shape", shape, tuple)
+        self._check_argument_type_in_tuple("shape", shape, int)
 
         vartype = self._modeltype_to_vartype(self._mtype)
         self._variables[name] = pyqubo.Array.create(name, shape=shape, vartype=vartype)
         return self._variables[name]
 
     def append(self, name, shape=()):
-        self._check_argument_type(name, str)
-        self._check_argument_type(shape, tuple)
-        self._check_argument_type_in_tuple(shape, (int, np.int64, np.int32))
+        self._check_argument_type("name", name, str)
+        self._check_argument_type("shape", shape, tuple)
+        self._check_argument_type_in_tuple("shape", shape, (int, np.int64, np.int32))
 
         if name not in self._variables:
             # raise KeyError(f"Variables name '{name}' is not defined in the model.")
@@ -111,7 +111,7 @@ class LogicalModel(AbstractModel):
         self._update_interactions_dataframe_from_arrays()
 
         # Find interactions which interacts with the given variable.
-        self._check_argument_type(target, (pyqubo.Spin, pyqubo.Binary))
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
         return self._interactions[(self._interactions["key_0"] == target.label) | (self._interactions["key_1"] == target.label)]["name"].values
 
     ################################
@@ -130,17 +130,17 @@ class LogicalModel(AbstractModel):
         if not target:
             raise ValueError("'target' must be specified.")
 
-        self._check_argument_type(coefficient, (numbers.Number, pyqubo.core.Express, pyqubo.core.Coefficient))
-        self._check_argument_type(scale, (numbers.Number, pyqubo.core.Express))
-        self._check_argument_type(attributes, dict)
-        self._check_argument_type(timestamp, (int, float))
+        self._check_argument_type("coefficient", coefficient, (numbers.Number, pyqubo.core.Express, pyqubo.core.Coefficient))
+        self._check_argument_type("scale", scale, (numbers.Number, pyqubo.core.Express))
+        self._check_argument_type("attributes", attributes, dict)
+        self._check_argument_type("timestamp", timestamp, (int, float))
 
         interaction_info = self._get_interaction_info_from_target(target)
 
         body = interaction_info["body"]
         if name:
             # Use the given specific name
-            self._check_argument_type(name, str)
+            self._check_argument_type("name", name, str)
             internal_name = name
         else:
             # Automatically named by the default name
@@ -206,13 +206,13 @@ class LogicalModel(AbstractModel):
             raise ValueError("Both 'target' and 'name' cannot be specified simultaneously.")
 
         if coefficient is not None:
-            self._check_argument_type(coefficient, numbers.Number)
+            self._check_argument_type("coefficient", coefficient, numbers.Number)
         if scale is not None:
-            self._check_argument_type(scale, numbers.Number)
+            self._check_argument_type("scale", scale, numbers.Number)
         if attributes is not None:
-            self._check_argument_type(attributes, dict)
+            self._check_argument_type("attributes", attributes, dict)
         if timestamp is not None:
-            self._check_argument_type(timestamp, (int, float))
+            self._check_argument_type("timestamp", timestamp, (int, float))
 
         if target is not None:
             interaction_info = self._get_interaction_info_from_target(target)
@@ -222,7 +222,7 @@ class LogicalModel(AbstractModel):
             if not self._has_name(internal_name):
                 raise KeyError(f"An interaction named '{internal_name}' does not exist yet in the model. Need to be added before updating.")
             # Already given the specific name
-            self._check_argument_type(name, (str, tuple))
+            self._check_argument_type("name", name, (str, tuple))
         else:
             # Will be automatically named by the default name
             internal_name = interaction_info["name"]
@@ -315,7 +315,7 @@ class LogicalModel(AbstractModel):
 
         if name:
             # Already given the specific name
-            self._check_argument_type(name, (str, tuple))
+            self._check_argument_type("name", name, (str, tuple))
             internal_name = name
         else:
             # Will be automatically named by the default name
@@ -346,7 +346,7 @@ class LogicalModel(AbstractModel):
     def delete_variable(self, target):
         if not target:
             raise ValueError("'target' must be specified.")
-        self._check_argument_type(target, (pyqubo.Spin, pyqubo.Binary))
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
 
         # TODO: Delete variable physically
         self._deleted[target.label] = True
@@ -367,7 +367,7 @@ class LogicalModel(AbstractModel):
     def fix_variable(self, target, value):
         if not target:
             raise ValueError("'target' must be specified.")
-        self._check_argument_type(target, (pyqubo.Spin, pyqubo.Binary))
+        self._check_argument_type("target", target, (pyqubo.Spin, pyqubo.Binary))
 
         # Value check
         if self.get_mtype() == constants.MODEL_ISING:
@@ -416,12 +416,12 @@ class LogicalModel(AbstractModel):
     ################################
 
     def add_constraint(self, constraint):
-        self._check_argument_type(constraint, AbstractConstraint)
+        self._check_argument_type("constraint", constraint, AbstractConstraint)
         label = constraint.get_label()
         self._constraints[label] = constraint
 
     def remove_constraint(self, label):
-        self._check_argument_type(label, str)
+        self._check_argument_type("label", label, str)
         self._constraints.pop(label)
 
     ################################
@@ -445,7 +445,7 @@ class LogicalModel(AbstractModel):
     ################################
 
     def from_pyqubo(self, expression):
-        self._check_argument_type(expression, (pyqubo.Express, pyqubo.Model))
+        self._check_argument_type("expression", expression, (pyqubo.Express, pyqubo.Model))
 
         if isinstance(expression, pyqubo.Express):
             pyqubo_model = expression.compile()
@@ -591,7 +591,7 @@ class LogicalModel(AbstractModel):
         return physical
 
     def merge(self, other):
-        self._check_argument_type(other, LogicalModel)
+        self._check_argument_type("other", other, LogicalModel)
 
         # Check type
         if self._mtype != other._mtype:
@@ -827,7 +827,7 @@ class LogicalModel(AbstractModel):
         """
         Returns the value of the key for the given variable or interaction.
         """
-        self._check_argument_type(key, str)
+        self._check_argument_type("key", key, str)
         attributes = self.get_attributes(target, name)
         return attributes[key]
 

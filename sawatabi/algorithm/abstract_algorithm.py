@@ -167,7 +167,7 @@ class AbstractAlgorithm(BaseMixin):
         initial_mtype=sawatabi.constants.MODEL_ISING,
         pipeline_args=["--runner=DirectRunner"],
     ):
-        cls._check_argument_type(initial_mtype, str)
+        cls._check_argument_type("initial_mtype", initial_mtype, str)
         valid_initial_mtypes = [sawatabi.constants.MODEL_ISING, sawatabi.constants.MODEL_QUBO]
         if initial_mtype not in valid_initial_mtypes:
             raise ValueError(f"'initial_mtype' must be one of {valid_initial_mtypes}.")

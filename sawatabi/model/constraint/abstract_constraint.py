@@ -24,18 +24,18 @@ class AbstractConstraint(BaseMixin):
     def __init__(self, label="", strength=1.0):
         self._constraint_class = None
 
-        self._check_argument_type(label, str)
+        self._check_argument_type("label", label, str)
         if label == "":
             raise ValueError("'label' must not be empty.")
-        self._check_argument_type(strength, numbers.Number)
+        self._check_argument_type("strength", strength, numbers.Number)
 
         self._label = label
         self._strength = strength
 
     def _check_variables_and_to_set(self, variables):
-        self._check_argument_type(variables, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary, list, set))
+        self._check_argument_type("variables", variables, (pyqubo.Array, pyqubo.Spin, pyqubo.Binary, list, set))
         if isinstance(variables, list) or isinstance(variables, set):
-            self._check_argument_type_in_list(variables, (pyqubo.Spin, pyqubo.Binary))
+            self._check_argument_type_in_list("variables", variables, (pyqubo.Spin, pyqubo.Binary))
         if isinstance(variables, set):
             return variables
         else:
