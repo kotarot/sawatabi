@@ -81,6 +81,7 @@ setup(
             "seaborn>=0.11.0,<1.0.0",
         ],
         "trial": [
+            "geopy>=2.0.0,<3.0.0",
             "optuna>=2.4.0,<3.0.0",
             "python-Levenshtein>=0.12.0,<1.0.0",
         ],
