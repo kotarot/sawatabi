@@ -53,28 +53,19 @@ def tsp_mapping(prev_model: sawatabi.model.logical_model.LogicalModel, curr_data
   model : sawatabi.model.logical_model.LogicalModel
     ある時刻の window 内で保持したデータで構築した TSP モデル
   """
-  # if prev_model.get_mtype() == "ising":  # convert Ising model to qubo
-  if prev_model is None:
-    model = prev_model.to_qubo()
+  model = sawatabi.model.LogicalModel(mtype="qubo")
+
+  #print(f"incoming: {incoming}", type(incoming))
+  #print(f"curr_data: {curr_data}", type(curr_data))
+  #print(f"outgoing: {outgoing}", type(outgoing))
 
   # prepare binary vector with bit(i, j)
-  n_city = len(incoming)
-  binary_vector = Array.create('c', (n_city, n_city), 'BINARY')
-  # print(binary_vector)
-  print(f"incoming: {incoming}", type(incoming))
-  print(f"curr_data: {curr_data}", type(curr_data))
-  print(f"outgoing: {outgoing}", type(outgoing))
-
-  if len(incoming) > 0:
-    x = model.append("city", shape=(n_city, n_city))  # Update variables
-    print(f"x: {x}")
+  n_city = len(curr_data)
+  if n_city > 0:
+    binary_vector = model.append("city", shape=(n_city, n_city))  # Update variables
+    #print(f"binary_vector: {binary_vector}")
   else:
-    x = model.get_variables_by_name(name="city")
-    print(f"x: {x}")
-
-  print(f"model: {model}", type(model))
-  print(prev_model)
-  # print(f"x: {x}", type(x))
+    return model
 
   # Constraint not to visit more than two cities at the same time.
   time_const = 0.0
@@ -86,25 +77,14 @@ def tsp_mapping(prev_model: sawatabi.model.logical_model.LogicalModel, curr_data
   for j in range(n_city):
     city_const += Constraint((Sum(0, n_city, lambda i: binary_vector[i, j]) - 1) ** 2, label="city{}".format(j))
 
-  traveling_distance = get_traveling_distance(n_city, list(incoming[1][1].values()), binary_vector)
-  hamiltonian_tsp = traveling_distance + Placeholder('time') * time_const + Placeholder('city') * city_const
+  n_cities = [list(c[1][1].values())[0] for c in curr_data]
+  traveling_distance = get_traveling_distance(n_city, n_cities, binary_vector)
+  hamiltonian_tsp = traveling_distance + 17.5 * time_const + 15.0 * city_const
 
   # qubo, offset, feed_dict_tsp = create_tsp_qubo(hamiltonian_tsp, 17.5, 15.0)
   model.from_pyqubo(hamiltonian_tsp)
 
-  for add_element in incoming:
-    for curr_element in curr_data:
-      if add_element[0] > curr_element[0]:
-        print(add_element[0], curr_element[0])
-        idx_add_element = add_element[1][1].values()
-        idx_curr_element = curr_element[1][1].values()
-        coefficient = -1.0 * add_element[1][1].values() * curr_element[1][1].values()
-        print(x[idx_add_element[0]])
-        model.add_interaction(target=(x[idx_add_element[0]], x[idx_curr_element[0]]), coefficient=coefficient)
-
-  for out_element in outgoing:
-    idx = out_element[0]
-    model.delete_variable(target=x[idx])
+  #print(f"model: {model}", type(model))
 
   return model
 
@@ -121,7 +101,7 @@ def get_traveling_distance(n_city, n_cities, x):
   return distance
 
 
-def tsp_unmapping(result_set: dict, elements: [(int, {str: (float, float)})]):
+def tsp_unmapping(result_set: dict, elements: [(int, {str: (float, float)})], incoming, outgoing):
   """
   Unmapping -- Decode spins to a problem solution
   ここにアニーリング結果をルートの結果として解釈するコードを書く
@@ -140,17 +120,18 @@ def tsp_unmapping(result_set: dict, elements: [(int, {str: (float, float)})]):
   outputs = ["", "INPUT -->", "  " + str([e[1][1] for e in elements]), "SOLUTION ==>"]
 
   # 解から訪問順を取得
-  def get_order_to_visit(solution):
+  def get_order_to_visit(solution, elements):
     # store order of the city
     order_to_visit = []
-    for i, v in solution.items():
-      for j, v2 in v.items():
-        if v2 == 1:
-          order_to_visit.append(j)
+    for i, _ in enumerate(elements):
+      for j, e in enumerate(elements):
+        if solution[f"city[{i}][{j}]"] == 1:
+          order_to_visit.append(list(e[1][1].keys())[0])
+          break
 
     return order_to_visit
 
-  return '\n'.join(outputs) + '\n'.join(get_order_to_visit(result_set))
+  return '\n'.join(outputs) + '\n  ' + ' -> '.join(get_order_to_visit(result_set.samples()[0], elements))
 
 
 def tsp_solving(physical_model, elements, incoming, outgoing):
