@@ -91,7 +91,7 @@ class OptiganSolver(AbstractSolver):
             headers["Content-Encoding"] = "gzip"
             response = requests.post(endpoint, headers=headers, data=buf.getvalue())
         else:
-            # Don't comress request body
+            # Don't compress request body
             headers["Content-Type"] = "application/json; charset=UTF-8"
             response = requests.post(endpoint, headers=headers, json=payload)
 
