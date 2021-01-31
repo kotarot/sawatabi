@@ -42,7 +42,7 @@ class LocalSolver(AbstractSolver):
 
         bqm = model.to_bqm()
 
-        start_time = time.time()
+        start_sec = time.perf_counter()
         if self._exact:
             # dimod's brute force solver
             sampleset = self._solver.sample(bqm)
@@ -51,9 +51,9 @@ class LocalSolver(AbstractSolver):
             sampleset = self._solver.sample(bqm, **kwargs)
 
         # Update the timing
-        elapsed_sec = time.time() - start_time
+        execution_sec = time.perf_counter() - start_sec
         sampleset.info["timing"] = {
-            "elapsed_sec": elapsed_sec,
+            "execution_sec": execution_sec,
         }
 
         return sampleset

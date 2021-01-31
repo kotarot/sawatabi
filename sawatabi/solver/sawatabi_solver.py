@@ -72,8 +72,7 @@ class SawatabiSolver(AbstractSolver):
         self._bqm = bqm
         self._rng = rng
 
-        start_time = time.time()
-        start_counter = time.perf_counter()
+        start_sec = time.perf_counter()
 
         samples = []
         energies = []
@@ -95,14 +94,12 @@ class SawatabiSolver(AbstractSolver):
             energies.append(energy)
 
         # Update the timing
-        elapsed_sec = time.time() - start_time
-        elapsed_counter = time.perf_counter() - start_counter
+        execution_sec = time.perf_counter() - start_sec
 
         sampleset = dimod.SampleSet.from_samples(samples, vartype=dimod.SPIN, energy=energies, aggregate_samples=True, sort_labels=True)
         sampleset._info = {
             "timing": {
-                "elapsed_sec": elapsed_sec,
-                "elapsed_counter": elapsed_counter,
+                "execution_sec": execution_sec,
             },
         }
 
