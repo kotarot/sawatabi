@@ -72,6 +72,13 @@ class SawatabiSolver(AbstractSolver):
         if bqm.vartype is not dimod.SPIN:
             bqm = bqm.change_vartype(dimod.SPIN, inplace=False)
 
+            # Convert initial states as well
+            if initial_states:
+                for i, initial_state in enumerate(initial_states):
+                    for k, v in initial_state.items():
+                        if v == 0:
+                            initial_states[i][k] = -1
+
         self._model = model
         self._bqm = bqm
         self._rng = rng
@@ -81,16 +88,16 @@ class SawatabiSolver(AbstractSolver):
         samples = []
         energies = []
         for r in range(num_reads):
-            initial_states_for_this_read = None
+            initial_state_for_this_read = None
             if initial_states:
-                initial_states_for_this_read = initial_states[r]
+                initial_state_for_this_read = initial_states[r]
             sample, energy = self.annealing(
                 num_reads=num_reads,
                 num_sweeps=num_sweeps,
                 num_coolings=num_coolings,
                 cooling_rate=cooling_rate,
                 initial_temperature=initial_temperature,
-                initial_states=initial_states_for_this_read,
+                initial_state=initial_state_for_this_read,
                 pickup_mode=pickup_mode,
             )
             # These samples and energies are in the Ising (SPIN) format
@@ -109,14 +116,14 @@ class SawatabiSolver(AbstractSolver):
 
         return sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
 
-    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_states, pickup_mode):
-        if initial_states is None:
+    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_state, pickup_mode):
+        if initial_state is None:
             x = ((self._rng.randint(2, size=self._bqm.num_variables) - 0.5) * 2).astype(int)  # -1 or +1
         else:
             x = np.ones(shape=(self._bqm.num_variables), dtype=int)
             for v in self._bqm.variables:
                 idx = self._model._label_to_index[v]
-                x[idx] = initial_states[v]
+                x[idx] = initial_state[v]
 
         initial_sample = dict(zip(list(self._model._index_to_label.values()), x))
         logger.info(f"initial_spins: {initial_sample}")
