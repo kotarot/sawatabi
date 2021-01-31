@@ -265,7 +265,15 @@ def test_sawatabi_solver_with_initial_states_reverse():
             "x[5]": -1,
         },
     ]
-    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=100, num_coolings=10, initial_states=initial_states, reverse_options={"reverse_period": 50, "reverse_temperature": 10.0}, seed=12345)
+    resultset = solver.solve(
+        model.to_physical(),
+        num_reads=1,
+        num_sweeps=100,
+        num_coolings=10,
+        initial_states=initial_states,
+        reverse_options={"reverse_period": 50, "reverse_temperature": 10.0},
+        seed=12345,
+    )
 
     assert len(resultset.record) == 1
 
