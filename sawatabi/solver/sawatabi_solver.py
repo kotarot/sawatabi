@@ -44,7 +44,7 @@ class SawatabiSolver(AbstractSolver):
         cooling_rate=0.9,
         initial_temperature=100.0,
         initial_states=None,
-        reverse=False,
+        reverse_options=None,
         pickup_mode=constants.PICKUP_MODE_RANDOM,
         seed=None,
     ):
@@ -99,7 +99,7 @@ class SawatabiSolver(AbstractSolver):
                 cooling_rate=cooling_rate,
                 initial_temperature=initial_temperature,
                 initial_state=initial_state_for_this_read,
-                reverse=reverse,
+                reverse_options=reverse_options,
                 pickup_mode=pickup_mode,
             )
             # These samples and energies are in the Ising (SPIN) format
@@ -118,7 +118,7 @@ class SawatabiSolver(AbstractSolver):
 
         return sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
 
-    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_state, reverse, pickup_mode):
+    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_state, reverse_options, pickup_mode):
         if initial_state is None:
             x = ((self._rng.randint(2, size=self._bqm.num_variables) - 0.5) * 2).astype(int)  # -1 or +1
         else:
@@ -132,21 +132,21 @@ class SawatabiSolver(AbstractSolver):
         initial_energy = self._bqm.energy(initial_sample) * -1.0  # Note that the signs of original bqm is opposite from ours
         logger.info(f"initial_energy: {initial_energy}")
 
-        if not reverse:
+        if not reverse_options:
             temperature = initial_temperature
         else:
             temperature = 1e-9
-            virtual_temperature = initial_temperature  # Referenced when reverse annealing
+            reverse_target_temperature = reverse_options["reverse_temperature"]  # The max temperature when reverse annealing is performed
 
         energy = initial_energy
         num_inners = math.ceil(num_sweeps / num_coolings)
-        reversing_phase = reverse
+        reversing_phase = True if reverse_options is not None else False
         sweep = 0
         sweep_finished = False
 
         for cool in range(num_coolings):  # outer loop
             # Normal annealing in the last half period
-            if num_coolings / 2 < cool:
+            if reversing_phase and (reverse_options["reverse_period"] <= cool):
                 reversing_phase = False
 
             logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
@@ -180,8 +180,8 @@ class SawatabiSolver(AbstractSolver):
                 break
 
             if reversing_phase:
-                virtual_temperature *= cooling_rate + (1.0 - cooling_rate) / 2.0  # Warm up gently compared to normal cooling_rate
-                temperature = initial_temperature - virtual_temperature
+                reverse_target_temperature *= cooling_rate
+                temperature = reverse_options["reverse_temperature"] - reverse_target_temperature
             else:
                 temperature *= cooling_rate
 
@@ -209,6 +209,9 @@ class SawatabiSolver(AbstractSolver):
         return 2.0 * diff
 
     def is_acceptable(self, diff, temperature):
+        """
+        Returns True if the flip is acceptable, False otherwise.
+        """
         if diff <= 0.0:
             return True
         else:

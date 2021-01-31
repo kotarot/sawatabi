@@ -151,7 +151,7 @@ def sawatabi_solver_with_initial_states_reverse_annealing():
     ]
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, initial_states=initial_states, reverse=True)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, initial_states=initial_states, reverse_options={"reverse_period": 50, "reverse_temperature": 10.0})
 
     _print_resultset(resultset)
 
