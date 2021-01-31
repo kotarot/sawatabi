@@ -160,7 +160,10 @@ class SawatabiSolver(AbstractSolver):
 
         # Create a random pick up indices beforehand for speed up
         if pickup_mode == constants.PICKUP_MODE_RANDOM:
-            pickup_order = self._rng.randint(self._bqm.num_variables, size=num_sweeps)
+            pickup_randoms = self._rng.randint(self._bqm.num_variables, size=num_sweeps)
+        # Create a random values for accept beforehand for speed up
+        self.accept_randoms = self._rng.random(size=num_sweeps)
+        self.accept_randoms_idx = -1
 
         for cool in range(num_coolings):  # outer loop
             # Normal annealing in the last half period
@@ -179,7 +182,7 @@ class SawatabiSolver(AbstractSolver):
 
                 # Pick up a spin (variable) randomly
                 if pickup_mode == constants.PICKUP_MODE_RANDOM:
-                    idx = pickup_order[sweep - 1]
+                    idx = pickup_randoms[sweep - 1]
                 # Pick up a spin (variable) sequentially
                 elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
                     idx = (sweep - 1) % self._bqm.num_variables
@@ -232,6 +235,7 @@ class SawatabiSolver(AbstractSolver):
             return True
         else:
             p = math.exp(-diff / temperature)
-            if self._rng.random() < p:
+            self.accept_randoms_idx += 1
+            if self.accept_randoms[self.accept_randoms_idx] < p:
                 return True
         return False
