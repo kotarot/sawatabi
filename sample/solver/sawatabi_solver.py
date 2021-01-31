@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+# import logging
 
 # fmt: off
 from _solver_helper import (_create_ising_model, _create_qubo_model, _create_simple_2x2_ising_model_without_active_var,
@@ -27,7 +27,7 @@ import sawatabi
 # fmt: on
 
 # logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 
 def sawatabi_solver_simple_ising_with_only_1_body():
@@ -35,7 +35,7 @@ def sawatabi_solver_simple_ising_with_only_1_body():
     physical = _create_simple_ising_model_with_only_1_body()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=2, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=10, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
@@ -45,7 +45,7 @@ def sawatabi_solver_simple_ising_with_only_2_body():
     physical = _create_simple_ising_model_with_only_2_body()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=10, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
