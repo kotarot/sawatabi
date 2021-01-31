@@ -158,6 +158,10 @@ class SawatabiSolver(AbstractSolver):
         sweep = 0
         sweep_finished = False
 
+        # Create a random pick up indices beforehand for speed up
+        if pickup_mode == constants.PICKUP_MODE_RANDOM:
+            pickup_order = self._rng.randint(self._bqm.num_variables, size=num_sweeps)
+
         for cool in range(num_coolings):  # outer loop
             # Normal annealing in the last half period
             if reversing_phase and (reverse_options["reverse_period"] <= cool):
@@ -175,7 +179,7 @@ class SawatabiSolver(AbstractSolver):
 
                 # Pick up a spin (variable) randomly
                 if pickup_mode == constants.PICKUP_MODE_RANDOM:
-                    idx = self._rng.randint(self._bqm.num_variables)
+                    idx = pickup_order[sweep - 1]
                 # Pick up a spin (variable) sequentially
                 elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
                     idx = (sweep - 1) % self._bqm.num_variables

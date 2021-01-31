@@ -29,15 +29,15 @@ def test_sawatabi_solver_ising():
     model.offset(10.0)
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_reads=2, num_sweeps=100, num_coolings=10, cooling_rate=0.9, initial_temperature=10.0, seed=12345)
+    resultset = solver.solve(model.to_physical(), num_reads=2, num_sweeps=100, num_coolings=10, cooling_rate=0.8, initial_temperature=10.0, seed=12345)
 
     assert resultset.variables == ["s[0]", "s[1]"]
-    assert len(resultset.record) == 2
+    assert len(resultset.record) == 1
 
     # Check the ground state
     assert np.array_equal(resultset.record[0].sample, [-1, 1])
     assert resultset.record[0].energy == 6.0
-    assert resultset.record[0].num_occurrences == 1
+    assert resultset.record[0].num_occurrences == 2
 
 
 def test_sawatabi_solver_qubo():
