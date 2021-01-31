@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+# import logging
 import math
 import time
 import warnings
@@ -24,7 +24,7 @@ import sawatabi.constants as constants
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.solver.abstract_solver import AbstractSolver
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class SawatabiSolver(AbstractSolver):
@@ -142,9 +142,9 @@ class SawatabiSolver(AbstractSolver):
                 x[idx] = initial_state[v]
 
         initial_sample = dict(zip(list(self._model._index_to_label.values()), x))
-        logger.info(f"initial_spins: {initial_sample}")
+        # logger.info(f"initial_spins: {initial_sample}")
         initial_energy = self._bqm.energy(initial_sample) * -1.0  # Note that the signs of original bqm is opposite from ours
-        logger.info(f"initial_energy: {initial_energy}")
+        # logger.info(f"initial_energy: {initial_energy}")
 
         if not reverse_options:
             temperature = initial_temperature
@@ -167,7 +167,7 @@ class SawatabiSolver(AbstractSolver):
             if reversing_phase and (reverse_options["reverse_period"] <= cool):
                 reversing_phase = False
 
-            logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
+            # logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
 
             for inner in range(num_inners):  # inner loop
                 sweep += 1
@@ -175,7 +175,7 @@ class SawatabiSolver(AbstractSolver):
                     sweep_finished = True
                     break
 
-                logger.debug(f"sweep: {sweep}/{num_sweeps}")
+                # logger.debug(f"sweep: {sweep}/{num_sweeps}")
 
                 # Pick up a spin (variable) randomly
                 if pickup_mode == constants.PICKUP_MODE_RANDOM:
@@ -190,11 +190,11 @@ class SawatabiSolver(AbstractSolver):
                 if self.is_acceptable(diff, temperature):
                     x[idx] *= -1
                     energy += diff
-                    logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
-                logger.debug(f"energy: {energy}")
+                    # logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
+                # logger.debug(f"energy: {energy}")
 
             if sweep_finished:
-                logger.info("No more sweeps left.")
+                # logger.info("No more sweeps left.")
                 break
 
             if reversing_phase:
