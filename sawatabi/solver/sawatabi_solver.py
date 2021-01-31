@@ -84,6 +84,20 @@ class SawatabiSolver(AbstractSolver):
         self._bqm = bqm
         self._rng = rng
 
+        # For speed up, store coefficients into a numpy array and a dictionary
+        self._bqm_linear = np.zeros(self._bqm.num_variables)
+        for label, coeff in self._bqm.linear.items():
+            index = self._model._label_to_index[label]
+            self._bqm_linear[index] = coeff
+        self._bqm_adj = {}
+        for label, adj in self._bqm.adj.items():
+            index = self._model._label_to_index[label]
+            adj_dict = {}
+            for alabel, coeff in adj.items():
+                aindex = self._model._label_to_index[alabel]
+                adj_dict[aindex] = coeff
+            self._bqm_adj[index] = adj_dict
+
         start_sec = time.perf_counter()
 
         samples = []
@@ -195,14 +209,12 @@ class SawatabiSolver(AbstractSolver):
         return sample, energy
 
     def calc_energy_diff(self, idx, x):
-        label = self._model._index_to_label[idx]
-
         # h_{i}
-        diff = x[idx] * self._bqm.linear[label]
+        diff = x[idx] * self._bqm_linear[idx]
 
         # J_{ij}
-        for a, j in self._bqm.adj[label].items():
-            diff += x[idx] * x[self._model._label_to_index[a]] * j
+        for aidx, j in self._bqm_adj[idx].items():
+            diff += x[idx] * x[aidx] * j
 
         # Now the calculated diff is the local energy at x[idx].
         # If the spin flips from -1 to +1 (vice versa), the diff energy will be double.
