@@ -44,6 +44,7 @@ class SawatabiSolver(AbstractSolver):
         cooling_rate=0.9,
         initial_temperature=100.0,
         initial_states=None,
+        reverse=False,
         pickup_mode=constants.PICKUP_MODE_RANDOM,
         seed=None,
     ):
@@ -98,6 +99,7 @@ class SawatabiSolver(AbstractSolver):
                 cooling_rate=cooling_rate,
                 initial_temperature=initial_temperature,
                 initial_state=initial_state_for_this_read,
+                reverse=reverse,
                 pickup_mode=pickup_mode,
             )
             # These samples and energies are in the Ising (SPIN) format
@@ -116,7 +118,7 @@ class SawatabiSolver(AbstractSolver):
 
         return sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
 
-    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_state, pickup_mode):
+    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_state, reverse, pickup_mode):
         if initial_state is None:
             x = ((self._rng.randint(2, size=self._bqm.num_variables) - 0.5) * 2).astype(int)  # -1 or +1
         else:
@@ -130,14 +132,24 @@ class SawatabiSolver(AbstractSolver):
         initial_energy = self._bqm.energy(initial_sample) * -1.0  # Note that the signs of original bqm is opposite from ours
         logger.info(f"initial_energy: {initial_energy}")
 
-        energy = initial_energy
-        temperature = initial_temperature
-        num_inners = math.ceil(num_sweeps / num_coolings)
-        sweep = 0
+        if not reverse:
+            temperature = initial_temperature
+        else:
+            temperature = 1e-9
+            virtual_temperature = initial_temperature  # Referenced when reverse annealing
 
+        energy = initial_energy
+        num_inners = math.ceil(num_sweeps / num_coolings)
+        reversing_phase = reverse
+        sweep = 0
         sweep_finished = False
+
         for cool in range(num_coolings):  # outer loop
-            logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature})")
+            # Normal annealing in the last half period
+            if num_coolings / 2 < cool:
+                reversing_phase = False
+
+            logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
 
             for inner in range(num_inners):  # inner loop
                 sweep += 1
@@ -167,7 +179,11 @@ class SawatabiSolver(AbstractSolver):
                 logger.info("No more sweeps left.")
                 break
 
-            temperature *= cooling_rate
+            if reversing_phase:
+                virtual_temperature *= cooling_rate + (1.0 - cooling_rate) / 2.0  # Warm up gently compared to normal cooling_rate
+                temperature = initial_temperature - virtual_temperature
+            else:
+                temperature *= cooling_rate
 
         sample = dict(zip(list(self._model._index_to_label.values()), x))
         recalc_energy = self._bqm.energy(sample) * -1.0
