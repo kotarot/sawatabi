@@ -24,8 +24,15 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 
 class LocalSolver(AbstractSolver):
     def __init__(self, exact=False):
-        self._exact = exact
         super().__init__()
+        self._exact = exact
+
+        if self._exact:
+            # dimod's brute force solver
+            self._solver = dimod.ExactSolver()
+        else:
+            # Simulated annealing (SA)
+            self._solver = neal.SimulatedAnnealingSampler()
 
     def solve(self, model, **kwargs):
         self._check_argument_type("model", model, PhysicalModel)
@@ -35,24 +42,18 @@ class LocalSolver(AbstractSolver):
 
         bqm = model.to_bqm()
 
-        start_time = time.time()
-        start_counter = time.perf_counter()
-
+        start_sec = time.perf_counter()
         if self._exact:
             # dimod's brute force solver
-            sampleset = dimod.ExactSolver().sample(bqm)
-
+            sampleset = self._solver.sample(bqm)
         else:
             # Simulated annealing (SA)
-            sampler = neal.SimulatedAnnealingSampler()
-            sampleset = sampler.sample(bqm, **kwargs)
+            sampleset = self._solver.sample(bqm, **kwargs)
 
         # Update the timing
-        elapsed_sec = time.time() - start_time
-        elapsed_counter = time.perf_counter() - start_counter
+        execution_sec = time.perf_counter() - start_sec
         sampleset.info["timing"] = {
-            "elapsed_sec": elapsed_sec,
-            "elapsed_counter": elapsed_counter,
+            "execution_sec": execution_sec,
         }
 
         return sampleset

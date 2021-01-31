@@ -74,9 +74,8 @@ def test_sawatabi_solver_n_hot_ising(n, s):
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == -1) == s - n
 
-    # Execution time should be within practical seconds (10 sec).
-    assert resultset.info["timing"]["elapsed_sec"] <= 10.0
-    assert resultset.info["timing"]["elapsed_counter"] <= 10.0
+    # Execution time should be within practical seconds (20 sec).
+    assert resultset.info["timing"]["execution_sec"] <= 20.0
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 100)])
@@ -93,9 +92,8 @@ def test_sawatabi_solver_n_hot_qubo(n, s):
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == 0) == s - n
 
-    # Execution time should be within practical seconds (10 sec).
-    assert resultset.info["timing"]["elapsed_sec"] <= 10.0
-    assert resultset.info["timing"]["elapsed_counter"] <= 10.0
+    # Execution time should be within practical seconds (20 sec).
+    assert resultset.info["timing"]["execution_sec"] <= 20.0
 
 
 @pytest.mark.parametrize("n,s,i", [(1, 4, 0), (1, 4, 1), (1, 4, 2), (1, 4, 3), (2, 10, 5)])

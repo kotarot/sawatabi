@@ -19,20 +19,17 @@ from functools import wraps
 def profile(func):
     @wraps(func)
     def profile_time(*args, **kargs):
-        start_time = time.time()
-        start_counter = time.perf_counter()
+        start_sec = time.perf_counter()
 
         func_return = func(*args, **kargs)
 
-        elapsed_sec = time.time() - start_time
-        elapsed_counter = time.perf_counter() - start_counter
+        execution_sec = time.perf_counter() - start_sec
 
         return {
             "return": func_return,
             "profile": {
                 "function_name": func.__name__,
-                "elapsed_sec": elapsed_sec,
-                "elapsed_counter": elapsed_counter,
+                "execution_sec": execution_sec,
             },
         }
 

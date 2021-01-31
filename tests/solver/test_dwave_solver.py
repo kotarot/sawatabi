@@ -30,18 +30,26 @@ def physical():
     return physical
 
 
-def test_dwave_solver(mocker, physical):
-    solver = DWaveSolver(solver="Advantage_system1.1")
+@pytest.fixture
+def default_solver(mocker):
+    mocker.patch("dwave.system.samplers.DWaveSampler.__init__", return_value=None)
+    mocker.patch("dwave.system.composites.EmbeddingComposite.__init__", return_value=None)
 
+    return DWaveSolver()
+
+
+def test_dwave_solver(mocker, physical):
     sampleset = dimod.SampleSet.from_samples([{"x[0]": 1, "x[1]": -1}], dimod.SPIN, energy=[-2.0])
     sampleset._info = {
         "timing": {"qpu_sampling_time": 12345},
         "problem_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     }
-
     mocker.patch("dwave.system.samplers.DWaveSampler.__init__", return_value=None)
     mocker.patch("dwave.system.composites.EmbeddingComposite.__init__", return_value=None)
     mocker.patch("dwave.system.composites.EmbeddingComposite.sample", return_value=sampleset)
+
+    solver = DWaveSolver(solver="Advantage_system1.1")
+
     resultset = solver.solve(physical)
 
     assert isinstance(resultset, dimod.SampleSet)
@@ -64,54 +72,50 @@ def test_dwave_solver(mocker, physical):
 
 
 def test_dwave_solver_with_auth_parameters(mocker, physical):
-    solver = DWaveSolver(endpoint="http://0.0.0.0/method", token="xxxx", solver="Advantage_system1.1")
-
     sampleset = dimod.SampleSet.from_samples([{"x[0]": 1, "x[1]": -1}], dimod.SPIN, energy=[-2.0])
     sampleset._info = {
         "timing": {"qpu_sampling_time": 12345},
         "problem_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     }
-
     mocker.patch("dwave.system.samplers.DWaveSampler.__init__", return_value=None)
     mocker.patch("dwave.system.composites.EmbeddingComposite.__init__", return_value=None)
     mocker.patch("dwave.system.composites.EmbeddingComposite.sample", return_value=sampleset)
+
+    solver = DWaveSolver(endpoint="http://0.0.0.0/method", token="xxxx", solver="Advantage_system1.1")
+
     resultset = solver.solve(physical)
 
     assert isinstance(resultset, dimod.SampleSet)
 
 
 def test_dwave_solver_with_embedding_parameters(mocker, physical):
-    solver = DWaveSolver(endpoint="http://0.0.0.0/method")
-
     sampleset = dimod.SampleSet.from_samples([{"x[0]": 1, "x[1]": -1}], dimod.SPIN, energy=[-2.0])
     sampleset._info = {
         "timing": {"qpu_sampling_time": 12345},
         "problem_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     }
-
     mocker.patch("dwave.system.samplers.DWaveSampler.__init__", return_value=None)
     mocker.patch("dwave.system.composites.EmbeddingComposite.__init__", return_value=None)
     mocker.patch("dwave.system.composites.EmbeddingComposite.sample", return_value=sampleset)
-    resultset = solver.solve(physical, embedding_parameters={"random_seed": 12345})
+
+    solver = DWaveSolver(endpoint="http://0.0.0.0/method", embedding_parameters={"random_seed": 12345})
+
+    resultset = solver.solve(physical)
 
     assert isinstance(resultset, dimod.SampleSet)
 
 
-def test_dwave_default_solver_name():
-    solver = DWaveSolver()
-    assert solver._solver == "Advantage_system1.1"
+def test_dwave_default_solver_name(default_solver):
+    assert default_solver._solver == "Advantage_system1.1"
 
 
-def test_dwave_solver_with_logical_model_fails():
+def test_dwave_solver_with_logical_model_fails(default_solver):
     model = LogicalModel(mtype="ising")
-    solver = DWaveSolver()
     with pytest.raises(TypeError):
-        solver.solve(model)
+        default_solver.solve(model)
 
 
-def test_dwave_solver_with_empty_model_fails():
+def test_dwave_solver_with_empty_model_fails(default_solver):
     model = LogicalModel(mtype="ising")
-    physical = model.to_physical()
-    solver = DWaveSolver()
     with pytest.raises(ValueError):
-        solver.solve(physical)
+        default_solver.solve(model.to_physical())

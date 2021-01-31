@@ -31,7 +31,7 @@ def _print_utf8(model):
         print(model)
 
 
-def n_hot_from_scratch_2_of_1_qubo():
+def n_hot_from_scratch_2_of_1_qubo(solver):
     print("\n=== N-hot from scratch (2 of 1) qubo ===")
     model = sawatabi.model.LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(2,))
@@ -44,13 +44,11 @@ def n_hot_from_scratch_2_of_1_qubo():
     model.add_interaction(x[1], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_3_of_1_qubo():
+def n_hot_from_scratch_3_of_1_qubo(solver):
     print("\n=== N-hot from scratch (3 of 1) qubo ===")
     model = sawatabi.model.LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(3,))
@@ -66,13 +64,11 @@ def n_hot_from_scratch_3_of_1_qubo():
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_3_of_2_qubo():
+def n_hot_from_scratch_3_of_2_qubo(solver):
     print("\n=== N-hot from scratch (3 of 2) qubo ===")
     model = sawatabi.model.LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(3,))
@@ -88,13 +84,11 @@ def n_hot_from_scratch_3_of_2_qubo():
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_4_of_1_qubo():
+def n_hot_from_scratch_4_of_1_qubo(solver):
     print("\n=== N-hot from scratch (4 of 1) qubo ===")
     model = sawatabi.model.LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(4,))
@@ -114,13 +108,11 @@ def n_hot_from_scratch_4_of_1_qubo():
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_4_of_2_qubo():
+def n_hot_from_scratch_4_of_2_qubo(solver):
     print("\n=== N-hot from scratch (4 of 2) qubo ===")
     model = sawatabi.model.LogicalModel(mtype="qubo")
     x = model.variables("x", shape=(4,))
@@ -140,13 +132,11 @@ def n_hot_from_scratch_4_of_2_qubo():
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_2_of_1_ising():
+def n_hot_from_scratch_2_of_1_ising(solver):
     print("\n=== N-hot from scratch (2 of 1) ising ===")
     model = sawatabi.model.LogicalModel(mtype="ising")
     x = model.variables("x", shape=(2,))
@@ -159,13 +149,11 @@ def n_hot_from_scratch_2_of_1_ising():
     model.add_interaction(x[1], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_3_of_1_ising():
+def n_hot_from_scratch_3_of_1_ising(solver):
     print("\n=== N-hot from scratch (3 of 1) ising ===")
     model = sawatabi.model.LogicalModel(mtype="ising")
     x = model.variables("x", shape=(3,))
@@ -181,13 +169,11 @@ def n_hot_from_scratch_3_of_1_ising():
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_3_of_2_ising():
+def n_hot_from_scratch_3_of_2_ising(solver):
     print("\n=== N-hot from scratch (3 of 2) ising ===")
     model = sawatabi.model.LogicalModel(mtype="ising")
     x = model.variables("x", shape=(3,))
@@ -203,13 +189,11 @@ def n_hot_from_scratch_3_of_2_ising():
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_4_of_1_ising():
+def n_hot_from_scratch_4_of_1_ising(solver):
     print("\n=== N-hot from scratch (4 of 1) ising ===")
     model = sawatabi.model.LogicalModel(mtype="ising")
     x = model.variables("x", shape=(4,))
@@ -229,13 +213,11 @@ def n_hot_from_scratch_4_of_1_ising():
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
-def n_hot_from_scratch_4_of_2_ising():
+def n_hot_from_scratch_4_of_2_ising(solver):
     print("\n=== N-hot from scratch (4 of 1) ising ===")
     model = sawatabi.model.LogicalModel(mtype="ising")
     x = model.variables("x", shape=(4,))
@@ -255,24 +237,24 @@ def n_hot_from_scratch_4_of_2_ising():
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    physical = model.to_physical()
-    solver = sawatabi.solver.LocalSolver(exact=True)
-    resultset = solver.solve(physical)
+    resultset = solver.solve(model.to_physical())
     print(resultset)
 
 
 def main():
-    n_hot_from_scratch_2_of_1_qubo()
-    n_hot_from_scratch_3_of_1_qubo()
-    n_hot_from_scratch_3_of_2_qubo()
-    n_hot_from_scratch_4_of_1_qubo()
-    n_hot_from_scratch_4_of_2_qubo()
+    solver = sawatabi.solver.LocalSolver(exact=True)
 
-    n_hot_from_scratch_2_of_1_ising()
-    n_hot_from_scratch_3_of_1_ising()
-    n_hot_from_scratch_3_of_2_ising()
-    n_hot_from_scratch_4_of_1_ising()
-    n_hot_from_scratch_4_of_2_ising()
+    n_hot_from_scratch_2_of_1_qubo(solver)
+    n_hot_from_scratch_3_of_1_qubo(solver)
+    n_hot_from_scratch_3_of_2_qubo(solver)
+    n_hot_from_scratch_4_of_1_qubo(solver)
+    n_hot_from_scratch_4_of_2_qubo(solver)
+
+    n_hot_from_scratch_2_of_1_ising(solver)
+    n_hot_from_scratch_3_of_1_ising(solver)
+    n_hot_from_scratch_3_of_2_ising(solver)
+    n_hot_from_scratch_4_of_1_ising(solver)
+    n_hot_from_scratch_4_of_2_ising(solver)
 
 
 if __name__ == "__main__":
