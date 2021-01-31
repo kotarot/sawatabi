@@ -15,6 +15,7 @@
 import logging
 import math
 import time
+import warnings
 
 import dimod
 import numpy as np
@@ -57,6 +58,9 @@ class SawatabiSolver(AbstractSolver):
         allowed_pickup_mode = [constants.PICKUP_MODE_RANDOM, constants.PICKUP_MODE_SEQUENTIAL]
         if pickup_mode not in allowed_pickup_mode:
             raise ValueError(f"pickup_mode must be one of {allowed_pickup_mode}")
+
+        if num_sweeps < num_coolings:
+            warnings.warn(f"num_coolings should not be larger than num_sweeps.")
 
         # Use RNG so that this random sequence is isolated
         rng = np.random.RandomState(seed)

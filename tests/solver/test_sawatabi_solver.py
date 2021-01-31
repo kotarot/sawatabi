@@ -221,6 +221,24 @@ def test_sawatabi_solver_with_initial_states():
     assert resultset.record[0].num_occurrences == 1
 
 
+def test_sawatabi_solver_when_coolings_is_larger_than_sweeps():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(2,))
+    for i in range(2):
+        model.add_interaction(x[i], coefficient=-1.0)
+    solver = SawatabiSolver()
+
+    with pytest.warns(UserWarning):
+        sampleset_1 = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, num_coolings=11, cooling_rate=0.5, seed=12345)
+    assert np.array_equal(sampleset_1.record[0].sample, [-1, -1])
+    assert sampleset_1.record[0].energy == -2.0
+
+    with pytest.warns(UserWarning):
+        sampleset_2 = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, num_coolings=20, cooling_rate=0.5, seed=12345)
+    assert np.array_equal(sampleset_2.record[0].sample, [-1, -1])
+    assert sampleset_2.record[0].energy == -2.0
+
+
 def test_sawatabi_solver_with_initial_states_fails():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(2,))
@@ -228,6 +246,7 @@ def test_sawatabi_solver_with_initial_states_fails():
         model.add_interaction(x[i], coefficient=-1.0)
     solver = SawatabiSolver()
     initial_states = [{"x[0]": 1, "x[1]": 1}]
+
     with pytest.raises(ValueError):
         solver.solve(model.to_physical(), num_reads=2, initial_states=initial_states)
 
@@ -238,5 +257,6 @@ def test_sawatabi_solver_invalid_pickup_mode():
     for i in range(2):
         model.add_interaction(x[i], coefficient=-1.0)
     solver = SawatabiSolver()
+
     with pytest.raises(ValueError):
         solver.solve(model.to_physical(), pickup_mode="invalid")
