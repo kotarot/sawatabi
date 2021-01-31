@@ -198,7 +198,7 @@ def cycle_in_currency_name(cycle):
     return " -> ".join(names)
 
 
-def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345, exact=False, prev_sampleset=None, optimal_profit=None):
+def solve_arb_finding(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345, exact=False, prev_sampleset=None, optimal_profit=None):
     if exact:
         print(f"== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, exact={exact}) ==")
     else:
@@ -322,11 +322,25 @@ def arb_finding_run(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, n
 
 def single_run():
     # Single run
-    arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
-    arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=500, num_coolings=200, cooling_rate=0.95, initial_temperature=1000.0, seed=12345)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=500, num_coolings=200, cooling_rate=0.95, initial_temperature=1000.0, seed=12345)
 
 
-def update_conversion_rate_one_by_one():
+def calc_tts(occurrences_opt, num_reads, num_sweeps, confidence_level=0.99):
+    """
+    Calculate TTS (time to solution) in sweeps unit
+    """
+    P = confidence_level
+    p = occurrences_opt / num_reads
+    if 0.999 < p:
+        p = 0.999
+    if p < 0.001:
+        p = 0.001
+    tts = num_sweeps * math.log(1 - P) / math.log(1 - p)
+    return tts
+
+
+def update_conversion_rate_one_by_one(iterations=10, problem_seed=12345):
     # Update conversion rate one by one
     # and find the optimal solution.
 
@@ -335,36 +349,40 @@ def update_conversion_rate_one_by_one():
     use_state = False
 
     # Initial solution
-    prev_sampleset, _, _, _, _, prev_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
+    print("[0] Initial problem")
+    prev_sampleset, _, _, _, _, prev_cycle = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
     print("")
 
-    np.random.seed(12345)
-    n = 1
-    for i in np.random.permutation(list(range(NUM_CURRENCIES))):
-        for j in np.random.permutation(list(range(NUM_CURRENCIES))):
+    # Continuous running
+    np.random.seed(problem_seed)
+    for itr in range(1, iterations + 1):
+        while True:
+            i = np.random.randint(NUM_CURRENCIES)
+            j = np.random.randint(NUM_CURRENCIES)
             if i != j:
-                change_rate = np.random.normal(loc=1.0, scale=0.001)
-                currency_i = index_to_currency[i]
-                currency_j = index_to_currency[j]
-                print(f"[{n}] Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
-                conversion_rates[currency_i][currency_j] *= change_rate
-                print(f" to {conversion_rates[currency_i][currency_j]}")
+                break
 
-                if not use_state:
-                    sampleset, _, _, _, _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
-                else:
-                    sampleset, _, _, _, _, current_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact, prev_sampleset=prev_sampleset)
-                if prev_cycle == current_cycle:
-                    print("\033[32mcycle unchanged.\033[0m\n")
-                else:
-                    print("\033[31mcycle changed!\033[0m\n")
+        change_rate = np.random.normal(loc=1.0, scale=0.001)
+        currency_i = index_to_currency[i]
+        currency_j = index_to_currency[j]
+        print(f"[{itr}] Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
+        conversion_rates[currency_i][currency_j] *= change_rate
+        print(f" to {conversion_rates[currency_i][currency_j]}")
 
-                prev_sampleset = sampleset
-                prev_cycle = current_cycle
-                n += 1
+        if not use_state:
+            sampleset, _, _, _, _, current_cycle = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact)
+        else:
+            sampleset, _, _, _, _, current_cycle = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=1000, seed=12345, exact=exact, prev_sampleset=prev_sampleset)
+        if prev_cycle == current_cycle:
+            print("\033[32mcycle unchanged.\033[0m\n")
+        else:
+            print("\033[31mcycle changed!\033[0m\n")
+
+        prev_sampleset = sampleset
+        prev_cycle = current_cycle
 
 
-def update_conversion_rate_one_by_one_sawatabi():
+def update_conversion_rate_one_by_one_sawatabi(iterations=10, problem_seed=12345):
     # Update conversion rate one by one
     # and find the optimal solution for sawatabi.
 
@@ -378,86 +396,96 @@ def update_conversion_rate_one_by_one_sawatabi():
     seeds = [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]
 
     # Initial solution
-    print("[0] Initial problem")
+    print(f"[0] Initial problem (problem_seed={problem_seed})")
 
     # Exact Solution
-    _, _, _, _, optimal_profit, prev_opt_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
+    _, _, _, _, optimal_profit, prev_opt_cycle = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
     print("optimal_profit:", optimal_profit)
     print("optimal_cycle:", cycle_in_currency_name(prev_opt_cycle))
     print("")
+
     # Sawatabi Solver for 10 different seeds
     n_optimal = 0
     for seed in range(11, 21):
-        _prev_sampleset, _, _, num_optimal, _, _prev_cycle = arb_finding_run(
+        _prev_sampleset, _, _, num_optimal, _, _prev_cycle = solve_arb_finding(
             log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit)
         n_optimal += num_optimal
         if num_optimal > 0:
             prev_sampleset = _prev_sampleset
             prev_cycle = _prev_cycle
+    tts = calc_tts(n_optimal, len(seeds) * nr, ns)
     print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
+    print(f"TTS:", tts)
     print("")
 
-    np.random.seed(12345)
-    n = 1
-    for i in np.random.permutation(list(range(NUM_CURRENCIES))):
-        for j in np.random.permutation(list(range(NUM_CURRENCIES))):
+    # Continuous running
+    np.random.seed(problem_seed)
+    for itr in range(1, iterations + 1):
+        while True:
+            i = np.random.randint(NUM_CURRENCIES)
+            j = np.random.randint(NUM_CURRENCIES)
             if i != j:
-                change_rate = np.random.normal(loc=1.0, scale=0.001)
-                currency_i = index_to_currency[i]
-                currency_j = index_to_currency[j]
-                print(f"[{n}] Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
-                conversion_rates[currency_i][currency_j] *= change_rate
-                print(f" to {conversion_rates[currency_i][currency_j]}")
+                break
 
-                # Exact Solution
-                _, _, _, _, optimal_profit, current_opt_cycle = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
-                print("optimal_profit:", optimal_profit)
-                print("optimal_cycle:", cycle_in_currency_name(current_opt_cycle))
-                if prev_opt_cycle == current_opt_cycle:
-                    print("\033[32moptimal cycle unchanged.\033[0m\n")
-                else:
-                    print("\033[31moptimal cycle changed!\033[0m\n")
-                prev_opt_cycle = current_opt_cycle
+        change_rate = np.random.normal(loc=1.0, scale=0.001)
+        currency_i = index_to_currency[i]
+        currency_j = index_to_currency[j]
+        print(f"[{itr}] Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
+        conversion_rates[currency_i][currency_j] *= change_rate
+        print(f" to {conversion_rates[currency_i][currency_j]} (problem_seed={problem_seed})")
 
-                # Sawatabi Solver for 10 different seeds WITHOUT previous state
-                n_feasible = n_profitable = n_optimal = 0
-                for seed in range(20 * n + 1, 20 * n + 11):
-                    _, num_feasible, num_profitable, num_optimal, _, _current_cycle = arb_finding_run(
-                        log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit)
-                    n_feasible += num_feasible
-                    n_profitable += num_profitable
-                    n_optimal += num_optimal
-                    if num_optimal > 0:
-                        current_cycle = _current_cycle
-                print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
-                print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
-                print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
-                print("")
+        # Exact Solution
+        _, _, _, _, optimal_profit, current_opt_cycle = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
+        print("optimal_profit:", optimal_profit)
+        print("optimal_cycle:", cycle_in_currency_name(current_opt_cycle))
+        if prev_opt_cycle == current_opt_cycle:
+            print("\033[32moptimal cycle unchanged.\033[0m\n")
+        else:
+            print("\033[31moptimal cycle changed!\033[0m\n")
+        prev_opt_cycle = current_opt_cycle
 
-                # Sawatabi Solver for 10 different seeds WITH previous state
-                n_feasible = n_profitable = n_optimal = 0
-                for seed in range(20 * n + 11, 20 * n + 21):
-                    _sampleset, num_feasible, num_profitable, num_optimal, _, _current_cycle = arb_finding_run(
-                        log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, prev_sampleset=prev_sampleset, optimal_profit=optimal_profit)
-                    n_feasible += num_feasible
-                    n_profitable += num_profitable
-                    n_optimal += num_optimal
-                    if num_optimal > 0:
-                        sampleset = _sampleset
-                        current_cycle = _current_cycle
-                print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
-                print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
-                print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
-                print("")
+        # Sawatabi Solver for 10 different seeds WITHOUT previous state
+        n_feasible = n_profitable = n_optimal = 0
+        for seed in range(20 * itr + 1, 20 * itr + 11):
+            _, num_feasible, num_profitable, num_optimal, _, _current_cycle = solve_arb_finding(
+                log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit)
+            n_feasible += num_feasible
+            n_profitable += num_profitable
+            n_optimal += num_optimal
+            if num_optimal > 0:
+                current_cycle = _current_cycle
+        tts = calc_tts(n_optimal, len(seeds) * nr, ns)
+        print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
+        print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
+        print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
+        print(f"TTS:", tts)
+        print("")
 
-                #if prev_cycle == current_cycle:
-                #    print("\033[32mcycle unchanged.\033[0m\n")
-                #else:
-                #    print("\033[31mcycle changed!\033[0m\n")
+        # Sawatabi Solver for 10 different seeds WITH previous state
+        n_feasible = n_profitable = n_optimal = 0
+        for seed in range(20 * itr + 11, 20 * itr + 21):
+            _sampleset, num_feasible, num_profitable, num_optimal, _, _current_cycle = solve_arb_finding(
+                log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, prev_sampleset=prev_sampleset, optimal_profit=optimal_profit)
+            n_feasible += num_feasible
+            n_profitable += num_profitable
+            n_optimal += num_optimal
+            if num_optimal > 0:
+                sampleset = _sampleset
+                current_cycle = _current_cycle
+        tts = calc_tts(n_optimal, len(seeds) * nr, ns)
+        print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
+        print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
+        print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
+        print(f"TTS:", tts)
+        print("")
 
-                prev_sampleset = sampleset
-                prev_cycle = current_cycle
-                n += 1
+        #if prev_cycle == current_cycle:
+        #    print("\033[32mcycle unchanged.\033[0m\n")
+        #else:
+        #    print("\033[31mcycle changed!\033[0m\n")
+
+        prev_sampleset = sampleset
+        prev_cycle = current_cycle
 
 
 def find_sawatabi_parameters():
@@ -484,7 +512,7 @@ def find_sawatabi_parameters():
                 continue
             for rate in [0.99, 0.95, 0.9, 0.85, 0.8]:
                 for temperature in [10.0, 100.0, 500.0, 1000.0]:
-                    arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=10, num_sweeps=sweep, num_coolings=cooling, cooling_rate=rate, initial_temperature=temperature, seed=12345)
+                    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=10, num_sweeps=sweep, num_coolings=cooling, cooling_rate=rate, initial_temperature=temperature, seed=12345)
     """
 
     """
@@ -511,7 +539,7 @@ def find_sawatabi_parameters():
     for (sweep, cooling, rate, temperature) in parameter_set:
         n_feasible = n_profitable = n_optimal = 0
         for seed in [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]:
-            _, num_feasible, num_profitable, num_optimal, _, _ = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=sweep, num_coolings=cooling, cooling_rate=rate, initial_temperature=temperature, seed=seed)
+            _, num_feasible, num_profitable, num_optimal, _, _ = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=sweep, num_coolings=cooling, cooling_rate=rate, initial_temperature=temperature, seed=seed)
             n_feasible += num_feasible
             n_profitable += num_profitable
             n_optimal += num_optimal
@@ -530,7 +558,7 @@ def objective_sawatabi(trial):
 
     n_optimal = 0
     for seed in [11, 22, 33, 44, 55]:
-        _, _, _, num_optimal, _, _ = arb_finding_run(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=num_sweeps, num_coolings=num_coolings, cooling_rate=cooling_rate/100.0, initial_temperature=initial_temperature, seed=seed)
+        _, _, _, num_optimal, _, _ = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=num_sweeps, num_coolings=num_coolings, cooling_rate=cooling_rate/100.0, initial_temperature=initial_temperature, seed=seed)
         n_optimal += num_optimal
 
     return n_optimal
@@ -562,7 +590,7 @@ def find_parameters():
         for m_1 in [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0]:
             for m_2 in [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0]:
                 if m_0 == 1.0 or m_1 == 1.0 or m_2 == 1.0:
-                    arb_finding_run(log_base=100.0, M_0=m_0, M_1=m_1, M_2=m_2)
+                    solve_arb_finding(log_base=100.0, M_0=m_0, M_1=m_1, M_2=m_2)
 
 
 def objective(trial):
@@ -573,7 +601,7 @@ def objective(trial):
 
     n_optimal = 0
     for seed in [11, 22, 33, 44, 55]:
-        _, _, _, num_optimal, _, _ = arb_finding_run(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
+        _, _, _, num_optimal, _, _ = solve_arb_finding(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
         n_optimal += num_optimal
 
     return n_optimal
@@ -602,8 +630,8 @@ def find_parameters_using_optuna():
 
 def main():
     #single_run()
-    #update_conversion_rate_one_by_one()
-    update_conversion_rate_one_by_one_sawatabi()
+    #update_conversion_rate_one_by_one(iterations=20)
+    update_conversion_rate_one_by_one_sawatabi(iterations=10)
 
     #find_sawatabi_parameters()
     #find_sawatabi_parameters_using_optuna()
