@@ -248,6 +248,33 @@ def test_sawatabi_solver_with_initial_states_qubo():
     assert resultset.record[0].num_occurrences == 1
 
 
+def test_sawatabi_solver_with_initial_states_reverse():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(6,))
+    for i in range(6):
+        model.add_interaction(x[i], coefficient=10.0)
+
+    solver = SawatabiSolver()
+    initial_states = [
+        {
+            "x[0]": -1,
+            "x[1]": -1,
+            "x[2]": -1,
+            "x[3]": -1,
+            "x[4]": -1,
+            "x[5]": -1,
+        },
+    ]
+    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=100, num_coolings=10, initial_states=initial_states, reverse_options={"reverse_period": 50, "reverse_temperature": 10.0}, seed=12345)
+
+    assert len(resultset.record) == 1
+
+    # Check the ground state
+    assert np.array_equal(resultset.record[0].sample, [1, 1, 1, 1, 1, 1])
+    assert resultset.record[0].energy == -60.0
+    assert resultset.record[0].num_occurrences == 1
+
+
 def test_sawatabi_solver_when_coolings_is_larger_than_sweeps():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(2,))
