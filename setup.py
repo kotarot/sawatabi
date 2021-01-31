@@ -64,6 +64,7 @@ setup(
             "black>=20.8b1,<21.0",
             "flake8>=3.8.4,<4.0.0",
             "isort>=5.6.4,<6.0.0",
+            "snakevis>=2.1.0,<3.0.0",
         ],
         "notebook": [
             # Jupyter notebook

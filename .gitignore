@@ -199,3 +199,7 @@ tests/algorithm/output.txt*
 
 gcp-key.json
 beam-temp-*
+
+# Profiling output
+*.prof
+*.stats
