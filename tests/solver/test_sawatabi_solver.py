@@ -188,7 +188,7 @@ def test_sawatabi_solver_with_empty_model_fails():
         solver.solve(physical, seed=12345)
 
 
-def test_sawatabi_solver_with_initial_states():
+def test_sawatabi_solver_with_initial_states_ising():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(12,))
     for i in range(12):
@@ -218,6 +218,33 @@ def test_sawatabi_solver_with_initial_states():
     # Check the ground state
     assert np.array_equal(resultset.record[0].sample, [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1])
     assert resultset.record[0].energy == -12.0
+    assert resultset.record[0].num_occurrences == 1
+
+
+def test_sawatabi_solver_with_initial_states_qubo():
+    model = LogicalModel(mtype="qubo")
+    x = model.variables("x", shape=(6,))
+    for i in range(6):
+        model.add_interaction(x[i], coefficient=-1.0)
+
+    solver = SawatabiSolver()
+    initial_states = [
+        {
+            "x[0]": 1,
+            "x[1]": 0,
+            "x[2]": 1,
+            "x[3]": 0,
+            "x[4]": 1,
+            "x[5]": 0,
+        },
+    ]
+    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=100, num_coolings=10, cooling_rate=0.5, initial_states=initial_states, seed=12345)
+
+    assert len(resultset.record) == 1
+
+    # Check the ground state
+    assert np.array_equal(resultset.record[0].sample, [0, 0, 0, 0, 0, 0])
+    assert resultset.record[0].energy == 0.0
     assert resultset.record[0].num_occurrences == 1
 
 
