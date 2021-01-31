@@ -20,31 +20,30 @@ from _solver_helper import _create_ising_model, _print_resultset
 import sawatabi
 
 
-def solver_dwave():
+def solver_dwave(solver):
     print("\n=== solver (dwave) ===")
     physical = _create_ising_model()
 
-    solver = sawatabi.solver.DWaveSolver()
     resultset = solver.solve(physical, chain_strength=2.0, num_reads=10)
 
     _print_resultset(resultset)
 
 
-def solver_dwave_long_schedule():
+def solver_dwave_long_schedule(solver):
     print("\n=== solver (dwave long schedule) ===")
     physical = _create_ising_model()
 
-    solver = sawatabi.solver.DWaveSolver(solver="Advantage_system1.1")
-    resultset = solver.solve(
-        physical, embedding_parameters={"random_seed": 12345}, chain_strength=2.0, annealing_time=50, num_reads=1000, answer_mode="histogram"
-    )
+    resultset = solver.solve(physical, chain_strength=2.0, annealing_time=50, num_reads=1000, answer_mode="histogram")
 
     _print_resultset(resultset)
 
 
 def main():
-    solver_dwave()
-    solver_dwave_long_schedule()
+    # The solver will be reused
+    solver = sawatabi.solver.DWaveSolver(solver="Advantage_system1.1", embedding_parameters={"random_seed": 12345})
+
+    solver_dwave(solver)
+    solver_dwave_long_schedule(solver)
 
 
 if __name__ == "__main__":

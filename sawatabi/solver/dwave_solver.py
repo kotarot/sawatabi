@@ -21,21 +21,15 @@ from sawatabi.solver.abstract_solver import AbstractSolver
 
 
 class DWaveSolver(AbstractSolver):
-    def __init__(self, endpoint=None, token=None, solver="Advantage_system1.1"):
+    def __init__(self, endpoint=None, token=None, solver="Advantage_system1.1", embedding_parameters=None):
         super().__init__()
         self._endpoint = endpoint
         self._token = token
         self._solver = solver
 
-    def solve(self, model, embedding_parameters=None, **kwargs):
-        self._check_argument_type("model", model, PhysicalModel)
+        self._composite = self._create_composite(embedding_parameters)
 
-        if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
-            raise ValueError("Model cannot be empty.")
-
-        # Converts to BQM (model representation for D-Wave)
-        bqm = model.to_bqm()
-
+    def _create_composite(self, embedding_parameters=None):
         if (self._endpoint is not None) and (self._token is not None):
             sampler = DWaveSampler(endpoint=self._endpoint, token=self._token, solver=self._solver)
         else:
@@ -46,6 +40,17 @@ class DWaveSolver(AbstractSolver):
         else:
             solver = EmbeddingComposite(sampler)
 
-        sampleset = solver.sample(bqm, **kwargs)
+        return solver
+
+    def solve(self, model, **kwargs):
+        self._check_argument_type("model", model, PhysicalModel)
+
+        if len(model._raw_interactions[constants.INTERACTION_LINEAR]) == 0 and len(model._raw_interactions[constants.INTERACTION_QUADRATIC]) == 0:
+            raise ValueError("Model cannot be empty.")
+
+        # Converts to BQM (model representation for D-Wave)
+        bqm = model.to_bqm()
+
+        sampleset = self._composite.sample(bqm, **kwargs)
 
         return sampleset
