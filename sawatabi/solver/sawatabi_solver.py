@@ -61,7 +61,7 @@ class SawatabiSolver(AbstractSolver):
             raise ValueError(f"pickup_mode must be one of {allowed_pickup_mode}")
 
         if num_sweeps < num_coolings:
-            warnings.warn(f"num_coolings should not be larger than num_sweeps.")
+            warnings.warn("num_coolings should not be larger than num_sweeps.")
 
         # Use RNG so that this random sequence is isolated
         rng = np.random.RandomState(seed)
