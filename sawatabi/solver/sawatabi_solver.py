@@ -84,12 +84,12 @@ class SawatabiSolver(AbstractSolver):
         self._bqm = bqm
         self._rng = rng
 
-        # For speed up, store coefficients into a numpy array and a dictionary
-        self._bqm_linear = np.zeros(self._bqm.num_variables)
+        # For speed up, store coefficients into a list (array)
+        self._bqm_linear = [0.0 for _ in range(self._bqm.num_variables)]
         for label, coeff in self._bqm.linear.items():
             index = self._model._label_to_index[label]
             self._bqm_linear[index] = coeff
-        self._bqm_adj = {}
+        self._bqm_adj = [{} for _ in range(self._bqm.num_variables)]
         for label, adj in self._bqm.adj.items():
             index = self._model._label_to_index[label]
             adj_dict = {}
