@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 #import logging
 import math
 
@@ -340,7 +341,8 @@ def calc_tts(occurrences_opt, num_reads, num_sweeps, confidence_level=0.99):
     return tts
 
 
-def update_conversion_rate_one_by_one(iterations=10, problem_seed=12345):
+def continuous(iterations=10, problem_seed=12345):
+    # Continuous:
     # Update conversion rate one by one
     # and find the optimal solution.
 
@@ -382,7 +384,8 @@ def update_conversion_rate_one_by_one(iterations=10, problem_seed=12345):
         prev_cycle = current_cycle
 
 
-def update_conversion_rate_one_by_one_sawatabi(iterations=10, problem_seed=12345):
+def continuous_sawatabi(iterations=10, problem_seed=12345):
+    # Continuous Sawatabi:
     # Update conversion rate one by one
     # and find the optimal solution for sawatabi.
 
@@ -394,6 +397,10 @@ def update_conversion_rate_one_by_one_sawatabi(iterations=10, problem_seed=12345
     cr = 0.95
     it = 500.0 #it = 1000.0
     seeds = [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]
+
+    # Output file
+    path = f"experiment-output-continuous_sawatabi_{problem_seed}.txt"
+    f = open(path, mode="w")
 
     # Initial solution
     print(f"[0] Initial problem (problem_seed={problem_seed})")
@@ -459,6 +466,7 @@ def update_conversion_rate_one_by_one_sawatabi(iterations=10, problem_seed=12345
         print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
         print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
         print(f"TTS:", tts)
+        f.write(f"{tts}\n")
         print("")
 
         # Sawatabi Solver for 10 different seeds WITH previous state
@@ -477,6 +485,7 @@ def update_conversion_rate_one_by_one_sawatabi(iterations=10, problem_seed=12345
         print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
         print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
         print(f"TTS:", tts)
+        f.write(f"{tts}\n")
         print("")
 
         #if prev_cycle == current_cycle:
@@ -486,6 +495,8 @@ def update_conversion_rate_one_by_one_sawatabi(iterations=10, problem_seed=12345
 
         prev_sampleset = sampleset
         prev_cycle = current_cycle
+
+    f.close()
 
 
 def find_sawatabi_parameters():
@@ -629,9 +640,25 @@ def find_parameters_using_optuna():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--iterations",
+        dest="iterations",
+        type=int,
+        default=20,
+        help="Iterations.")
+    parser.add_argument(
+        "--problem-seed",
+        dest="problem_seed",
+        type=int,
+        default=12345,
+        help="Problem seed.")
+    args = parser.parse_args()
+
     #single_run()
-    #update_conversion_rate_one_by_one(iterations=20)
-    update_conversion_rate_one_by_one_sawatabi(iterations=10)
+    #continuous(iterations=20)
+    continuous_sawatabi(iterations=args.iterations, problem_seed=args.problem_seed)
 
     #find_sawatabi_parameters()
     #find_sawatabi_parameters_using_optuna()
