@@ -83,6 +83,17 @@ def test_local_solver_sa_ising():
     assert resultset.record[0].energy == 6.0
     assert resultset.record[0].num_occurrences == 1
 
+    # Check the second solve with the same solver instance
+    resultset2 = solver.solve(model.to_physical(), seed=54321)
+
+    assert resultset2.variables == ["s[0]", "s[1]"]
+    assert len(resultset2.record) == 1
+
+    # Check the ground state
+    assert np.array_equal(resultset2.record[0].sample, [-1, 1])
+    assert resultset2.record[0].energy == 6.0
+    assert resultset2.record[0].num_occurrences == 1
+
 
 def test_local_solver_sa_qubo():
     model = LogicalModel(mtype="qubo")

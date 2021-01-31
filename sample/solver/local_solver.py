@@ -24,51 +24,49 @@ import sawatabi
 # fmt: on
 
 
-def solver_local_ising():
+def solver_local_ising(solver):
     print("\n=== solver (local ising) ===")
     physical = _create_ising_model()
 
-    solver = sawatabi.solver.LocalSolver(exact=False)
     resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
 
     _print_resultset(resultset)
 
 
-def solver_local_qubo():
+def solver_local_qubo(solver):
     print("\n=== solver (local qubo) ===")
     physical = _create_qubo_model()
 
-    solver = sawatabi.solver.LocalSolver(exact=False)
     resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
 
     _print_resultset(resultset)
 
 
-def solver_local_simple_2x2_ising_without_active_var():
+def solver_local_simple_2x2_ising_without_active_var(solver):
     print("\n=== solver (simple ising 2x2) ===")
     physical = _create_simple_2x2_ising_model_without_active_var()
 
-    solver = sawatabi.solver.LocalSolver(exact=False)
     resultset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
 
     _print_resultset(resultset)
 
 
-def solver_local_simple_2x2_qubo_without_active_var():
+def solver_local_simple_2x2_qubo_without_active_var(solver):
     print("\n=== solver (simple qubo 2x2) ===")
     physical = _create_simple_2x2_qubo_model_without_active_var()
 
-    solver = sawatabi.solver.LocalSolver(exact=False)
     resultset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
 
     _print_resultset(resultset)
 
 
 def main():
-    solver_local_ising()
-    solver_local_qubo()
-    solver_local_simple_2x2_ising_without_active_var()
-    solver_local_simple_2x2_qubo_without_active_var()
+    solver = sawatabi.solver.LocalSolver(exact=False)
+
+    solver_local_ising(solver)
+    solver_local_qubo(solver)
+    solver_local_simple_2x2_ising_without_active_var(solver)
+    solver_local_simple_2x2_qubo_without_active_var(solver)
 
 
 if __name__ == "__main__":
