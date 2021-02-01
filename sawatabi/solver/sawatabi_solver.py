@@ -160,7 +160,6 @@ class SawatabiSolver(AbstractSolver):
                 reversing_phase = False
 
             # logger.info(f"sweep: {sweep + 1}/{num_sweeps}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
-            print(f"- sweep: {sweep + 1}/{num_sweeps}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
 
             # Pick up a spin (variable) randomly
             if pickup_mode == constants.PICKUP_MODE_RANDOM:
@@ -171,8 +170,6 @@ class SawatabiSolver(AbstractSolver):
 
             for inner, idx in enumerate(pickups):  # inner loop
                 # logger.debug(f"inner: {inner + 1}/{num_variables}  (pickuped: {idx})")
-                print(f"inner: {inner + 1}/{num_variables}  (pickuped: {idx})")
-                print(x)
 
                 # `diff` represents a gained energy value after flipping
                 diff = self.calc_energy_diff(idx, x)
@@ -181,9 +178,7 @@ class SawatabiSolver(AbstractSolver):
                     x[idx] *= -1
                     energy += diff
                     # logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
-                    print(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
                 # logger.debug(f"energy: {energy}")
-                print(f"energy: {energy}")
 
             if reversing_phase:
                 reverse_target_temperature *= cooling_rate
@@ -220,7 +215,6 @@ class SawatabiSolver(AbstractSolver):
             return True
         else:
             p = math.exp(-diff / temperature)
-            print(p)
             if self._rng.random() < p:
                 return True
         return False
