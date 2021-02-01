@@ -79,7 +79,7 @@ def main():
     #ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
     plt.ylim(ymin=0)
     plt.xlabel("Iteration")
-    plt.ylabel("TTS (99% confidence level) in sweeps")
+    plt.ylabel("Time-to-Solution (in sweeps)")
     plt.legend(["forward", "reverse"])
     plt.title(f"Finding arbitrage opportunities by sawatabi solver\nwithout previous state (forward) and with (reverse annealing).")
     plt.savefig(f"experiment-output-continuous-sawatabi.png")
