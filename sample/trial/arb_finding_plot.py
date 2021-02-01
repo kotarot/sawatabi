@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Default font size is 12
-plt.rcParams['font.size'] = 14
+plt.rcParams['font.size'] = 12
 
 
 def calc_average_and_standard_error(ttslist):
@@ -61,13 +61,13 @@ def main():
                     else:
                         tts_with[index] = [float(line)]
 
-    print("tts_without:", tts_without)
-    print("tts_with:", tts_with)
+    #print("tts_without:", tts_without)
+    #print("tts_with:", tts_with)
 
     tts_result_without = calc_average_and_standard_error(tts_without)
     tts_result_with = calc_average_and_standard_error(tts_with)
-    print("tts_result_without:", tts_result_without)
-    print("tts_result_with:", tts_result_with)
+    #print("tts_result_without:", tts_result_without)
+    #print("tts_result_with:", tts_result_with)
 
     # Plot chart for comparison
     fig = plt.figure(figsize=(10, 6))
@@ -81,7 +81,7 @@ def main():
     plt.xlabel("Iteration")
     plt.ylabel("TTS (99% confidence level) in sweeps")
     plt.legend(["forward", "reverse"])
-    plt.title(f"Sawatabi solver without previous state (forward) and with (reverse).")
+    plt.title(f"Finding arbitrage opportunities by sawatabi solver\nwithout previous state (forward) and with (reverse annealing).")
     plt.savefig(f"experiment-output-continuous-sawatabi.png")
     print("Plot generated.")
 
