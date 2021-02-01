@@ -29,7 +29,7 @@ def test_sawatabi_solver_ising():
     model.offset(10.0)
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_reads=2, num_sweeps=100, num_coolings=10, cooling_rate=0.8, initial_temperature=10.0, seed=12345)
+    resultset = solver.solve(model.to_physical(), num_reads=2, num_sweeps=10, cooling_rate=0.5, initial_temperature=10.0, seed=12345)
 
     assert resultset.variables == ["s[0]", "s[1]"]
     assert len(resultset.record) == 1
@@ -49,7 +49,7 @@ def test_sawatabi_solver_qubo():
     model.offset(10.0)
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_sweeps=1000, num_coolings=101, seed=12345)
+    resultset = solver.solve(model.to_physical(), num_sweeps=10, cooling_rate=0.5, seed=12345)
 
     assert resultset.variables == ["x[0]", "x[1]"]
     assert len(resultset.record) == 1
@@ -140,15 +140,17 @@ def test_sawatabi_solver_ising_without_active_var():
     assert len(physical._index_to_label) == 3
 
     solver = SawatabiSolver()
-    resultset = solver.solve(physical, seed=12345)
+    resultset = solver.solve(physical, num_reads=10, seed=12345)
 
     assert resultset.variables == ["s[0][1]", "s[1][0]", "s[1][1]"]
-    assert len(resultset.record) == 1
+    assert len(resultset.record) == 2
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [1, 1, 1])
+    assert np.array_equal(resultset.record[0].sample, [1, -1, -1])
+    assert np.array_equal(resultset.record[1].sample, [1, 1, 1])
     assert resultset.record[0].energy == -3
-    assert resultset.record[0].num_occurrences == 1
+    assert resultset.record[1].energy == -3
+    assert resultset.record[0].num_occurrences + resultset.record[1].num_occurrences == 10
 
 
 def test_sawatabi_solver_qubo_without_active_var():
@@ -211,7 +213,7 @@ def test_sawatabi_solver_with_initial_states_ising():
             "x[11]": -1,
         },
     ]
-    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=1, num_coolings=1, pickup_mode="sequential", initial_states=initial_states)
+    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=1, pickup_mode="sequential", initial_temperature=1e-9, initial_states=initial_states)
 
     assert len(resultset.record) == 1
 
@@ -238,7 +240,7 @@ def test_sawatabi_solver_with_initial_states_qubo():
             "x[5]": 0,
         },
     ]
-    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=100, num_coolings=10, cooling_rate=0.5, initial_states=initial_states, seed=12345)
+    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.5, initial_states=initial_states, seed=12345)
 
     assert len(resultset.record) == 1
 
@@ -268,8 +270,7 @@ def test_sawatabi_solver_with_initial_states_reverse():
     resultset = solver.solve(
         model.to_physical(),
         num_reads=1,
-        num_sweeps=100,
-        num_coolings=10,
+        num_sweeps=10,
         initial_states=initial_states,
         reverse_options={"reverse_period": 5, "reverse_temperature": 10.0},
         seed=12345,
@@ -283,20 +284,18 @@ def test_sawatabi_solver_with_initial_states_reverse():
     assert resultset.record[0].num_occurrences == 1
 
 
-def test_sawatabi_solver_when_coolings_is_larger_than_sweeps():
+def test_sawatabi_solver_reuse_solver_instance():
     model = LogicalModel(mtype="ising")
     x = model.variables("x", shape=(2,))
     for i in range(2):
         model.add_interaction(x[i], coefficient=-1.0)
     solver = SawatabiSolver()
 
-    with pytest.warns(UserWarning):
-        sampleset_1 = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, num_coolings=11, cooling_rate=0.5, seed=12345)
+    sampleset_1 = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.5, seed=12345)
     assert np.array_equal(sampleset_1.record[0].sample, [-1, -1])
     assert sampleset_1.record[0].energy == -2.0
 
-    with pytest.warns(UserWarning):
-        sampleset_2 = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, num_coolings=20, cooling_rate=0.5, seed=12345)
+    sampleset_2 = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.5, seed=12345)
     assert np.array_equal(sampleset_2.record[0].sample, [-1, -1])
     assert sampleset_2.record[0].energy == -2.0
 

@@ -15,7 +15,6 @@
 # import logging
 import math
 import time
-import warnings
 
 import dimod
 import numpy as np
@@ -39,8 +38,7 @@ class SawatabiSolver(AbstractSolver):
         self,
         model,
         num_reads=1,
-        num_sweeps=1000,
-        num_coolings=100,
+        num_sweeps=100,
         cooling_rate=0.9,
         initial_temperature=100.0,
         initial_states=None,
@@ -60,11 +58,11 @@ class SawatabiSolver(AbstractSolver):
         if pickup_mode not in allowed_pickup_mode:
             raise ValueError(f"pickup_mode must be one of {allowed_pickup_mode}")
 
-        if num_sweeps < num_coolings:
-            warnings.warn("num_coolings should not be larger than num_sweeps.")
-
         # Use RNG so that this random sequence is isolated
-        rng = np.random.RandomState(seed)
+        if seed:
+            self._rng = np.random.default_rng(seed)
+        else:
+            self._rng = np.random.default_rng()
 
         bqm = model.to_bqm(sign=1.0)
         self._original_bqm = bqm
@@ -82,7 +80,6 @@ class SawatabiSolver(AbstractSolver):
 
         self._model = model
         self._bqm = bqm
-        self._rng = rng
 
         # For speed up, store coefficients into a list (array)
         self._bqm_linear = [0.0 for _ in range(self._bqm.num_variables)]
@@ -109,7 +106,6 @@ class SawatabiSolver(AbstractSolver):
             sample, energy = self.annealing(
                 num_reads=num_reads,
                 num_sweeps=num_sweeps,
-                num_coolings=num_coolings,
                 cooling_rate=cooling_rate,
                 initial_temperature=initial_temperature,
                 initial_state=initial_state_for_this_read,
@@ -132,11 +128,12 @@ class SawatabiSolver(AbstractSolver):
 
         return sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
 
-    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_state, reverse_options, pickup_mode):
+    def annealing(self, num_reads, num_sweeps, cooling_rate, initial_temperature, initial_state, reverse_options, pickup_mode):
+        num_variables = self._bqm.num_variables
         if initial_state is None:
-            x = ((self._rng.randint(2, size=self._bqm.num_variables) - 0.5) * 2).astype(int)  # -1 or +1
+            x = ((self._rng.integers(2, size=num_variables) - 0.5) * 2).astype(int)  # -1 or +1
         else:
-            x = np.ones(shape=(self._bqm.num_variables), dtype=int)
+            x = np.ones(shape=(num_variables), dtype=int)
             for v in self._bqm.variables:
                 idx = self._model._label_to_index[v]
                 x[idx] = initial_state[v]
@@ -153,39 +150,29 @@ class SawatabiSolver(AbstractSolver):
             reverse_target_temperature = reverse_options["reverse_temperature"]  # The max temperature when reverse annealing is performed
 
         energy = initial_energy
-        num_inners = math.ceil(num_sweeps / num_coolings)
         reversing_phase = True if reverse_options is not None else False
         sweep = 0
         sweep_finished = False
 
-        # Create a random pick up indices beforehand for speed up
-        if pickup_mode == constants.PICKUP_MODE_RANDOM:
-            pickup_randoms = self._rng.randint(self._bqm.num_variables, size=num_sweeps)
-        # Create a random values for accept beforehand for speed up
-        self.accept_randoms = self._rng.random(size=num_sweeps)
-        self.accept_randoms_idx = -1
-
-        for cool in range(num_coolings):  # outer loop
+        for sweep in range(num_sweeps):  # outer loop (=sweeps)
             # Normal annealing in the last half period
-            if reversing_phase and (reverse_options["reverse_period"] <= cool):
+            if reversing_phase and (reverse_options["reverse_period"] <= sweep):
                 reversing_phase = False
 
-            # logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
+            # logger.info(f"sweep: {sweep + 1}/{num_sweeps}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
+            print(f"- sweep: {sweep + 1}/{num_sweeps}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
 
-            for inner in range(num_inners):  # inner loop
-                sweep += 1
-                if num_sweeps < sweep:
-                    sweep_finished = True
-                    break
+            # Pick up a spin (variable) randomly
+            if pickup_mode == constants.PICKUP_MODE_RANDOM:
+                pickups = self._rng.permutation(list(range(num_variables)))
+            # Pick up a spin (variable) sequentially
+            elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
+                pickups = list(range(num_variables))
 
-                # logger.debug(f"sweep: {sweep}/{num_sweeps}")
-
-                # Pick up a spin (variable) randomly
-                if pickup_mode == constants.PICKUP_MODE_RANDOM:
-                    idx = pickup_randoms[sweep - 1]
-                # Pick up a spin (variable) sequentially
-                elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
-                    idx = (sweep - 1) % self._bqm.num_variables
+            for inner, idx in enumerate(pickups):  # inner loop
+                # logger.debug(f"inner: {inner + 1}/{num_variables}  (pickuped: {idx})")
+                print(f"inner: {inner + 1}/{num_variables}  (pickuped: {idx})")
+                print(x)
 
                 # `diff` represents a gained energy value after flipping
                 diff = self.calc_energy_diff(idx, x)
@@ -194,11 +181,9 @@ class SawatabiSolver(AbstractSolver):
                     x[idx] *= -1
                     energy += diff
                     # logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
+                    print(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
                 # logger.debug(f"energy: {energy}")
-
-            if sweep_finished:
-                # logger.info("No more sweeps left.")
-                break
+                print(f"energy: {energy}")
 
             if reversing_phase:
                 reverse_target_temperature *= cooling_rate
@@ -235,7 +220,7 @@ class SawatabiSolver(AbstractSolver):
             return True
         else:
             p = math.exp(-diff / temperature)
-            self.accept_randoms_idx += 1
-            if self.accept_randoms[self.accept_randoms_idx] < p:
+            print(p)
+            if self._rng.random() < p:
                 return True
         return False
