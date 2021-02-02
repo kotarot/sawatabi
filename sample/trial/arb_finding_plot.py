@@ -45,21 +45,23 @@ def main():
 
     abspath = os.path.dirname(os.path.abspath(__file__))
     outputs = glob.glob(f"{abspath}/experiment-output-continuous_sawatabi_*.txt")
+    print(outputs)
     for output in outputs:
         with open(output, mode="r") as f:
             lines = f.read().splitlines()
             for i, line in enumerate(lines):
                 index = int(i / 2)
-                if i % 2 == 0:  # even -> without
+                print(index, line)
+                if i % 2 == 0:  # even -> without (forward)
                     if index in tts_without:
-                        tts_without[index].append(float(line))
+                        tts_without[index].extend([float(s) for s in line.split()[1:]])
                     else:
-                        tts_without[index] = [float(line)]
-                else:  # odd -> with
+                        tts_without[index] = [float(s) for s in line.split()[1:]]
+                else:  # odd -> with (reverse)
                     if index in tts_with:
-                        tts_with[index].append(float(line))
+                        tts_with[index].extend([float(s) for s in line.split()[1:]])
                     else:
-                        tts_with[index] = [float(line)]
+                        tts_with[index] = [float(s) for s in line.split()[1:]]
 
     #print("tts_without:", tts_without)
     #print("tts_with:", tts_with)
