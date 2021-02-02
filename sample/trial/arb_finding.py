@@ -532,6 +532,11 @@ def find_sawatabi_parameters():
     - Annealing parameters for Sawatabi Solver.
     - The following parameter set can get num_optimal >= 2 when num_reads = 100
     - num_sweeps  cooling_rate  initial_temperature  num_feasible/num_profitable/num_optimal
+      50          0.85          10                   99 / 15 / 4
+      50          0.85          500                  99 / 15 / 4
+      50          0.8           10                   98 / 19 / 2
+      50          0.8           500                  100 / 18 / 2
+      50          0.7           10                   99 / 16 / 3
       100         0.95          100                  100 / 13 / 2
       100         0.85          100                  100 / 18 / 2
       100         0.85          1000                 100 / 17 / 3
@@ -544,8 +549,8 @@ def find_sawatabi_parameters():
       500         0.8           100                  100 / 14 / 3
     """
     '''
-    for sweep in [100, 200, 500]:
-        for rate in [0.99, 0.95, 0.9, 0.85, 0.8]:
+    for sweep in [50, 100, 200, 500]:
+        for rate in [0.99, 0.95, 0.9, 0.85, 0.8, 0.7]:
             for temperature in [10.0, 100.0, 500.0, 1000.0]:
                 solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=sweep, cooling_rate=rate, initial_temperature=temperature, seed=12345)
     '''
@@ -555,6 +560,7 @@ def find_sawatabi_parameters():
     - More detail search to set num_read to 100 and for 10 different solver seed
     - The following parameter sets seem to be good:
     - num_sweeps  cooling_rate  initial_temperature  n_feasible/n_profitable/n_optimal
+      50          0.85          500                  988 / 153 / 11
       100         0.95          100                  994 / 159 / 14
       200         0.85          100                  993 / 154 / 15
       500         0.9           10                   992 / 145 / 10
@@ -562,6 +568,13 @@ def find_sawatabi_parameters():
     """
     #'''
     parameter_set = [
+        (50, 0.85, 10),
+        (50, 0.85, 100),
+        (50, 0.85, 500),
+        (50, 0.8, 10),
+        (50, 0.8, 100),
+        (50, 0.8, 500),
+        (50, 0.7, 10),
         (100, 0.95, 100),
         (100, 0.85, 100),
         (100, 0.85, 1000),
