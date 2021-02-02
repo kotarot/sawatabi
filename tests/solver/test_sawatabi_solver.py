@@ -331,7 +331,7 @@ def test_sawatabi_solver_invalid_reverse_options():
     solver = SawatabiSolver()
 
     with pytest.raises(ValueError):
-        solver.solve(model.to_physical(),reverse_options={"reverse_period": 5})
+        solver.solve(model.to_physical(), reverse_options={"reverse_period": 5})
 
     with pytest.raises(ValueError):
-        solver.solve(model.to_physical(),reverse_options={"reverse_temperature": 10.0})
+        solver.solve(model.to_physical(), reverse_options={"reverse_temperature": 10.0})
