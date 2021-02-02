@@ -512,7 +512,7 @@ def continuous_sawatabi(iterations=10, problem_seed=12345):
         print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
         #print(f"TTS:", tts)
         #f.write(f"{tts}\n")
-        f.write(f"reverse_" + str(itr) + + " " + (" ".join(ttss)) + "\n")
+        f.write("reverse_" + str(itr) + " " + (" ".join(ttss)) + "\n")
         print("")
 
         #if prev_cycle == current_cycle:
