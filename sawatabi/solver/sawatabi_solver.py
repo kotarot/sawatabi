@@ -161,7 +161,6 @@ class SawatabiSolver(AbstractSolver):
         energy = initial_energy
         reversing_phase = True if reverse_options is not None else False
         sweep = 0
-        sweep_finished = False
 
         # Create a random values for accept beforehand for speed up
         self._accept_randoms = self._rng.random(size=num_sweeps * num_variables)
