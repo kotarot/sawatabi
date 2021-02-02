@@ -58,7 +58,14 @@ class SawatabiSolver(AbstractSolver):
         if pickup_mode not in allowed_pickup_mode:
             raise ValueError(f"pickup_mode must be one of {allowed_pickup_mode}")
 
-        # Use RNG so that this random sequence is isolated
+        if reverse_options:
+            self._check_argument_type("reverse_options", reverse_options, dict)
+            if "reverse_period" not in reverse_options:
+                raise ValueError("reverse_options must contain 'reverse_period'")
+            if "reverse_temperature" not in reverse_options:
+                raise ValueError("reverse_options must contain 'reverse_temperature'")
+
+        # Use a rangom generator so that this random sequence is isolated
         if seed:
             self._rng = np.random.default_rng(seed)
         else:
@@ -144,18 +151,24 @@ class SawatabiSolver(AbstractSolver):
         # logger.info(f"initial_energy: {initial_energy}")
 
         if not reverse_options:
+            # Forward (normal) annealing
             temperature = initial_temperature
         else:
+            # Reverse annealing
             temperature = 1e-9
-            reverse_target_temperature = reverse_options["reverse_temperature"]  # The max temperature when reverse annealing is performed
+            reverse_target_temperature = reverse_options["reverse_temperature"]  # The max temperature when the phase is reverse annealing
 
         energy = initial_energy
         reversing_phase = True if reverse_options is not None else False
         sweep = 0
         sweep_finished = False
 
+        # Create a random values for accept beforehand for speed up
+        self._accept_randoms = self._rng.random(size=num_sweeps * num_variables)
+        self._accept_randoms_idx = -1
+
         for sweep in range(num_sweeps):  # outer loop (=sweeps)
-            # Normal annealing in the last half period
+            # Normal annealing in the last half of period if reverse annealing is performed
             if reversing_phase and (reverse_options["reverse_period"] <= sweep):
                 reversing_phase = False
 
@@ -163,15 +176,15 @@ class SawatabiSolver(AbstractSolver):
 
             # Pick up a spin (variable) randomly
             if pickup_mode == constants.PICKUP_MODE_RANDOM:
-                pickups = self._rng.permutation(list(range(num_variables)))
+                pickups = self._rng.permutation(num_variables)
             # Pick up a spin (variable) sequentially
             elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
-                pickups = list(range(num_variables))
+                pickups = np.arange(num_variables)
 
             for inner, idx in enumerate(pickups):  # inner loop
                 # logger.debug(f"inner: {inner + 1}/{num_variables}  (pickuped: {idx})")
 
-                # `diff` represents a gained energy value after flipping
+                # `diff` represents an energy value gained after flipping
                 diff = self.calc_energy_diff(idx, x)
 
                 if self.is_acceptable(diff, temperature):
@@ -187,8 +200,10 @@ class SawatabiSolver(AbstractSolver):
                 temperature *= cooling_rate
 
         sample = dict(zip(list(self._model._index_to_label.values()), x))
-        recalc_energy = self._bqm.energy(sample) * -1.0
-        assert math.isclose(energy, recalc_energy, rel_tol=1e-9, abs_tol=1e-9)
+
+        # Check energy if needed
+        # recalc_energy = self._bqm.energy(sample) * -1.0
+        # assert math.isclose(energy, recalc_energy, rel_tol=1e-9, abs_tol=1e-9)
 
         # Deal with offset
         energy += self._original_bqm.offset * 2
@@ -214,7 +229,8 @@ class SawatabiSolver(AbstractSolver):
         if diff <= 0.0:
             return True
         else:
-            p = math.exp(-diff / temperature)
-            if self._rng.random() < p:
+            p = math.exp(-diff / temperature)  # Note: np.exp is slow here
+            self._accept_randoms_idx += 1
+            if self._accept_randoms[self._accept_randoms_idx] < p:
                 return True
         return False
