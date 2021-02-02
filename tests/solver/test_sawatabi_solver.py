@@ -321,3 +321,17 @@ def test_sawatabi_solver_invalid_pickup_mode():
 
     with pytest.raises(ValueError):
         solver.solve(model.to_physical(), pickup_mode="invalid")
+
+
+def test_sawatabi_solver_invalid_reverse_options():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(2,))
+    for i in range(2):
+        model.add_interaction(x[i], coefficient=-1.0)
+    solver = SawatabiSolver()
+
+    with pytest.raises(ValueError):
+        solver.solve(model.to_physical(),reverse_options={"reverse_period": 5})
+
+    with pytest.raises(ValueError):
+        solver.solve(model.to_physical(),reverse_options={"reverse_temperature": 10.0})
