@@ -49,15 +49,15 @@ def test_sawatabi_solver_qubo():
     model.offset(10.0)
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_sweeps=10, cooling_rate=0.5, seed=12345)
+    resultset = solver.solve(model.to_physical(), num_reads=10, num_sweeps=10, cooling_rate=0.5, seed=12345)
 
     assert resultset.variables == ["x[0]", "x[1]"]
-    assert len(resultset.record) == 1
+    assert len(resultset.record) == 2  # Note: We have an optimal solution and a sub-optimal one for this problem.
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [0, 1])
-    assert resultset.record[0].energy == 8.0
-    assert resultset.record[0].num_occurrences == 1
+    record = sorted(resultset.record, key=lambda r: r.energy)  # sort by energy
+    assert np.array_equal(record[0].sample, [0, 1])
+    assert record[0].energy == 8.0
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 100)])
