@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import argparse
+import datetime
 #import logging
 import math
 
@@ -158,7 +159,7 @@ def interpret(sample, record, satisfied, optimal_profit):
 
         if valid:
             #print(f"  cycle #{start}: {cycle}")
-            num_feasible += 1
+            num_feasible += record.num_occurrences
 
             # Calc gain
             gain = 1.0
@@ -174,7 +175,7 @@ def interpret(sample, record, satisfied, optimal_profit):
             if gain > 1.0:
                 #print(f"  cycle #{start}: {cycle}")
                 #print(f"  gain #{start}: {gain}")
-                num_profitable += 1
+                num_profitable += record.num_occurrences
 
             if not optimal_profit:
                 optimal_profit = 1.0007375  # 1.0007375904861755 is the optimal gain
@@ -183,13 +184,13 @@ def interpret(sample, record, satisfied, optimal_profit):
                 #print(f"  gain #{start}: {gain}")
                 #print("  energy:", record.energy)
                 #print("  satisfied:", satisfied)
-                num_optimal += 1
+                num_optimal += record.num_occurrences
 
     # Returns:
-    # - 1 if there is at least one feasible cycle, 0 otherwise,
-    # - 1 if there is at least one cycle that can obtain a positive gain, 0 otherwise,
-    # - 1 if there is at least one cycle that can obtain the maximum gain, 0 otherwise.
-    return min(num_feasible, 1), min(num_profitable, 1), min(num_optimal, 1), max_gain, max_cycle
+    # - record.num_occurrences if there is at least one feasible cycle, 0 otherwise,
+    # - record.num_occurrences if there is at least one cycle that can obtain a positive gain, 0 otherwise,
+    # - record.num_occurrences if there is at least one cycle that can obtain the maximum gain, 0 otherwise.
+    return min(num_feasible, record.num_occurrences), min(num_profitable, record.num_occurrences), min(num_optimal, record.num_occurrences), max_gain, max_cycle
 
 
 def cycle_in_currency_name(cycle):
@@ -199,11 +200,11 @@ def cycle_in_currency_name(cycle):
     return " -> ".join(names)
 
 
-def solve_arb_finding(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345, exact=False, prev_sampleset=None, optimal_profit=None):
+def solve_arb_finding(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, reverse_temperature=1.0, seed=12345, exact=False, prev_sampleset=None, optimal_profit=None):
     if exact:
         print(f"== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, exact={exact}) ==")
     else:
-        print(f"== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, nr={num_reads}, ns={num_sweeps}, nc={num_coolings}, cr={cooling_rate}, it={initial_temperature}, seed={seed}, exact={exact}, prev_sampleset={prev_sampleset is not None}) ==")
+        print(f"== arb finding (log_base={log_base}, M_0={M_0}, M_1={M_1}, M_2={M_2}, nr={num_reads}, ns={num_sweeps}, cr={cooling_rate}, it={initial_temperature}, rt={reverse_temperature}, seed={seed}, exact={exact}, prev_sampleset={prev_sampleset is not None}) ==")
 
     ################################
     # Create Model
@@ -260,7 +261,7 @@ def solve_arb_finding(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000,
         #'''
         solver = sawatabi.solver.SawatabiSolver()
         if not prev_sampleset:
-            sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=num_coolings, cooling_rate=cooling_rate, initial_temperature=initial_temperature, seed=seed)
+            sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, cooling_rate=cooling_rate, initial_temperature=initial_temperature, seed=seed)
         else:
             initial_states = []
 
@@ -273,8 +274,8 @@ def solve_arb_finding(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000,
             #print("Initialized with previous states.")
             assert len(initial_states) == num_reads
 
-            sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=num_coolings, cooling_rate=cooling_rate, initial_temperature=initial_temperature, seed=seed,
-                initial_states=initial_states, reverse_options={"reverse_period": num_coolings / 2, "reverse_temperature": initial_temperature * 0.01})
+            sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, cooling_rate=cooling_rate, initial_temperature=initial_temperature, seed=seed,
+                initial_states=initial_states, reverse_options={"reverse_period": int(num_sweeps / 2), "reverse_temperature": reverse_temperature})
         #'''
 
     #print("\n== Result ==")
@@ -310,10 +311,10 @@ def solve_arb_finding(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000,
 
     #if exact:
     #    print("profit:", max_gain)
-    #if not exact:
-    #    print("num_feasible:", num_feasible)
-    #    print("num_profitable:", num_profitable)
-    #    print("num_optimal:", num_optimal)
+    if not exact:
+        #print("num_feasible:", num_feasible)
+        #print("num_profitable:", num_profitable)
+        print("num_optimal:", num_optimal)
     #    print("profit:", max_gain)
     #if 0 < max_gain:
     #    print("cycle:", cycle_in_currency_name(max_cycle))
@@ -323,16 +324,30 @@ def solve_arb_finding(log_base=100.0, M_0=1.0, M_1=1.0, M_2=1.0, num_reads=1000,
 
 def single_run():
     # Single run
+    # Exact Solver
     solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
-    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=500, num_coolings=200, cooling_rate=0.95, initial_temperature=1000.0, seed=12345)
+    # Swatabi Solver without previous state (forward annealing)
+    sampleset, _, _, _, _, _ = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345)
+    # Sawatabi Solver with previous state (reverse annealing)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=1.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=2.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=3.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=4.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=5.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=6.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=7.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=8.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=9.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=10.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=20.0)
+    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=1000, num_sweeps=100, cooling_rate=0.95, initial_temperature=100.0, seed=12345, prev_sampleset=sampleset, reverse_temperature=50.0)
 
 
-def calc_tts(occurrences_opt, num_reads, num_sweeps, confidence_level=0.99):
+def calc_tts(num_occurrences, num_reads, num_sweeps, P=0.99):
     """
     Calculate TTS (time to solution) in sweeps unit
     """
-    P = confidence_level
-    p = occurrences_opt / num_reads
+    p = num_occurrences / num_reads
     if 0.999 < p:
         p = 0.999
     if p < 0.001:
@@ -356,15 +371,15 @@ def continuous(iterations=10, problem_seed=12345):
     print("")
 
     # Continuous running
-    np.random.seed(problem_seed)
+    rng = np.random.default_rng(problem_seed)
     for itr in range(1, iterations + 1):
         while True:
-            i = np.random.randint(NUM_CURRENCIES)
-            j = np.random.randint(NUM_CURRENCIES)
+            i = rng.integers(NUM_CURRENCIES)
+            j = rng.integers(NUM_CURRENCIES)
             if i != j:
                 break
 
-        change_rate = np.random.normal(loc=1.0, scale=0.001)
+        change_rate = rng.normal(loc=1.0, scale=0.001)
         currency_i = index_to_currency[i]
         currency_j = index_to_currency[j]
         print(f"[{itr}] Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
@@ -391,19 +406,19 @@ def continuous_sawatabi(iterations=10, problem_seed=12345):
 
     # Experiment options
     use_state = False
-    nr = 100
-    ns = 1000 #ns = 500
-    nc = 200
+    nr = 200
+    ns = 100
     cr = 0.95
-    it = 500.0 #it = 1000.0
-    seeds = [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]
+    it = 100.0
+    rt = 7.0
+    seeds = [101, 102, 103, 104, 105]
 
     # Output file
     path = f"experiment-output-continuous_sawatabi_{problem_seed}.txt"
     f = open(path, mode="w")
 
     # Initial solution
-    print(f"[0] Initial problem (problem_seed={problem_seed})")
+    print(f"(0) Initial problem (problem_seed={problem_seed})")
 
     # Exact Solution
     _, _, _, _, optimal_profit, prev_opt_cycle = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, exact=True)
@@ -411,33 +426,35 @@ def continuous_sawatabi(iterations=10, problem_seed=12345):
     print("optimal_cycle:", cycle_in_currency_name(prev_opt_cycle))
     print("")
 
-    # Sawatabi Solver for 10 different seeds
     n_optimal = 0
-    for seed in range(11, 21):
-        _prev_sampleset, _, _, num_optimal, _, _prev_cycle = solve_arb_finding(
-            log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit)
-        n_optimal += num_optimal
-        if num_optimal > 0:
+    for seed in range(11, 12):
+        _prev_sampleset, _, _, numo, _, _prev_cycle = solve_arb_finding(
+            log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit)
+        n_optimal += numo
+        if numo > 0:
             prev_sampleset = _prev_sampleset
             prev_cycle = _prev_cycle
-    tts = calc_tts(n_optimal, len(seeds) * nr, ns)
-    print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
-    print(f"TTS:", tts)
+            #tts = calc_tts(numo, nr, ns)
+            #print(f"TTS:", tts)
+    #tts = calc_tts(n_optimal, len(seeds) * nr, ns)
+    #print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
+    #print(f"TTS:", tts)
     print("")
 
     # Continuous running
-    np.random.seed(problem_seed)
+    rng = np.random.default_rng(problem_seed)
     for itr in range(1, iterations + 1):
         while True:
-            i = np.random.randint(NUM_CURRENCIES)
-            j = np.random.randint(NUM_CURRENCIES)
+            i = rng.integers(NUM_CURRENCIES)
+            j = rng.integers(NUM_CURRENCIES)
             if i != j:
                 break
 
-        change_rate = np.random.normal(loc=1.0, scale=0.001)
+        change_rate = rng.normal(loc=1.0, scale=0.001)
         currency_i = index_to_currency[i]
         currency_j = index_to_currency[j]
-        print(f"[{itr}] Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
+        print(f"[{datetime.datetime.now()}]")
+        print(f"({itr}) Change conversion rate {currency_i}-{currency_j} from {conversion_rates[currency_i][currency_j]}", end="")
         conversion_rates[currency_i][currency_j] *= change_rate
         print(f" to {conversion_rates[currency_i][currency_j]} (problem_seed={problem_seed})")
 
@@ -451,41 +468,51 @@ def continuous_sawatabi(iterations=10, problem_seed=12345):
             print("\033[31moptimal cycle changed!\033[0m\n")
         prev_opt_cycle = current_opt_cycle
 
-        # Sawatabi Solver for 10 different seeds WITHOUT previous state
+        # Sawatabi Solver for 5 different seeds WITHOUT previous state
         n_feasible = n_profitable = n_optimal = 0
-        for seed in range(20 * itr + 1, 20 * itr + 11):
-            _, num_feasible, num_profitable, num_optimal, _, _current_cycle = solve_arb_finding(
-                log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit)
-            n_feasible += num_feasible
-            n_profitable += num_profitable
-            n_optimal += num_optimal
-            if num_optimal > 0:
+        ttss = []
+        for seed in range(20 * itr + 1, 20 * itr + 6):
+            _, numf, nump, numo, _, _current_cycle = solve_arb_finding(
+                log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit)
+            n_feasible += numf
+            n_profitable += nump
+            n_optimal += numo
+            if numo > 0:
                 current_cycle = _current_cycle
-        tts = calc_tts(n_optimal, len(seeds) * nr, ns)
-        print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
-        print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
+                tts = calc_tts(num_occurrences=numo, num_reads=nr, num_sweeps=ns)
+                ttss.append(str(tts))
+                print(f"TTS:", tts)
+        #tts = calc_tts(n_optimal, len(seeds) * nr, ns)
+        #print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
+        #print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
         print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
-        print(f"TTS:", tts)
-        f.write(f"{tts}\n")
+        #print(f"TTS:", tts)
+        #f.write(f"{tts}\n")
+        f.write("forward_" + str(itr) + " " + (" ".join(ttss)) + "\n")
         print("")
 
-        # Sawatabi Solver for 10 different seeds WITH previous state
+        # Sawatabi Solver for 5 different seeds WITH previous state
         n_feasible = n_profitable = n_optimal = 0
-        for seed in range(20 * itr + 11, 20 * itr + 21):
-            _sampleset, num_feasible, num_profitable, num_optimal, _, _current_cycle = solve_arb_finding(
-                log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, num_coolings=nc, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, prev_sampleset=prev_sampleset, optimal_profit=optimal_profit)
-            n_feasible += num_feasible
-            n_profitable += num_profitable
-            n_optimal += num_optimal
-            if num_optimal > 0:
+        ttss = []
+        for seed in range(20 * itr + 11, 20 * itr + 16):
+            _sampleset, numf, nump, numo, _, _current_cycle = solve_arb_finding(
+                log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=nr, num_sweeps=ns, cooling_rate=cr, initial_temperature=it, seed=seed, exact=False, optimal_profit=optimal_profit, prev_sampleset=prev_sampleset, reverse_temperature=rt)
+            n_feasible += numf
+            n_profitable += nump
+            n_optimal += numo
+            if numo > 0:
                 sampleset = _sampleset
                 current_cycle = _current_cycle
-        tts = calc_tts(n_optimal, len(seeds) * nr, ns)
-        print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
-        print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
+                tts = calc_tts(num_occurrences=numo, num_reads=nr, num_sweeps=ns)
+                ttss.append(str(tts))
+                print(f"TTS:", tts)
+        #tts = calc_tts(n_optimal, len(seeds) * nr, ns)
+        #print(f"n_feasible ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_feasible)
+        #print(f"n_profitable ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_profitable)
         print(f"n_optimal ({len(seeds)} seeds, {len(seeds) * nr} samples):", n_optimal)
-        print(f"TTS:", tts)
-        f.write(f"{tts}\n")
+        #print(f"TTS:", tts)
+        #f.write(f"{tts}\n")
+        f.write(f"reverse_" + str(itr) + + " " + (" ".join(ttss)) + "\n")
         print("")
 
         #if prev_cycle == current_cycle:
@@ -503,74 +530,73 @@ def find_sawatabi_parameters():
     """
     Experiments Note:
     - Annealing parameters for Sawatabi Solver.
-    - The following parameter set can get num_profitable >= 2 and num_optimal >= 1 when num_reads=10
-    - num_sweeps  num_coolings  cooling_rate  initial_temperature  num_feasible/num_profitable/num_optimal
-      500         100           0.95          500                  7 / 2 / 1
-      500         100           0.9           100                  8 / 2 / 1
-      500         200           0.95          100                  9 / 2 / 1
-      500         200           0.95          1000                 9 / 2 / 1
-      500         500           0.85          100                  7 / 3 / 1
-      500         500           0.85          1000                 6 / 2 / 1
-      1000        100           0.95          500                  6 / 2 / 1
-      1000        200           0.95          500                  10 / 3 / 1
-      1000        200           0.9           1000                 7 / 2 / 1
-      1000        200           0.8           100                  8 / 2 / 1
+    - The following parameter set can get num_optimal >= 2 when num_reads = 100
+    - num_sweeps  cooling_rate  initial_temperature  num_feasible/num_profitable/num_optimal
+      100         0.95          100                  100 / 13 / 2
+      100         0.85          100                  100 / 18 / 2
+      100         0.85          1000                 100 / 17 / 3
+      200         0.85          10                   100 / 18 / 4
+      200         0.85          100                  99 / 21 / 4
+      200         0.8           500                  99 / 15 / 2
+      500         0.95          100                  99 / 18 / 3
+      500         0.95          1000                 98 / 14 / 3
+      500         0.9           10                   100 / 15 / 4
+      500         0.8           100                  100 / 14 / 3
     """
-    """
-    for sweep in [500, 1000]:
-        for cooling in [100, 200, 500, 1000]:
-            if sweep < cooling:
-                continue
-            for rate in [0.99, 0.95, 0.9, 0.85, 0.8]:
-                for temperature in [10.0, 100.0, 500.0, 1000.0]:
-                    solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=10, num_sweeps=sweep, num_coolings=cooling, cooling_rate=rate, initial_temperature=temperature, seed=12345)
-    """
+    '''
+    for sweep in [100, 200, 500]:
+        for rate in [0.99, 0.95, 0.9, 0.85, 0.8]:
+            for temperature in [10.0, 100.0, 500.0, 1000.0]:
+                solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=sweep, cooling_rate=rate, initial_temperature=temperature, seed=12345)
+    '''
 
     """
     Experiments Note:
-    - More detail search to set num_read to 100
+    - More detail search to set num_read to 100 and for 10 different solver seed
     - The following parameter sets seem to be good:
-    - num_sweeps  num_coolings  cooling_rate  initial_temperature  n_feasible/n_profitable/n_optimal
-      500         200           0.95          1000                 657 / 101 / 9
-      1000        200           0.95          500                  682 / 112 / 5
-      1000        200           0.9           1000                 678 / 102 / 5
+    - num_sweeps  cooling_rate  initial_temperature  n_feasible/n_profitable/n_optimal
+      100         0.95          100                  994 / 159 / 14
+      200         0.85          100                  993 / 154 / 15
+      500         0.9           10                   992 / 145 / 10
+      500         0.8           100                  981 / 148 / 11
     """
+    #'''
     parameter_set = [
-        (500, 100, 0.95, 500),
-        (500, 100, 0.9, 100),
-        (500, 200, 0.95, 100),
-        (500, 200, 0.95, 1000),
-        (500, 500, 0.85, 100),
-        (500, 500, 0.85, 1000),
-        (1000, 100, 0.95, 500),
-        (1000, 200, 0.95, 500),
-        (1000, 200, 0.9, 1000),
-        (1000, 200, 0.8, 100),
+        (100, 0.95, 100),
+        (100, 0.85, 100),
+        (100, 0.85, 1000),
+        (200, 0.85, 10),
+        (200, 0.85, 100),
+        (200, 0.8, 500),
+        (500, 0.95, 100),
+        (500, 0.95, 1000),
+        (500, 0.9, 10),
+        (500, 0.8, 100),
     ]
-    for (sweep, cooling, rate, temperature) in parameter_set:
+    for (sweep, rate, temperature) in parameter_set:
         n_feasible = n_profitable = n_optimal = 0
         for seed in [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]:
-            _, num_feasible, num_profitable, num_optimal, _, _ = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=sweep, num_coolings=cooling, cooling_rate=rate, initial_temperature=temperature, seed=seed)
-            n_feasible += num_feasible
-            n_profitable += num_profitable
-            n_optimal += num_optimal
+            _, numf, nump, numo, _, _ = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=sweep, cooling_rate=rate, initial_temperature=temperature, seed=seed)
+            n_feasible += numf
+            n_profitable += nump
+            n_optimal += numo
         print("--------")
         print("n_feasible:", n_feasible)
         print("n_profitable:", n_profitable)
         print("n_optimal:", n_optimal)
         print("")
+    #'''
 
 
 def objective_sawatabi(trial):
-    num_sweeps = trial.suggest_int("num_sweeps", 100, 2000)
-    num_coolings = trial.suggest_int("num_coolings", 100, 2000)
+    num_sweeps = trial.suggest_int("num_sweeps", 50, 500)
     cooling_rate = trial.suggest_int("cooling_rate", 80, 99)
     initial_temperature = trial.suggest_int("initial_temperature", 100, 1000)
 
     n_optimal = 0
     for seed in [11, 22, 33, 44, 55]:
-        _, _, _, num_optimal, _, _ = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=num_sweeps, num_coolings=num_coolings, cooling_rate=cooling_rate/100.0, initial_temperature=initial_temperature, seed=seed)
-        n_optimal += num_optimal
+        _, _, _, numo, _, _ = solve_arb_finding(log_base=100.0, M_0=1.0, M_1=8.0, M_2=8.0, num_reads=100, num_sweeps=num_sweeps, cooling_rate=cooling_rate/100.0, initial_temperature=initial_temperature, seed=seed)
+        n_optimal += numo
 
     return n_optimal
 
@@ -578,13 +604,13 @@ def objective_sawatabi(trial):
 def find_sawatabi_parameters_using_optuna():
     # Tuning by Optuna
     """
-    The number of trials is too small now...
+    The number of trials is small now...
 
-    Accuracy: 5.0
-    Best hyperparameters: {'num_sweeps': 1999, 'num_coolings': 1771, 'cooling_rate': 93, 'initial_temperature': 800}
+    Accuracy: 9.0
+    Best hyperparameters: {'num_sweeps': 163, 'cooling_rate': 96, 'initial_temperature': 918}
     """
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective_sawatabi, n_trials=10)
+    study.optimize(objective_sawatabi, n_trials=20)
     trial = study.best_trial
     print("Accuracy:", trial.value)
     print("Best hyperparameters:", trial.params)
@@ -612,8 +638,8 @@ def objective(trial):
 
     n_optimal = 0
     for seed in [11, 22, 33, 44, 55]:
-        _, _, _, num_optimal, _, _ = solve_arb_finding(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
-        n_optimal += num_optimal
+        _, _, _, numo, _, _ = solve_arb_finding(log_base=log_base, M_0=m_0, M_1=m_1, M_2=m_2, num_reads=1000, num_sweeps=1000, seed=seed)
+        n_optimal += numo
 
     return n_optimal
 
@@ -646,7 +672,7 @@ def main():
         "--iterations",
         dest="iterations",
         type=int,
-        default=20,
+        default=50,
         help="Iterations.")
     parser.add_argument(
         "--problem-seed",
