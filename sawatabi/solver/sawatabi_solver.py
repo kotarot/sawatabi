@@ -45,6 +45,7 @@ class SawatabiSolver(AbstractSolver):
         reverse_options=None,
         pickup_mode=constants.PICKUP_MODE_RANDOM,
         seed=None,
+        need_stats=False,
     ):
         self._check_argument_type("model", model, PhysicalModel)
 
@@ -106,11 +107,12 @@ class SawatabiSolver(AbstractSolver):
 
         samples = []
         energies = []
+        stats = []
         for r in range(num_reads):
             initial_state_for_this_read = None
             if initial_states:
                 initial_state_for_this_read = initial_states[r]
-            sample, energy = self.annealing(
+            sample, energy, energy_hist, temperature_hist, acceptance_hist = self.annealing(
                 num_reads=num_reads,
                 num_sweeps=num_sweeps,
                 cooling_rate=cooling_rate,
@@ -122,6 +124,11 @@ class SawatabiSolver(AbstractSolver):
             # These samples and energies are in the Ising (SPIN) format
             samples.append(sample)
             energies.append(energy)
+            stats.append({
+                "energy_history": energy_hist,
+                "temperature_history": temperature_hist,
+                "acceptance_history": acceptance_hist,
+            })
 
         # Update the timing
         execution_sec = time.perf_counter() - start_sec
@@ -133,7 +140,11 @@ class SawatabiSolver(AbstractSolver):
             },
         }
 
-        return sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
+        sampleset = sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
+        if not need_stats:
+            return sampleset
+        else:
+            return sampleset, stats
 
     def annealing(self, num_reads, num_sweeps, cooling_rate, initial_temperature, initial_state, reverse_options, pickup_mode):
         num_variables = self._bqm.num_variables
@@ -162,6 +173,10 @@ class SawatabiSolver(AbstractSolver):
         reversing_phase = True if reverse_options is not None else False
         sweep = 0
 
+        energy_hist = []
+        temperature_hist = []
+        acceptance_hist = []
+
         # Create a random values for accept beforehand for speed up
         self._accept_randoms = self._rng.random(size=num_sweeps * num_variables)
         self._accept_randoms_idx = -1
@@ -173,6 +188,9 @@ class SawatabiSolver(AbstractSolver):
 
             # logger.info(f"sweep: {sweep + 1}/{num_sweeps}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
 
+            energy_hist.append(energy)
+            temperature_hist.append(temperature)
+
             # Pick up a spin (variable) randomly
             if pickup_mode == constants.PICKUP_MODE_RANDOM:
                 pickups = self._rng.permutation(num_variables)
@@ -180,6 +198,7 @@ class SawatabiSolver(AbstractSolver):
             elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
                 pickups = np.arange(num_variables)
 
+            acceptances = 0
             for inner, idx in enumerate(pickups):  # inner loop
                 # logger.debug(f"inner: {inner + 1}/{num_variables}  (pickuped: {idx})")
 
@@ -189,8 +208,11 @@ class SawatabiSolver(AbstractSolver):
                 if self.is_acceptable(diff, temperature):
                     x[idx] *= -1
                     energy += diff
+                    acceptances += 1
                     # logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
                 # logger.debug(f"energy: {energy}")
+
+            acceptance_hist.append(acceptances)
 
             if reversing_phase:
                 reverse_target_temperature *= cooling_rate
@@ -207,7 +229,7 @@ class SawatabiSolver(AbstractSolver):
         # Deal with offset
         energy += self._original_bqm.offset * 2
 
-        return sample, energy
+        return sample, energy, energy_hist, temperature_hist, acceptance_hist
 
     def calc_energy_diff(self, idx, x):
         # h_{i}

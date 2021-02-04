@@ -16,6 +16,7 @@
 # limitations under the License.
 
 # import logging
+import pprint
 
 # fmt: off
 from _solver_helper import (_create_ising_model, _create_qubo_model, _create_simple_2x2_ising_model_without_active_var,
@@ -35,7 +36,8 @@ def sawatabi_solver_simple_ising_with_only_1_body():
     physical = _create_simple_ising_model_with_only_1_body()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=10, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset, stats = solver.solve(physical, num_reads=10, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345, need_stats=True)
+    pprint.pprint(stats, compact=True, width=200)
 
     _print_resultset(resultset)
 
@@ -45,7 +47,8 @@ def sawatabi_solver_simple_ising_with_only_2_body():
     physical = _create_simple_ising_model_with_only_2_body()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=10, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset, stats = solver.solve(physical, num_reads=10, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345, need_stats=True)
+    pprint.pprint(stats, compact=True, width=200)
 
     _print_resultset(resultset)
 

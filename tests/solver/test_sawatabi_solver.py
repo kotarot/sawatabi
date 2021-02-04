@@ -49,10 +49,10 @@ def test_sawatabi_solver_qubo():
     model.offset(10.0)
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_reads=10, num_sweeps=10, cooling_rate=0.5, seed=12345)
+    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.55, seed=12345)
 
     assert resultset.variables == ["x[0]", "x[1]"]
-    assert len(resultset.record) == 2  # Note: We have an optimal solution and a sub-optimal one for this problem.
+    assert len(resultset.record) == 1
 
     # Check the ground state
     record = sorted(resultset.record, key=lambda r: r.energy)  # sort by energy
@@ -335,3 +335,17 @@ def test_sawatabi_solver_invalid_reverse_options():
 
     with pytest.raises(ValueError):
         solver.solve(model.to_physical(), reverse_options={"reverse_temperature": 10.0})
+
+
+def test_sawatabi_solver_with_stats():
+    model = LogicalModel(mtype="ising")
+    x = model.variables("x", shape=(2,))
+    for i in range(2):
+        model.add_interaction(x[i], coefficient=-1.0)
+    solver = SawatabiSolver()
+
+    sampleset, stats = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.5, seed=12345, need_stats=True)
+
+    assert stats[0]["acceptance_history"][-1] == 0
+    assert stats[0]["energy_history"][-1] == -2.0
+    assert stats[0]["temperature_history"] == [100.0, 50.0, 25.0, 12.5, 6.25, 3.125, 1.5625, 0.78125, 0.390625, 0.1953125]
