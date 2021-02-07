@@ -1,4 +1,4 @@
-![sawatabi-logo](./figs/sawatabi-logo.gif)
+![sawatabi-logo](https://github.com/kotarot/sawatabi/blob/main/figs/sawatabi-logo.gif)
 
 # sawatabi
 
