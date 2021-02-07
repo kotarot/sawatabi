@@ -24,7 +24,9 @@ from google.cloud import pubsub_v1
 This script subscribes messages from GCP Pub/Sub for debugging.
 
 Sample Usage:
-$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/subscribe_pubsub.py --project=your-project --subscription=your-subscription
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/subscribe_pubsub.py \
+    --project=your-project\
+    --subscription=your-subscription
 """
 
 
