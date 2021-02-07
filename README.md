@@ -10,19 +10,74 @@
 [![GitHub](https://img.shields.io/github/license/kotarot/sawatabi?style=flat-square)](https://github.com/kotarot/sawatabi/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
-:warning: **This project is work in progress** :warning:
+Sawatabi is an application framework to develop and run stream-data-oriented Ising applications with quantum annealing.
 
 ## Usage
 
-### For Users
+### Installation
 
 ```
 pip install sawatabi
 ```
 
-### If you use the D-Wave solver
+### Sample Application
 
-Set up a config using dwave-cloud-client:
+#### To run a sample NPP (Number Partition Problem) Sawatabi application on local environment
+
+The following application reads numbers from a local file, run continuous annealing computations to solve NPP on local environment, and writes solutions to the stdout:
+```
+python sample/algorithm/npp_window.py --input="tests/algorithm/numbers_100.txt"
+```
+
+#### To run a sample NPP (Number Partition Problem) Sawatabi application on Google Cloud Dataflow with Google Cloud Pub/Sub
+
+Please prepare your service account credentials as `./gcp-key.json` and open three terminals.
+
+**[1st terminal]** The Pub/Sub publisher continuously publishes numbers to the specified Pub/Sub topic:
+```
+GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" \
+    python sample/pubsub/publish_pubsub.py \
+        --project=<PROJECT> \
+        --topic=<TOPIC> \
+        --interval=1.0 \
+        --random-number
+```
+where
+- `<PROJECT>` is your GCP project name, and
+- `<TOPIC>` is your Google Cloud Pub/Sub topic name to publish messages (numbers) to.
+
+**[2nd terminal]** The Pub/Sub subscriber continuously subscribes solutions from the specified Pub/Sub subscription:
+```
+GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" \
+    python sample/pubsub/subscribe_pubsub.py \
+        --project=<PROJECT> \
+        --subscription=<SUBSCRIPTION>
+```
+where
+- `<PROJECT>` is your GCP project name, and
+- `<SUBSCRIPTION>` is your Google Cloud Pub/Sub subscription name to subscribe messages (solutions) from.
+
+**[3rd terminal]** The following application reads numbers from the given Pub/Sub topic, run continuous annealing computations to solve NPP on Google Cloud Dataflow, and writes solutions to the given Pub/Sub topic:
+```
+GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" \
+    python sample/algorithm/npp_window.py \
+        --project=<PROJECT> \
+        --input-topic=<INPUT_TOPIC> \
+        --output-topic=<OUTPUT_TOPIC> \
+        --dataflow \
+        --dataflow-bucket=<DATAFLOW_BUCKET>
+```
+where
+- `<PROJECT>` is your GCP project name,
+- `<INPUT_TOPIC>` is your Google Cloud Pub/Sub topic name of input,
+- `<OUTPUT_TOPIC>` is your Google Cloud Pub/Sub topic name of output, and
+- `<DATAFLOW_BUCKET`> is your GCS bucket name for Dataflow temporary files.
+
+### Solvers
+
+#### If you would like to use the D-Wave solver
+
+Please give credentials directly to the `sawatabi.solver.DWaveSolver()` constructor arguments, or set up a config using dwave-cloud-client:
 ```
 $ dwave config create
 Configuration file not found; the default location is: /path/to/your/location/dwave.conf
@@ -36,31 +91,23 @@ Default solver [skip]: Advantage_system1.1
 Configuration saved.
 ```
 
-You can also give these parameters directly in the sawatabi.solver.DWaveSolver() constructor arguments.
+#### If you would like to use the Fixstars GPU solver (Optigan)
 
-### If you use the Fixstars GPU solver (Optigan)
-
-Set up a API Token in `~/.optigan.yml`:
+Please give credentials directly to the `sawatabi.solver.OptiganSolver()` constructor arguments, or set up a API Token in `~/.optigan.yml`:
 ```
 api:
     endpoint: http://optigan.example.com/method
     token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-You can also give these parameters directly in the sawatabi.solver.OptiganSolver() constructor arguments.
+### For Contributions to the Sawatabi Framework
 
-### For Developers
-
+Please set up a development environment as follows:
 ```
 python -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install --editable ".[dev]"
-```
-
-To start a jupyter notebook server:
-```
-./venv/bin/jupyter notebook
 ```
 
 ## Acknowledgement
