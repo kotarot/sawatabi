@@ -110,7 +110,7 @@ jobs:
     - name: Run sample/utils/npp.py
       run: python sample/utils/npp.py
 
-    # Algorithm
+    # Algorithm (NPP sample)
     - name: Run sample/algorithm/npp_incremental.py (local file)
       run: python sample/algorithm/npp_incremental.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_incremental.py (GCS and output)
@@ -123,6 +123,8 @@ jobs:
       run: python sample/algorithm/npp_window.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_window.py (GCS and output)
       run: python sample/algorithm/npp_window.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_window.txt"
+
+    # Algorithm (TSP sample)
     - name: Install additional dependencies for TSP sample
       run: pip install geopy
     - name: Run sample/algorithm/tsp_window.py (TSP local file)
