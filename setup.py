@@ -75,7 +75,7 @@ setup(
     author="Kotaro Terada",
     author_email="kotarot@apache.org",
     url="https://github.com/kotarot/sawatabi",
-    description="sawatabi.",
+    description="Sawatabi is an application framework to develop and run stream-data-oriented Ising applications with quantum annealing.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords="",

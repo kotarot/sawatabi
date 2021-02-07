@@ -20,7 +20,7 @@ Sawatabi is an application framework to develop and run stream-data-oriented Isi
 pip install sawatabi
 ```
 
-### Sample Application
+### Sample Applications
 
 #### To run a sample NPP (Number Partition Problem) Sawatabi application on local environment
 
