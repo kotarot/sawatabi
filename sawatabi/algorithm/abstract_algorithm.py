@@ -143,13 +143,13 @@ class AbstractAlgorithm(BaseMixin):
 
             # Solve and unmap to the solution
             try:
-                resultset = solve_fn(physical, sorted_elements, incoming, outgoing)
+                sampleset = solve_fn(physical, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to solve: {e}"
                 return
 
             try:
-                yield unmap_fn(resultset, sorted_elements, incoming, outgoing)
+                yield unmap_fn(sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to unmap: {e}"
 

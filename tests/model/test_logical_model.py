@@ -230,8 +230,8 @@ def test_logical_model_from_pyqubo_spins(qubo):
     qubo.from_pyqubo(hamiltonian)
     physical = qubo.to_physical()
     solver = LocalSolver(exact=False)
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=10000)
-    spins = resultset.record[0][0]
+    sampleset = solver.solve(physical, num_reads=1, num_sweeps=10000)
+    spins = sampleset.record[0][0]
     assert np.count_nonzero(spins[:10]) == np.count_nonzero(spins[10:])
 
 

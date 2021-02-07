@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from _solver_helper import _create_qubo_model, _print_resultset
+from _solver_helper import _create_qubo_model, _print_sampleset
 
 import sawatabi
 
@@ -25,9 +25,9 @@ def solver_optigan():
     physical = _create_qubo_model()
 
     solver = sawatabi.solver.OptiganSolver()
-    resultset = solver.solve(physical, timeout=1000, duplicate=True, gzip_request=False, gzip_response=False)
+    sampleset = solver.solve(physical, timeout=1000, duplicate=True, gzip_request=False, gzip_response=False)
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def solver_optigan_gzip():
@@ -35,9 +35,9 @@ def solver_optigan_gzip():
     physical = _create_qubo_model()
 
     solver = sawatabi.solver.OptiganSolver()
-    resultset = solver.solve(physical, timeout=1000, duplicate=True)
+    sampleset = solver.solve(physical, timeout=1000, duplicate=True)
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def main():

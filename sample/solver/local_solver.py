@@ -17,7 +17,7 @@
 
 # fmt: off
 from _solver_helper import (_create_ising_model, _create_qubo_model, _create_simple_2x2_ising_model_without_active_var,
-                            _create_simple_2x2_qubo_model_without_active_var, _print_resultset)
+                            _create_simple_2x2_qubo_model_without_active_var, _print_sampleset)
 
 import sawatabi
 
@@ -28,36 +28,36 @@ def solver_local_ising(solver):
     print("\n=== solver (local ising) ===")
     physical = _create_ising_model()
 
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
+    sampleset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def solver_local_qubo(solver):
     print("\n=== solver (local qubo) ===")
     physical = _create_qubo_model()
 
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
+    sampleset = solver.solve(physical, num_reads=1, num_sweeps=10000, seed=12345)
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def solver_local_simple_2x2_ising_without_active_var(solver):
     print("\n=== solver (simple ising 2x2) ===")
     physical = _create_simple_2x2_ising_model_without_active_var()
 
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
+    sampleset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def solver_local_simple_2x2_qubo_without_active_var(solver):
     print("\n=== solver (simple qubo 2x2) ===")
     physical = _create_simple_2x2_qubo_model_without_active_var()
 
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
+    sampleset = solver.solve(physical, num_reads=1, num_sweeps=100, seed=12345)
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def main():

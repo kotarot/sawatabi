@@ -78,7 +78,7 @@ def user_code():
         return model
 
 
-    def my_unmapping(resultset, elements, incoming, outgoing):
+    def my_unmapping(sampleset, elements, incoming, outgoing):
         """
         Unmapping -- Decode spins to a problem solution
         """
@@ -90,7 +90,7 @@ def user_code():
         outputs.append("SOLUTION ==>")
 
         # Decode spins to solution
-        spins = resultset.samples()[0]
+        spins = sampleset.samples()[0]
 
         set_p, set_n = [], []
         n_set_p = n_set_n = 0
@@ -120,12 +120,12 @@ def user_code():
             "seed": 12345,
         }
         # The main solve.
-        resultset = solver.solve(physical_model, **SOLVER_OPTIONS)
+        sampleset = solver.solve(physical_model, **SOLVER_OPTIONS)
 
         # Set a fallback solver if needed here.
         pass
 
-        return resultset
+        return sampleset
 
 
     parser = argparse.ArgumentParser()
@@ -238,11 +238,11 @@ class SolveDoFn(beam.DoFn):
 
         # Solve and unmap to the solution
         try:
-            resultset = solve_fn(physical, elements, incoming, outgoing)
+            sampleset = solve_fn(physical, elements, incoming, outgoing)
         except Exception as e:
             yield f"Failed to solve: {e}"
         else:
-            yield unmap_fn(resultset, elements, incoming, outgoing)
+            yield unmap_fn(sampleset, elements, incoming, outgoing)
 
 
 

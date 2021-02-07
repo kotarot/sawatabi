@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from _solver_helper import _create_ising_model, _print_resultset
+from _solver_helper import _create_ising_model, _print_sampleset
 
 import sawatabi
 
@@ -24,18 +24,18 @@ def solver_dwave(solver):
     print("\n=== solver (dwave) ===")
     physical = _create_ising_model()
 
-    resultset = solver.solve(physical, chain_strength=2.0, num_reads=10)
+    sampleset = solver.solve(physical, chain_strength=2.0, num_reads=10)
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def solver_dwave_long_schedule(solver):
     print("\n=== solver (dwave long schedule) ===")
     physical = _create_ising_model()
 
-    resultset = solver.solve(physical, chain_strength=2.0, annealing_time=50, num_reads=1000, answer_mode="histogram")
+    sampleset = solver.solve(physical, chain_strength=2.0, annealing_time=50, num_reads=1000, answer_mode="histogram")
 
-    _print_resultset(resultset)
+    _print_sampleset(sampleset)
 
 
 def main():
