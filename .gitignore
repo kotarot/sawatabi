@@ -197,5 +197,11 @@ sample/trial/*.png
 
 tests/algorithm/output.txt*
 
+experiment-output-*
+
 gcp-key.json
 beam-temp-*
+
+# Profiling output
+*.prof
+*.stats

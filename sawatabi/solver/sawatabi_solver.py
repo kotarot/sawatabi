@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+# import logging
 import math
 import time
 
@@ -23,7 +23,7 @@ import sawatabi.constants as constants
 from sawatabi.model.physical_model import PhysicalModel
 from sawatabi.solver.abstract_solver import AbstractSolver
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class SawatabiSolver(AbstractSolver):
@@ -38,13 +38,14 @@ class SawatabiSolver(AbstractSolver):
         self,
         model,
         num_reads=1,
-        num_sweeps=1000,
-        num_coolings=100,
+        num_sweeps=100,
         cooling_rate=0.9,
         initial_temperature=100.0,
         initial_states=None,
+        reverse_options=None,
         pickup_mode=constants.PICKUP_MODE_RANDOM,
         seed=None,
+        need_stats=False,
     ):
         self._check_argument_type("model", model, PhysicalModel)
 
@@ -58,8 +59,18 @@ class SawatabiSolver(AbstractSolver):
         if pickup_mode not in allowed_pickup_mode:
             raise ValueError(f"pickup_mode must be one of {allowed_pickup_mode}")
 
-        # Use RNG so that this random sequence is isolated
-        rng = np.random.RandomState(seed)
+        if reverse_options:
+            self._check_argument_type("reverse_options", reverse_options, dict)
+            if "reverse_period" not in reverse_options:
+                raise ValueError("reverse_options must contain 'reverse_period'")
+            if "reverse_temperature" not in reverse_options:
+                raise ValueError("reverse_options must contain 'reverse_temperature'")
+
+        # Use a rangom generator so that this random sequence is isolated
+        if seed:
+            self._rng = np.random.default_rng(seed)
+        else:
+            self._rng = np.random.default_rng()
 
         bqm = model.to_bqm(sign=1.0)
         self._original_bqm = bqm
@@ -68,30 +79,58 @@ class SawatabiSolver(AbstractSolver):
         if bqm.vartype is not dimod.SPIN:
             bqm = bqm.change_vartype(dimod.SPIN, inplace=False)
 
+            # Convert initial states as well
+            if initial_states:
+                for i, initial_state in enumerate(initial_states):
+                    for k, v in initial_state.items():
+                        if v == 0:
+                            initial_states[i][k] = -1
+
         self._model = model
         self._bqm = bqm
-        self._rng = rng
+
+        # For speed up, store coefficients into a list (array)
+        self._bqm_linear = [0.0 for _ in range(self._bqm.num_variables)]
+        for label, coeff in self._bqm.linear.items():
+            index = self._model._label_to_index[label]
+            self._bqm_linear[index] = coeff
+        self._bqm_adj = [{} for _ in range(self._bqm.num_variables)]
+        for label, adj in self._bqm.adj.items():
+            index = self._model._label_to_index[label]
+            adj_dict = {}
+            for alabel, coeff in adj.items():
+                aindex = self._model._label_to_index[alabel]
+                adj_dict[aindex] = coeff
+            self._bqm_adj[index] = adj_dict
 
         start_sec = time.perf_counter()
 
         samples = []
         energies = []
+        stats = []
         for r in range(num_reads):
-            initial_states_for_this_read = None
+            initial_state_for_this_read = None
             if initial_states:
-                initial_states_for_this_read = initial_states[r]
-            sample, energy = self.annealing(
+                initial_state_for_this_read = initial_states[r]
+            sample, energy, energy_hist, temperature_hist, acceptance_hist = self.annealing(
                 num_reads=num_reads,
                 num_sweeps=num_sweeps,
-                num_coolings=num_coolings,
                 cooling_rate=cooling_rate,
                 initial_temperature=initial_temperature,
-                initial_states=initial_states_for_this_read,
+                initial_state=initial_state_for_this_read,
+                reverse_options=reverse_options,
                 pickup_mode=pickup_mode,
             )
             # These samples and energies are in the Ising (SPIN) format
             samples.append(sample)
             energies.append(energy)
+            stats.append(
+                {
+                    "energy_history": energy_hist,
+                    "temperature_history": temperature_hist,
+                    "acceptance_history": acceptance_hist,
+                }
+            )
 
         # Update the timing
         execution_sec = time.perf_counter() - start_sec
@@ -103,89 +142,118 @@ class SawatabiSolver(AbstractSolver):
             },
         }
 
-        return sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
-
-    def annealing(self, num_reads, num_sweeps, num_coolings, cooling_rate, initial_temperature, initial_states, pickup_mode):
-        if initial_states is None:
-            x = ((self._rng.randint(2, size=self._bqm.num_variables) - 0.5) * 2).astype(int)  # -1 or +1
+        sampleset = sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
+        if not need_stats:
+            return sampleset
         else:
-            x = np.ones(shape=(self._bqm.num_variables), dtype=int)
+            return sampleset, stats
+
+    def annealing(self, num_reads, num_sweeps, cooling_rate, initial_temperature, initial_state, reverse_options, pickup_mode):
+        num_variables = self._bqm.num_variables
+        if initial_state is None:
+            x = ((self._rng.integers(2, size=num_variables) - 0.5) * 2).astype(int)  # -1 or +1
+        else:
+            x = np.ones(shape=(num_variables), dtype=int)
             for v in self._bqm.variables:
                 idx = self._model._label_to_index[v]
-                x[idx] = initial_states[v]
+                x[idx] = initial_state[v]
 
         initial_sample = dict(zip(list(self._model._index_to_label.values()), x))
-        logger.info(f"initial_spins: {initial_sample}")
+        # logger.info(f"initial_spins: {initial_sample}")
         initial_energy = self._bqm.energy(initial_sample) * -1.0  # Note that the signs of original bqm is opposite from ours
-        logger.info(f"initial_energy: {initial_energy}")
+        # logger.info(f"initial_energy: {initial_energy}")
+
+        if not reverse_options:
+            # Forward (normal) annealing
+            temperature = initial_temperature
+        else:
+            # Reverse annealing
+            temperature = 1e-9
+            reverse_target_temperature = reverse_options["reverse_temperature"]  # The max temperature when the phase is reverse annealing
 
         energy = initial_energy
-        temperature = initial_temperature
-        num_inners = math.ceil(num_sweeps / num_coolings)
+        reversing_phase = True if reverse_options is not None else False
         sweep = 0
 
-        sweep_finished = False
-        for cool in range(num_coolings):  # outer loop
-            logger.info(f"cooling: {cool + 1}/{num_coolings}  (temperature: {temperature})")
+        energy_hist = []
+        temperature_hist = []
+        acceptance_hist = []
 
-            for inner in range(num_inners):  # inner loop
-                sweep += 1
-                if num_sweeps < sweep:
-                    sweep_finished = True
-                    break
+        # Create a random values for accept beforehand for speed up
+        self._accept_randoms = self._rng.random(size=num_sweeps * num_variables)
+        self._accept_randoms_idx = -1
 
-                logger.debug(f"sweep: {sweep}/{num_sweeps}")
+        for sweep in range(num_sweeps):  # outer loop (=sweeps)
+            # Normal annealing in the last half of period if reverse annealing is performed
+            if reversing_phase and (reverse_options["reverse_period"] <= sweep):
+                reversing_phase = False
 
-                # Pick up a spin (variable) randomly
-                if pickup_mode == constants.PICKUP_MODE_RANDOM:
-                    idx = self._rng.randint(self._bqm.num_variables)
-                # Pick up a spin (variable) sequentially
-                elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
-                    idx = (sweep - 1) % self._bqm.num_variables
+            # logger.info(f"sweep: {sweep + 1}/{num_sweeps}  (temperature: {temperature}, reversing_phase: {reversing_phase})")
 
-                # `diff` represents a gained energy value after flipping
+            energy_hist.append(energy)
+            temperature_hist.append(temperature)
+
+            # Pick up a spin (variable) randomly
+            if pickup_mode == constants.PICKUP_MODE_RANDOM:
+                pickups = self._rng.permutation(num_variables)
+            # Pick up a spin (variable) sequentially
+            elif pickup_mode == constants.PICKUP_MODE_SEQUENTIAL:
+                pickups = np.arange(num_variables)
+
+            acceptances = 0
+            for inner, idx in enumerate(pickups):  # inner loop
+                # logger.debug(f"inner: {inner + 1}/{num_variables}  (pickuped: {idx})")
+
+                # `diff` represents an energy value gained after flipping
                 diff = self.calc_energy_diff(idx, x)
 
                 if self.is_acceptable(diff, temperature):
                     x[idx] *= -1
                     energy += diff
-                    logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
-                logger.debug(f"energy: {energy}")
+                    acceptances += 1
+                    # logger.debug(f"Spin {self._model._index_to_label[idx]} was flipped to {x[idx]}")
+                # logger.debug(f"energy: {energy}")
 
-            if sweep_finished:
-                logger.info("No more sweeps left.")
-                break
+            acceptance_hist.append(acceptances)
 
-            temperature *= cooling_rate
+            if reversing_phase:
+                reverse_target_temperature *= cooling_rate
+                temperature = reverse_options["reverse_temperature"] - reverse_target_temperature
+            else:
+                temperature *= cooling_rate
 
         sample = dict(zip(list(self._model._index_to_label.values()), x))
-        recalc_energy = self._bqm.energy(sample) * -1.0
-        assert math.isclose(energy, recalc_energy, rel_tol=1e-9, abs_tol=1e-9)
+
+        # Check energy if needed
+        # recalc_energy = self._bqm.energy(sample) * -1.0
+        # assert math.isclose(energy, recalc_energy, rel_tol=1e-9, abs_tol=1e-9)
 
         # Deal with offset
         energy += self._original_bqm.offset * 2
 
-        return sample, energy
+        return sample, energy, energy_hist, temperature_hist, acceptance_hist
 
     def calc_energy_diff(self, idx, x):
-        label = self._model._index_to_label[idx]
-
         # h_{i}
-        diff = x[idx] * self._bqm.linear[label]
+        diff = x[idx] * self._bqm_linear[idx]
 
         # J_{ij}
-        for a, j in self._bqm.adj[label].items():
-            diff += x[idx] * x[self._model._label_to_index[a]] * j
+        for aidx, j in self._bqm_adj[idx].items():
+            diff += x[idx] * x[aidx] * j
 
         # Now the calculated diff is the local energy at x[idx].
         # If the spin flips from -1 to +1 (vice versa), the diff energy will be double.
         return 2.0 * diff
 
     def is_acceptable(self, diff, temperature):
+        """
+        Returns True if the flip is acceptable, False otherwise.
+        """
         if diff <= 0.0:
             return True
         else:
-            p = math.exp(-diff / temperature)
-            if self._rng.random() < p:
+            p = math.exp(-diff / temperature)  # Note: np.exp is slow here
+            self._accept_randoms_idx += 1
+            if self._accept_randoms[self._accept_randoms_idx] < p:
                 return True
         return False

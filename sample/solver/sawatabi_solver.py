@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+# import logging
+import pprint
 
 # fmt: off
 from _solver_helper import (_create_ising_model, _create_qubo_model, _create_simple_2x2_ising_model_without_active_var,
@@ -27,7 +28,7 @@ import sawatabi
 # fmt: on
 
 # logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 
 def sawatabi_solver_simple_ising_with_only_1_body():
@@ -35,7 +36,8 @@ def sawatabi_solver_simple_ising_with_only_1_body():
     physical = _create_simple_ising_model_with_only_1_body()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=2, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset, stats = solver.solve(physical, num_reads=10, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345, need_stats=True)
+    pprint.pprint(stats, compact=True, width=200)
 
     _print_resultset(resultset)
 
@@ -45,7 +47,8 @@ def sawatabi_solver_simple_ising_with_only_2_body():
     physical = _create_simple_ising_model_with_only_2_body()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset, stats = solver.solve(physical, num_reads=10, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345, need_stats=True)
+    pprint.pprint(stats, compact=True, width=200)
 
     _print_resultset(resultset)
 
@@ -55,7 +58,7 @@ def sawatabi_solver_simple_2x2_ising_without_active_var():
     physical = _create_simple_2x2_ising_model_without_active_var()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
@@ -65,7 +68,7 @@ def sawatabi_solver_simple_2x2_qubo_without_active_var():
     physical = _create_simple_2x2_qubo_model_without_active_var()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
@@ -75,7 +78,7 @@ def sawatabi_solver_ising():
     physical = _create_ising_model()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=101, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
@@ -85,7 +88,7 @@ def sawatabi_solver_qubo():
     physical = _create_qubo_model()
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1000, num_coolings=99, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=100, cooling_rate=0.9, initial_temperature=100.0, seed=12345)
 
     _print_resultset(resultset)
 
@@ -112,7 +115,42 @@ def sawatabi_solver_with_initial_states():
     ]
 
     solver = sawatabi.solver.SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=1, num_sweeps=1, num_coolings=1, pickup_mode="sequential", initial_states=initial_states)
+    resultset = solver.solve(physical, num_reads=1, num_sweeps=1, pickup_mode="sequential", initial_states=initial_states)
+
+    _print_resultset(resultset)
+
+
+def sawatabi_solver_with_initial_states_reverse_annealing():
+    print("\n=== solver (sawatabi with initial states reverse annealing) ===")
+    physical = _create_simple_ising_model_with_only_1_body()
+
+    initial_states = [
+        {
+            "x[0]": 1,
+            "x[1]": -1,
+            "x[2]": 1,
+            "x[3]": -1,
+            "x[4]": 1,
+            "x[5]": -1,
+            "x[6]": 1,
+            "x[7]": -1,
+            "x[8]": 1,
+            "x[9]": -1,
+            "x[10]": 1,
+            "x[11]": -1,
+        },
+    ]
+
+    solver = sawatabi.solver.SawatabiSolver()
+    resultset = solver.solve(
+        physical,
+        num_reads=1,
+        num_sweeps=100,
+        cooling_rate=0.9,
+        initial_temperature=100.0,
+        initial_states=initial_states,
+        reverse_options={"reverse_period": 50, "reverse_temperature": 10.0},
+    )
 
     _print_resultset(resultset)
 
@@ -125,6 +163,7 @@ def main():
     sawatabi_solver_ising()
     sawatabi_solver_qubo()
     sawatabi_solver_with_initial_states()
+    sawatabi_solver_with_initial_states_reverse_annealing()
 
 
 if __name__ == "__main__":
