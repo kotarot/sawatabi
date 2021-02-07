@@ -19,7 +19,7 @@ import argparse
 import os
 
 from geopy.distance import geodesic
-from pyqubo import Constraint, Sum, Array, Placeholder, solve_qubo
+from pyqubo import Constraint, Sum
 
 import sawatabi
 
