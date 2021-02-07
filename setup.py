@@ -57,13 +57,19 @@ setup(
     ],
     extras_require={
         "dev": [
+            # For test
             "pytest>=6.1.2,<7.0.0",
             "pytest-cov>=2.10.1,<3.0.0",
             "pytest-mock>=3.3.1,<4.0.0",
             "pytest-timeout>=1.4.2,<2.0.0",
+            # For lint
             "black>=20.8b1,<21.0",
             "flake8>=3.8.4,<4.0.0",
             "isort>=5.6.4,<6.0.0",
+        ],
+        "sample": [
+            # For samples
+            "geopy>=2.0.0,<3.0.0",
         ],
         "notebook": [
             # Jupyter notebook
@@ -81,7 +87,6 @@ setup(
             "seaborn>=0.11.0,<1.0.0",
         ],
         "trial": [
-            "geopy>=2.0.0,<3.0.0",
             "optuna>=2.4.0,<3.0.0",
             "python-Levenshtein>=0.12.0,<1.0.0",
         ],
