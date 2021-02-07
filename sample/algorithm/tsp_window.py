@@ -28,7 +28,7 @@ def tsp_mapping(
     prev_model: sawatabi.model.logical_model.LogicalModel,
     curr_data: [(int, (int, {str: (float, float)}))],
     incoming: [(int, (int, {str: (float, float)}))],
-    outgoing: [(int, (int, {str: (float, float)}))]
+    outgoing: [(int, (int, {str: (float, float)}))],
 ) -> sawatabi.model.logical_model.LogicalModel:
     """
     Mapping -- update model based on the input data elements
@@ -66,7 +66,6 @@ def tsp_mapping(
     n_city = len(curr_data)
     if n_city > 0:
         binary_vector = model.append("city", shape=(n_city, n_city))  # Update variables
-        #print(f"binary_vector: {binary_vector}")
     else:
         return model
 
@@ -87,7 +86,7 @@ def tsp_mapping(
     # qubo, offset, feed_dict_tsp = create_tsp_qubo(hamiltonian_tsp, 17.5, 15.0)
     model.from_pyqubo(hamiltonian_tsp)
 
-    #print(f"model: {model}", type(model))
+    # print(f"model: {model}", type(model))
 
     return model
 
@@ -134,7 +133,7 @@ def tsp_unmapping(result_set: dict, elements: [(int, {str: (float, float)})], in
 
         return order_to_visit
 
-    return '\n'.join(outputs) + '\n  ' + ' -> '.join(get_order_to_visit(result_set.samples()[0], elements))
+    return "\n".join(outputs) + "\n  " + " -> ".join(get_order_to_visit(result_set.samples()[0], elements))
 
 
 def tsp_solving(physical_model, elements, incoming, outgoing):
@@ -187,16 +186,13 @@ def tsp_window(
         pipeline_args.append("--streaming")
 
     algorithm_options = {"window.size": 5, "window.period": 1, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
-    print(algorithm_options)
 
     if (project is not None) and (input_topic is not None):
         input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=input_topic)
     elif (project is not None) and (input_subscription is not None):
         input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=input_subscription)
     elif input_path is not None:
-        # input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
         input_fn = sawatabi.algorithm.IO.read_from_text_as_json(path=input_path)
-        print(input_fn)
         algorithm_options["input.reassign_timestamp"] = True
 
     if output_path is not None:
@@ -217,11 +213,9 @@ def tsp_window(
         initial_mtype="qubo",
         pipeline_args=pipeline_args,
     )
-    print(f'pipeline: {pipeline}')
 
     # Run the pipeline
     result = pipeline.run()
-    print(f'result: {result.state}')
     result.wait_until_finish()
 
 
@@ -246,9 +240,8 @@ def main():
     )
     args = parser.parse_args()
 
-    print(f'\nargs: {args} \n')
     tsp_window(args.project, args.input, args.input_topic, args.input_subscription, args.output, args.output_topic, args.dataflow, args.dataflow_bucket)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
