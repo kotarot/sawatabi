@@ -72,25 +72,6 @@ setup(
             # For samples
             "geopy>=2.0.0,<3.0.0",
         ],
-        "notebook": [
-            # Jupyter notebook
-            "notebook>=6.1.5,<7.0.0",
-            "ipykernel>=5.3.4,<6.0.0",
-            "ipywidgets>=7.5.1,<8.0.0",
-            "jupyterlab>=2.2.9,<3.0.0",
-            # Data processing
-            "numpy>=1.19.4,<2.0.0",
-            "scipy>=1.5.4,<2.0.0",
-            "scikit-learn>=0.23.2,<1.0.0",
-            # For visualization
-            "matplotlib>=3.3.2,<4.0.0",
-            "plotly>=4.12.0,<5.0.0",
-            "seaborn>=0.11.0,<1.0.0",
-        ],
-        "trial": [
-            "optuna>=2.4.0,<3.0.0",
-            "python-Levenshtein>=0.12.0,<1.0.0",
-        ],
     },
     author="Kotaro Terada",
     author_email="kotarot@apache.org",
