@@ -80,9 +80,10 @@ setup(
     long_description_content_type="text/markdown",
     keywords="stream-processing ising-model ising quantum-annealing annealing",
     classifiers=[
-        "Development Status :: 1 - Planning",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
     ],
 )
