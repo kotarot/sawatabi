@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+        pip install ".[dev]"
     - name: List installed packages
       run: pip list
     - name: Lint with black
@@ -47,7 +47,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+        pip install ".[dev]"
     - name: Test sawatabi package installation
       run: python -c 'import sawatabi'
     - name: List installed packages
@@ -112,7 +112,7 @@ jobs:
 
     # Algorithm
     - name: Install dependencies for sample
-      run: pip install -e ".[sample]"
+      run: pip install ".[sample]"
     - name: Run sample/algorithm/npp_incremental.py (local file)
       run: python sample/algorithm/npp_incremental.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_incremental.py (GCS and output)
