@@ -22,9 +22,9 @@ jobs:
     - name: List installed packages
       run: pip list
     - name: Lint with black
-      run: black . --check --diff"
+      run: black . --check --diff
     - name: Lint with flake8
-      run: flake8 . --statistics --count --show-source" --ignore=E128,W503
+      run: flake8 . --statistics --count --show-source --ignore=E128,W503
     - name: Lint with isort
       run: isort . --check-only --diff
 
@@ -110,9 +110,7 @@ jobs:
     - name: Run sample/utils/npp.py
       run: python sample/utils/npp.py
 
-    # Algorithm
-    - name: Install dependencies for sample
-      run: pip install ".[dev]"
+    # Algorithm (NPP sample)
     - name: Run sample/algorithm/npp_incremental.py (local file)
       run: python sample/algorithm/npp_incremental.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_incremental.py (GCS and output)
@@ -125,5 +123,9 @@ jobs:
       run: python sample/algorithm/npp_window.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_window.py (GCS and output)
       run: python sample/algorithm/npp_window.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_window.txt"
+
+    # Algorithm (TSP sample)
+    - name: Install additional dependencies for TSP sample
+      run: pip install geopy
     - name: Run sample/algorithm/tsp_window.py (TSP local file)
       run: python sample/algorithm/tsp_window.py --input="tests/algorithm/cities_47.json"

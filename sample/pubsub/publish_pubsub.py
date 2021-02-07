@@ -23,29 +23,49 @@ import time
 
 from google.cloud import pubsub_v1
 
-#from google.oauth2 import service_account
+# from google.oauth2 import service_account
 
 
 """
 This script publishes test messages to GCP Pub/Sub for debugging.
 
 Sample Usage:
-$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic
-$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=10.0 --random-text
-$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=30.0 --random-number
-$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pubsub.py --project=your-project --topic=your-topic --interval=0.1 --incremental-text --incremental-end=100
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/publish_pubsub.py \
+    --project=your-project \
+    --topic=your-topic
+
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/publish_pubsub.py \
+    --project=your-project \
+    --topic=your-topic \
+    --interval=10.0 \
+    --random-text
+
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/publish_pubsub.py \
+    --project=your-project \
+    --topic=your-topic \
+    --interval=30.0 \
+    --random-number
+
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/publish_pubsub.py \
+    --project=your-project \
+    --topic=your-topic \
+    --interval=0.1 \
+    --incremental-text \
+    --incremental-end=100
 """
 
 
 def main():
     parser = argparse.ArgumentParser()
 
+    # fmt: off
+
     # Pub/Sub options
     parser.add_argument(
         "--project",
         dest="project",
         required=True,
-        help="Google Cloud Pub/Sub project name.")
+        help="Google Cloud Platform project name.")
     parser.add_argument(
         "--topic",
         dest="topic",
@@ -88,9 +108,12 @@ def main():
         type=float,
         default=1.0,
         help="Message interval in second.")
+
+    # fmt: on
+
     args = parser.parse_args()
 
-    #client = pubsub_v1.PublisherClient(credentials=service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]))
+    # client = pubsub_v1.PublisherClient(credentials=service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]))
     client = pubsub_v1.PublisherClient()
     topic_path = client.topic_path(args.project, args.topic)
 

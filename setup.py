@@ -46,10 +46,8 @@ setup(
     license="Apache 2.0",
     install_requires=[
         "apache-beam>=2.26.0,<3.0.0",
-        "apache-beam[interactive]>=2.26.0,<3.0.0",
         "apache-beam[gcp]>=2.26.0,<3.0.0",
         "dwave-system>=1.2.1,<2.0.0",
-        "dwave-cloud-client>=0.8.1,<1.0.0",
         "dwave-neal>=0.5.6,<1.0.0",
         "pandas>=1.1.4,<2.0.0",
         "pyqubo>=0.4.0,<1.0.0",
@@ -57,6 +55,8 @@ setup(
     ],
     extras_require={
         "dev": [
+            # Beam interactive runner
+            "apache-beam[interactive]>=2.26.0,<3.0.0",
             # For test
             "pytest>=6.1.2,<7.0.0",
             "pytest-cov>=2.10.1,<3.0.0",
@@ -66,23 +66,24 @@ setup(
             "black>=20.8b1,<21.0",
             "flake8>=3.8.4,<4.0.0",
             "isort>=5.6.4,<6.0.0",
-            # For samples
-            "geopy>=2.0.0,<3.0.0",
             # For profiling visualization
             "snakeviz>=2.1.0,<3.0.0",
+            # For samples
+            "geopy>=2.0.0,<3.0.0",
         ],
     },
     author="Kotaro Terada",
     author_email="kotarot@apache.org",
     url="https://github.com/kotarot/sawatabi",
-    description="sawatabi.",
+    description="Sawatabi is an application framework to develop and run stream-data-oriented Ising applications with quantum annealing.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    keywords="",
+    keywords="python streaming stream-processing ising-model ising quantum-annealing annealing",
     classifiers=[
-        "Development Status :: 1 - Planning",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
     ],
 )

@@ -24,24 +24,31 @@ from google.cloud import pubsub_v1
 This script subscribes messages from GCP Pub/Sub for debugging.
 
 Sample Usage:
-$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/subscribe_pubsub.py --project=your-project --subscription=your-subscription
+$ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/subscribe_pubsub.py \
+    --project=your-project\
+    --subscription=your-subscription
 """
 
 
 def main():
     parser = argparse.ArgumentParser()
 
+    # fmt: off
+
     # Pub/Sub options
     parser.add_argument(
         "--project",
         dest="project",
         required=True,
-        help="Google Cloud Pub/Sub project name.")
+        help="Google Cloud Platform project name.")
     parser.add_argument(
         "--subscription",
         dest="subscription",
         required=True,
         help="Google Cloud Pub/Sub subscription name to subscribe messages from.")
+
+    # fmt: on
+
     args = parser.parse_args()
 
     client = pubsub_v1.SubscriberClient()
