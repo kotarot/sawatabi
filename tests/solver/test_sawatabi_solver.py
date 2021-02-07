@@ -29,15 +29,15 @@ def test_sawatabi_solver_ising():
     model.offset(10.0)
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_reads=2, num_sweeps=10, cooling_rate=0.5, initial_temperature=10.0, seed=12345)
+    sampleset = solver.solve(model.to_physical(), num_reads=2, num_sweeps=10, cooling_rate=0.5, initial_temperature=10.0, seed=12345)
 
-    assert resultset.variables == ["s[0]", "s[1]"]
-    assert len(resultset.record) == 1
+    assert sampleset.variables == ["s[0]", "s[1]"]
+    assert len(sampleset.record) == 1
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [-1, 1])
-    assert resultset.record[0].energy == 6.0
-    assert resultset.record[0].num_occurrences == 2
+    assert np.array_equal(sampleset.record[0].sample, [-1, 1])
+    assert sampleset.record[0].energy == 6.0
+    assert sampleset.record[0].num_occurrences == 2
 
 
 def test_sawatabi_solver_qubo():
@@ -49,13 +49,13 @@ def test_sawatabi_solver_qubo():
     model.offset(10.0)
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.55, seed=12345)
+    sampleset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.55, seed=12345)
 
-    assert resultset.variables == ["x[0]", "x[1]"]
-    assert len(resultset.record) == 1
+    assert sampleset.variables == ["x[0]", "x[1]"]
+    assert len(sampleset.record) == 1
 
     # Check the ground state
-    record = sorted(resultset.record, key=lambda r: r.energy)  # sort by energy
+    record = sorted(sampleset.record, key=lambda r: r.energy)  # sort by energy
     assert np.array_equal(record[0].sample, [0, 1])
     assert record[0].energy == 8.0
 
@@ -68,14 +68,14 @@ def test_sawatabi_solver_n_hot_ising(n, s):
     model.add_constraint(NHotConstraint(variables=x, n=n))
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    sampleset = solver.solve(model.to_physical(), seed=12345)
 
-    result = np.array(resultset.record[0].sample)
+    result = np.array(sampleset.record[0].sample)
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == -1) == s - n
 
     # Execution time should be within practical seconds (20 sec).
-    assert resultset.info["timing"]["execution_sec"] <= 20.0
+    assert sampleset.info["timing"]["execution_sec"] <= 20.0
 
 
 @pytest.mark.parametrize("n,s", [(1, 2), (1, 3), (2, 3), (1, 4), (2, 4), (1, 100), (10, 100)])
@@ -86,14 +86,14 @@ def test_sawatabi_solver_n_hot_qubo(n, s):
     model.add_constraint(NHotConstraint(variables=x, n=n))
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    sampleset = solver.solve(model.to_physical(), seed=12345)
 
-    result = np.array(resultset.record[0].sample)
+    result = np.array(sampleset.record[0].sample)
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == 0) == s - n
 
     # Execution time should be within practical seconds (20 sec).
-    assert resultset.info["timing"]["execution_sec"] <= 20.0
+    assert sampleset.info["timing"]["execution_sec"] <= 20.0
 
 
 @pytest.mark.parametrize("n,s,i", [(1, 4, 0), (1, 4, 1), (1, 4, 2), (1, 4, 3), (2, 10, 5)])
@@ -105,9 +105,9 @@ def test_sawatabi_solver_n_hot_ising_with_deleting(n, s, i):
     model.delete_variable(x[i])
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    sampleset = solver.solve(model.to_physical(), seed=12345)
 
-    result = np.array(resultset.record[0].sample)
+    result = np.array(sampleset.record[0].sample)
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == -1) == s - n - 1
 
@@ -122,9 +122,9 @@ def test_sawatabi_solver_n_hot_qubo_with_deleting(n, s, i, j):
     model.delete_variable(x[j])
 
     solver = SawatabiSolver()
-    resultset = solver.solve(model.to_physical(), seed=12345)
+    sampleset = solver.solve(model.to_physical(), seed=12345)
 
-    result = np.array(resultset.record[0].sample)
+    result = np.array(sampleset.record[0].sample)
     assert np.count_nonzero(result == 1) == n
     assert np.count_nonzero(result == 0) == s - n - 2
 
@@ -140,17 +140,17 @@ def test_sawatabi_solver_ising_without_active_var():
     assert len(physical._index_to_label) == 3
 
     solver = SawatabiSolver()
-    resultset = solver.solve(physical, num_reads=10, seed=12345)
+    sampleset = solver.solve(physical, num_reads=10, seed=12345)
 
-    assert resultset.variables == ["s[0][1]", "s[1][0]", "s[1][1]"]
-    assert len(resultset.record) == 2
+    assert sampleset.variables == ["s[0][1]", "s[1][0]", "s[1][1]"]
+    assert len(sampleset.record) == 2
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [1, -1, -1])
-    assert np.array_equal(resultset.record[1].sample, [1, 1, 1])
-    assert resultset.record[0].energy == -3
-    assert resultset.record[1].energy == -3
-    assert resultset.record[0].num_occurrences + resultset.record[1].num_occurrences == 10
+    assert np.array_equal(sampleset.record[0].sample, [1, -1, -1])
+    assert np.array_equal(sampleset.record[1].sample, [1, 1, 1])
+    assert sampleset.record[0].energy == -3
+    assert sampleset.record[1].energy == -3
+    assert sampleset.record[0].num_occurrences + sampleset.record[1].num_occurrences == 10
 
 
 def test_sawatabi_solver_qubo_without_active_var():
@@ -164,15 +164,15 @@ def test_sawatabi_solver_qubo_without_active_var():
     assert len(physical._index_to_label) == 3
 
     solver = SawatabiSolver()
-    resultset = solver.solve(physical, seed=12345)
+    sampleset = solver.solve(physical, seed=12345)
 
-    assert resultset.variables == ["x[0][1]", "x[1][0]", "x[1][1]"]
-    assert len(resultset.record) == 1
+    assert sampleset.variables == ["x[0][1]", "x[1][0]", "x[1][1]"]
+    assert len(sampleset.record) == 1
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [1, 1, 1])
-    assert resultset.record[0].energy == -3.0
-    assert resultset.record[0].num_occurrences == 1
+    assert np.array_equal(sampleset.record[0].sample, [1, 1, 1])
+    assert sampleset.record[0].energy == -3.0
+    assert sampleset.record[0].num_occurrences == 1
 
 
 def test_sawatabi_solver_with_logical_model_fails():
@@ -213,14 +213,14 @@ def test_sawatabi_solver_with_initial_states_ising():
             "x[11]": -1,
         },
     ]
-    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=1, pickup_mode="sequential", initial_temperature=1e-9, initial_states=initial_states)
+    sampleset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=1, pickup_mode="sequential", initial_temperature=1e-9, initial_states=initial_states)
 
-    assert len(resultset.record) == 1
+    assert len(sampleset.record) == 1
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1])
-    assert resultset.record[0].energy == -12.0
-    assert resultset.record[0].num_occurrences == 1
+    assert np.array_equal(sampleset.record[0].sample, [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1])
+    assert sampleset.record[0].energy == -12.0
+    assert sampleset.record[0].num_occurrences == 1
 
 
 def test_sawatabi_solver_with_initial_states_qubo():
@@ -240,14 +240,14 @@ def test_sawatabi_solver_with_initial_states_qubo():
             "x[5]": 0,
         },
     ]
-    resultset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.5, initial_states=initial_states, seed=12345)
+    sampleset = solver.solve(model.to_physical(), num_reads=1, num_sweeps=10, cooling_rate=0.5, initial_states=initial_states, seed=12345)
 
-    assert len(resultset.record) == 1
+    assert len(sampleset.record) == 1
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [0, 0, 0, 0, 0, 0])
-    assert resultset.record[0].energy == 0.0
-    assert resultset.record[0].num_occurrences == 1
+    assert np.array_equal(sampleset.record[0].sample, [0, 0, 0, 0, 0, 0])
+    assert sampleset.record[0].energy == 0.0
+    assert sampleset.record[0].num_occurrences == 1
 
 
 def test_sawatabi_solver_with_initial_states_reverse():
@@ -267,7 +267,7 @@ def test_sawatabi_solver_with_initial_states_reverse():
             "x[5]": -1,
         },
     ]
-    resultset = solver.solve(
+    sampleset = solver.solve(
         model.to_physical(),
         num_reads=1,
         num_sweeps=10,
@@ -276,12 +276,12 @@ def test_sawatabi_solver_with_initial_states_reverse():
         seed=12345,
     )
 
-    assert len(resultset.record) == 1
+    assert len(sampleset.record) == 1
 
     # Check the ground state
-    assert np.array_equal(resultset.record[0].sample, [1, 1, 1, 1, 1, 1])
-    assert resultset.record[0].energy == -60.0
-    assert resultset.record[0].num_occurrences == 1
+    assert np.array_equal(sampleset.record[0].sample, [1, 1, 1, 1, 1, 1])
+    assert sampleset.record[0].energy == -60.0
+    assert sampleset.record[0].num_occurrences == 1
 
 
 def test_sawatabi_solver_reuse_solver_instance():

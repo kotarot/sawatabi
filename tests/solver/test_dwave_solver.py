@@ -50,24 +50,24 @@ def test_dwave_solver(mocker, physical):
 
     solver = DWaveSolver(solver="Advantage_system1.1")
 
-    resultset = solver.solve(physical)
+    sampleset = solver.solve(physical)
 
-    assert isinstance(resultset, dimod.SampleSet)
-    assert isinstance(resultset.info, dict)
-    assert "timing" in resultset.info
-    assert "problem_id" in resultset.info
-    assert isinstance(resultset.variables, dimod.variables.Variables)
-    assert resultset.variables == ["x[0]", "x[1]"]
-    assert isinstance(resultset.record, np.recarray)
-    assert np.array_equal(resultset.record[0].sample, [1, -1])
-    assert resultset.record[0].energy == -2.0
-    assert resultset.record[0].num_occurrences == 1
-    assert isinstance(resultset.vartype, dimod.Vartype)
-    assert resultset.vartype == dimod.SPIN
-    assert resultset.first.sample == {"x[0]": 1, "x[1]": -1}
-    assert resultset.first.energy == -2.0
-    assert resultset.first.num_occurrences == 1
-    for sample in resultset.samples():
+    assert isinstance(sampleset, dimod.SampleSet)
+    assert isinstance(sampleset.info, dict)
+    assert "timing" in sampleset.info
+    assert "problem_id" in sampleset.info
+    assert isinstance(sampleset.variables, dimod.variables.Variables)
+    assert sampleset.variables == ["x[0]", "x[1]"]
+    assert isinstance(sampleset.record, np.recarray)
+    assert np.array_equal(sampleset.record[0].sample, [1, -1])
+    assert sampleset.record[0].energy == -2.0
+    assert sampleset.record[0].num_occurrences == 1
+    assert isinstance(sampleset.vartype, dimod.Vartype)
+    assert sampleset.vartype == dimod.SPIN
+    assert sampleset.first.sample == {"x[0]": 1, "x[1]": -1}
+    assert sampleset.first.energy == -2.0
+    assert sampleset.first.num_occurrences == 1
+    for sample in sampleset.samples():
         assert sample == {"x[0]": 1, "x[1]": -1}
 
 
@@ -83,9 +83,9 @@ def test_dwave_solver_with_auth_parameters(mocker, physical):
 
     solver = DWaveSolver(endpoint="http://0.0.0.0/method", token="xxxx", solver="Advantage_system1.1")
 
-    resultset = solver.solve(physical)
+    sampleset = solver.solve(physical)
 
-    assert isinstance(resultset, dimod.SampleSet)
+    assert isinstance(sampleset, dimod.SampleSet)
 
 
 def test_dwave_solver_with_embedding_parameters(mocker, physical):
@@ -100,9 +100,9 @@ def test_dwave_solver_with_embedding_parameters(mocker, physical):
 
     solver = DWaveSolver(endpoint="http://0.0.0.0/method", embedding_parameters={"random_seed": 12345})
 
-    resultset = solver.solve(physical)
+    sampleset = solver.solve(physical)
 
-    assert isinstance(resultset, dimod.SampleSet)
+    assert isinstance(sampleset, dimod.SampleSet)
 
 
 def test_dwave_default_solver_name(default_solver):

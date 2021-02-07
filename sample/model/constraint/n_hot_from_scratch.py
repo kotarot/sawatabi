@@ -44,8 +44,8 @@ def n_hot_from_scratch_2_of_1_qubo(solver):
     model.add_interaction(x[1], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_3_of_1_qubo(solver):
@@ -64,8 +64,8 @@ def n_hot_from_scratch_3_of_1_qubo(solver):
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_3_of_2_qubo(solver):
@@ -84,8 +84,8 @@ def n_hot_from_scratch_3_of_2_qubo(solver):
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_4_of_1_qubo(solver):
@@ -108,8 +108,8 @@ def n_hot_from_scratch_4_of_1_qubo(solver):
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_4_of_2_qubo(solver):
@@ -132,8 +132,8 @@ def n_hot_from_scratch_4_of_2_qubo(solver):
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_2_of_1_ising(solver):
@@ -149,8 +149,8 @@ def n_hot_from_scratch_2_of_1_ising(solver):
     model.add_interaction(x[1], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_3_of_1_ising(solver):
@@ -169,8 +169,8 @@ def n_hot_from_scratch_3_of_1_ising(solver):
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_3_of_2_ising(solver):
@@ -189,8 +189,8 @@ def n_hot_from_scratch_3_of_2_ising(solver):
     model.add_interaction(x[2], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_4_of_1_ising(solver):
@@ -213,8 +213,8 @@ def n_hot_from_scratch_4_of_1_ising(solver):
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def n_hot_from_scratch_4_of_2_ising(solver):
@@ -237,8 +237,8 @@ def n_hot_from_scratch_4_of_2_ising(solver):
     model.add_interaction(x[3], coefficient=-coeff)
     _print_utf8(model)
 
-    resultset = solver.solve(model.to_physical())
-    print(resultset)
+    sampleset = solver.solve(model.to_physical())
+    print(sampleset)
 
 
 def main():

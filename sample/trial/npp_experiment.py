@@ -70,7 +70,7 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
         '''
         solver = sawatabi.solver.LocalSolver(exact=False)
         if not prev_sampleset:
-            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, seed=1 * (r + 1))
+            sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, seed=1 * (r + 1))
         else:
             initial_states = []
 
@@ -108,39 +108,39 @@ def run_windowing(window_size, window_period, batches, numbers_range_lower=1, nu
             physical = model.to_physical()
             default_beta_range = solver.default_beta_range(physical)
             beta_range = (default_beta_range[0] * 10, default_beta_range[1])  # Tighten the initial temperature than the default temperature
-            resultset = solver.solve(physical, num_reads=num_reads, num_sweeps=num_sweeps, initial_states=initial_states, initial_states_generator="none", seed=2 * (r + 1), beta_range=beta_range)
+            sampleset = solver.solve(physical, num_reads=num_reads, num_sweeps=num_sweeps, initial_states=initial_states, initial_states_generator="none", seed=2 * (r + 1), beta_range=beta_range)
         '''
 
         # D-Wave
         '''
         solver = sawatabi.solver.DWaveSolver()
-        resultset = solver.solve(model.to_physical(), chain_strength=2, num_reads=100)
+        sampleset = solver.solve(model.to_physical(), chain_strength=2, num_reads=100)
         '''
 
         # Optigan
         '''
         solver = sawatabi.solver.OptiganSolver()
         model.to_qubo()
-        resultset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
+        sampleset = solver.solve(model.to_physical(), timeout=1000, duplicate=False)
         '''
 
         # Sawatabi Solver
         solver = sawatabi.solver.SawatabiSolver()
         if not prev_sampleset:
-            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=1 * (r + 1))
+            sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=1 * (r + 1))
         else:
-            resultset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=2 * (r + 1))
+            sampleset = solver.solve(model.to_physical(), num_reads=num_reads, num_sweeps=num_sweeps, num_coolings=50, cooling_rate=0.8, initial_temperature=100.0, seed=2 * (r + 1))
 
-        #print(resultset)
+        #print(sampleset)
 
-        # Store the resultset to use it in the next batch
+        # Store the sampleset to use it in the next batch
         if 0.0 < prev_states_usage:
-            prev_sampleset = resultset
+            prev_sampleset = sampleset
 
         # Get minimum diff from obtained samples from the solver
         diffs = []
-        for r in resultset.record:
-            sample = dict(zip(resultset.variables, r.sample))
+        for r in sampleset.record:
+            sample = dict(zip(sampleset.variables, r.sample))
             s_1, s_2 = [], []
             for i, n in enumerate(numbers):
                 if sample[f"x[{i}]"] == 1:

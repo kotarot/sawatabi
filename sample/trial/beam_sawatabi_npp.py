@@ -103,7 +103,7 @@ def mapping(model, elements, incoming, outgoing, sorted_elements):
     return model
 
 
-def unmapping(resultset, elements, incoming, outgoing, sorted_elements):
+def unmapping(sampleset, elements, incoming, outgoing, sorted_elements):
     """
     Unmapping -- Decode spins to a problem solution
     """
@@ -115,7 +115,7 @@ def unmapping(resultset, elements, incoming, outgoing, sorted_elements):
     outputs.append("SOLUTION ==>")
 
     # Decode spins to solution
-    spins = resultset.samples()[0]
+    spins = sampleset.samples()[0]
 
     set_p, set_n = [], []
     n_set_p = n_set_n = 0
@@ -204,11 +204,11 @@ class SolveNPPDoFn(beam.DoFn):
 
         # Solve and unmap to the solution
         try:
-            resultset = solver.solve(physical, **SOLVER_OPTIONS)
+            sampleset = solver.solve(physical, **SOLVER_OPTIONS)
         except Exception as e:
             yield f"Failed to solve: {e}"
         else:
-            yield unmapping(resultset, elements, incoming, outgoing, sorted_elements)
+            yield unmapping(sampleset, elements, incoming, outgoing, sorted_elements)
 
 
 def run(argv=None):

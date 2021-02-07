@@ -56,7 +56,7 @@ def npp_mapping(prev_model, elements, incoming, outgoing):
     return model
 
 
-def npp_unmapping(resultset, elements, incoming, outgoing):
+def npp_unmapping(sampleset, elements, incoming, outgoing):
     """
     Unmapping -- Decode spins to a problem solution
     """
@@ -68,7 +68,7 @@ def npp_unmapping(resultset, elements, incoming, outgoing):
     outputs.append("SOLUTION ==>")
 
     # Decode spins to solution
-    spins = resultset.samples()[0]
+    spins = sampleset.samples()[0]
 
     set_p, set_n = [], []
     n_set_p = n_set_n = 0
@@ -99,12 +99,12 @@ def npp_solving(physical_model, elements, incoming, outgoing):
         "seed": 12345,
     }
     # The main solve.
-    resultset = solver.solve(physical_model, **SOLVER_OPTIONS)
+    sampleset = solver.solve(physical_model, **SOLVER_OPTIONS)
 
     # Set a fallback solver if needed here.
     pass
 
-    return resultset
+    return sampleset
 
 
 def npp_window(

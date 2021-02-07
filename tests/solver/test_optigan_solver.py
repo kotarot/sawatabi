@@ -52,24 +52,24 @@ def test_optigan_solver(mocker, physical):
     response_mock = ResponseMock()
     mocker.patch("requests.post", return_value=response_mock)
 
-    resultset = solver.solve(physical, duplicate=True)
+    sampleset = solver.solve(physical, duplicate=True)
 
-    assert isinstance(resultset, dimod.SampleSet)
-    assert isinstance(resultset.info, dict)
-    assert resultset.info["energies"] == [-1.0]
-    assert resultset.info["spins"] == [[1, 0]]
-    assert isinstance(resultset.variables, dimod.variables.Variables)
-    assert resultset.variables == ["x[0]", "x[1]"]
-    assert isinstance(resultset.record, np.recarray)
-    assert np.array_equal(resultset.record[0].sample, [1, 0])
-    assert resultset.record[0].energy == -1.0
-    assert resultset.record[0].num_occurrences == 1
-    assert isinstance(resultset.vartype, dimod.Vartype)
-    assert resultset.vartype == dimod.BINARY
-    assert resultset.first.sample == {"x[0]": 1, "x[1]": 0}
-    assert resultset.first.energy == -1.0
-    assert resultset.first.num_occurrences == 1
-    for sample in resultset.samples():
+    assert isinstance(sampleset, dimod.SampleSet)
+    assert isinstance(sampleset.info, dict)
+    assert sampleset.info["energies"] == [-1.0]
+    assert sampleset.info["spins"] == [[1, 0]]
+    assert isinstance(sampleset.variables, dimod.variables.Variables)
+    assert sampleset.variables == ["x[0]", "x[1]"]
+    assert isinstance(sampleset.record, np.recarray)
+    assert np.array_equal(sampleset.record[0].sample, [1, 0])
+    assert sampleset.record[0].energy == -1.0
+    assert sampleset.record[0].num_occurrences == 1
+    assert isinstance(sampleset.vartype, dimod.Vartype)
+    assert sampleset.vartype == dimod.BINARY
+    assert sampleset.first.sample == {"x[0]": 1, "x[1]": 0}
+    assert sampleset.first.energy == -1.0
+    assert sampleset.first.num_occurrences == 1
+    for sample in sampleset.samples():
         assert sample == {"x[0]": 1, "x[1]": 0}
 
 
@@ -79,9 +79,9 @@ def test_optigan_solver_with_auth_parameters(mocker, physical):
     response_mock = ResponseMock()
     mocker.patch("requests.post", return_value=response_mock)
 
-    resultset = solver.solve(physical, duplicate=True)
+    sampleset = solver.solve(physical, duplicate=True)
 
-    assert isinstance(resultset, dimod.SampleSet)
+    assert isinstance(sampleset, dimod.SampleSet)
 
 
 def test_optigan_solver_without_gzip(mocker, physical):
@@ -91,8 +91,8 @@ def test_optigan_solver_without_gzip(mocker, physical):
     response_mock = ResponseMock()
     mocker.patch("requests.post", return_value=response_mock)
 
-    resultset = solver.solve(physical, gzip_request=False, gzip_response=False)
-    assert isinstance(resultset, dimod.SampleSet)
+    sampleset = solver.solve(physical, gzip_request=False, gzip_response=False)
+    assert isinstance(sampleset, dimod.SampleSet)
 
 
 def test_optigan_solver_with_invalid_response(mocker, physical):
