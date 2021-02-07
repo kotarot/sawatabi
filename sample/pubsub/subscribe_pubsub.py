@@ -31,6 +31,8 @@ $ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/subscribe_
 def main():
     parser = argparse.ArgumentParser()
 
+    # fmt: off
+
     # Pub/Sub options
     parser.add_argument(
         "--project",
@@ -42,6 +44,9 @@ def main():
         dest="subscription",
         required=True,
         help="Google Cloud Pub/Sub subscription name to subscribe messages from.")
+
+    # fmt: on
+
     args = parser.parse_args()
 
     client = pubsub_v1.SubscriberClient()

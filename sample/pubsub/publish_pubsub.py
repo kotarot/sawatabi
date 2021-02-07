@@ -40,6 +40,8 @@ $ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/trial/publish_pu
 def main():
     parser = argparse.ArgumentParser()
 
+    # fmt: off
+
     # Pub/Sub options
     parser.add_argument(
         "--project",
@@ -88,6 +90,9 @@ def main():
         type=float,
         default=1.0,
         help="Message interval in second.")
+
+    # fmt: on
+
     args = parser.parse_args()
 
     #client = pubsub_v1.PublisherClient(credentials=service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]))
