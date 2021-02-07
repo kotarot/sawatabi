@@ -55,7 +55,7 @@ You can also give these parameters directly in the sawatabi.solver.OptiganSolver
 python -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip install -e ".[dev,notebook,trial]"
+pip install --editable ".[dev]"
 ```
 
 To start a jupyter notebook server:
