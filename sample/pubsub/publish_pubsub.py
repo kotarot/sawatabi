@@ -23,7 +23,7 @@ import time
 
 from google.cloud import pubsub_v1
 
-#from google.oauth2 import service_account
+# from google.oauth2 import service_account
 
 
 """
@@ -95,7 +95,7 @@ def main():
 
     args = parser.parse_args()
 
-    #client = pubsub_v1.PublisherClient(credentials=service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]))
+    # client = pubsub_v1.PublisherClient(credentials=service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]))
     client = pubsub_v1.PublisherClient()
     topic_path = client.topic_path(args.project, args.topic)
 
