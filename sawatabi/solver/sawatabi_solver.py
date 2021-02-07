@@ -124,11 +124,13 @@ class SawatabiSolver(AbstractSolver):
             # These samples and energies are in the Ising (SPIN) format
             samples.append(sample)
             energies.append(energy)
-            stats.append({
-                "energy_history": energy_hist,
-                "temperature_history": temperature_hist,
-                "acceptance_history": acceptance_hist,
-            })
+            stats.append(
+                {
+                    "energy_history": energy_hist,
+                    "temperature_history": temperature_hist,
+                    "acceptance_history": acceptance_hist,
+                }
+            )
 
         # Update the timing
         execution_sec = time.perf_counter() - start_sec
