@@ -29,9 +29,9 @@ The following application reads numbers from a local file, run continuous anneal
 python sample/algorithm/npp_window.py --input="tests/algorithm/numbers_100.txt"
 ```
 
-#### To run a sample NPP (Number Partition Problem) Sawatabi application on Google Cloud Dataflow with Google Cloud Pub/Sub
+#### To run a sample NPP (Number Partition Problem) Sawatabi application on Google Cloud Dataflow using Google Cloud Pub/Sub
 
-Please prepare your service account credentials as `./gcp-key.json` and open three terminals.
+Please prepare your GCP service account credentials as `./gcp-key.json` and open three terminals.
 
 **[1st terminal]** The Pub/Sub publisher continuously publishes numbers to the specified Pub/Sub topic:
 ```
