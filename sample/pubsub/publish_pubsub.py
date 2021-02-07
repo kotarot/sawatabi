@@ -45,7 +45,7 @@ def main():
         "--project",
         dest="project",
         required=True,
-        help="Google Cloud Pub/Sub project name.")
+        help="Google Cloud Platform project name.")
     parser.add_argument(
         "--topic",
         dest="topic",
