@@ -78,7 +78,7 @@ setup(
     description="Sawatabi is an application framework to develop and run stream-data-oriented Ising applications with quantum annealing.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    keywords="",
+    keywords="stream-processing ising-model ising quantum-annealing annealing",
     classifiers=[
         "Development Status :: 1 - Planning",
         "License :: OSI Approved :: Apache Software License",
