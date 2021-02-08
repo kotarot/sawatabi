@@ -46,6 +46,7 @@ class AbstractAlgorithm(BaseMixin):
         PREV_TIMESTAMP = BagStateSpec(name="timestamp_state", coder=coders.PickleCoder())
         PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())
         PREV_MODEL = BagStateSpec(name="model_state", coder=coders.PickleCoder())
+        PREV_SAMPLESET = BagStateSpec(name="sampleset_state", coder=coders.PickleCoder())
 
         def process(
             self,
@@ -54,6 +55,7 @@ class AbstractAlgorithm(BaseMixin):
             timestamp_state=beam.DoFn.StateParam(PREV_TIMESTAMP),
             elements_state=beam.DoFn.StateParam(PREV_ELEMENTS),
             model_state=beam.DoFn.StateParam(PREV_MODEL),
+            sampleset_state=beam.DoFn.StateParam(PREV_SAMPLESET),
             algorithm=None,
             map_fn=None,
             solve_fn=None,
@@ -72,6 +74,7 @@ class AbstractAlgorithm(BaseMixin):
             timestamp_state_as_list = list(timestamp_state.read())
             elements_state_as_list = list(elements_state.read())
             model_state_as_list = list(model_state.read())
+            sampleset_state_as_list = list(sampleset_state.read())
 
             # Extract the previous timestamp, elements, and model from state
             if len(timestamp_state_as_list) == 0:
@@ -86,6 +89,10 @@ class AbstractAlgorithm(BaseMixin):
                 prev_model = sawatabi.model.LogicalModel(mtype=initial_mtype)
             else:
                 prev_model = model_state_as_list[-1]
+            if len(sampleset_state_as_list) == 0:
+                prev_sampleset = None
+            else:
+                prev_sampleset = sampleset_state_as_list[-1]
 
             # Sometimes, when we use the sliding window algorithm for a bounded data (such as a local file),
             # we may receive an outdated event whose timestamp is older than timestamp of previously processed event.
@@ -134,7 +141,7 @@ class AbstractAlgorithm(BaseMixin):
 
             # Map problem input to the model
             try:
-                model = map_fn(prev_model, sorted_elements, incoming, outgoing)
+                model = map_fn(prev_model, prev_sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to map: {e}\n{traceback.format_exc()}"
                 return
@@ -146,10 +153,15 @@ class AbstractAlgorithm(BaseMixin):
 
             # Solve and unmap to the solution
             try:
-                sampleset = solve_fn(solver, model, sorted_elements, incoming, outgoing)
+                sampleset = solve_fn(solver, model, prev_sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to solve: {e}\n{traceback.format_exc()}"
                 return
+
+            # Clear the BagState so we can hold only the latest state, and
+            # Register new sampleset to the state
+            sampleset_state.clear()
+            sampleset_state.add(sampleset)
 
             try:
                 yield unmap_fn(sampleset, sorted_elements, incoming, outgoing)

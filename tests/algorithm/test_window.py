@@ -173,7 +173,7 @@ def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
 
 
 def test_window_algorithm_npp_map_fails(capfd):
-    def invalid_mapping(prev_model, elements, incoming, outgoing):
+    def invalid_mapping(prev_model, prev_sampleset, elements, incoming, outgoing):
         raise Exception("Mapping fails!")
 
     algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
@@ -236,7 +236,7 @@ def test_window_algorithm_npp_unmap_fails(capfd):
 
 
 def test_window_algorithm_npp_solve_fails(capfd):
-    def invalid_solving(solver, prev_model, elements, incoming, outgoing):
+    def invalid_solving(solver, prev_model, prev_sampleset, elements, incoming, outgoing):
         raise Exception("Solving fails!")
 
     algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}

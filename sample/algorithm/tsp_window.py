@@ -28,6 +28,7 @@ import sawatabi
 
 def tsp_mapping(
     prev_model: sawatabi.model.LogicalModel,
+    prev_sampleset: dimod.SampleSet,
     curr_data: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
     incoming: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
     outgoing: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
@@ -39,6 +40,8 @@ def tsp_mapping(
     ----------
     prev_model : sawatabi.model.LogicalModel
         Previous LogicalModel.
+    prev_sampleset : dimod.SampleSet,
+        Previous SampleSet.
     curr_data : List
         Elements in the current window (= prev data + incoming - outgoing).
         curr_data : [
@@ -147,6 +150,7 @@ def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[
 def tsp_solving(
     solver: Union[sawatabi.solver.LocalSolver, sawatabi.solver.DWaveSolver, sawatabi.solver.OptiganSolver, sawatabi.solver.SawatabiSolver],
     model: sawatabi.model.LogicalModel,
+    prev_sampleset: dimod.SampleSet,
     elements: List,
     incoming: List,
     outgoing: List,

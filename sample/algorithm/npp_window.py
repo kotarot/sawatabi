@@ -24,7 +24,13 @@ import dimod
 import sawatabi
 
 
-def npp_mapping(prev_model: sawatabi.model.LogicalModel, elements: List, incoming: List, outgoing: List) -> sawatabi.model.LogicalModel:
+def npp_mapping(
+    prev_model: sawatabi.model.LogicalModel,
+    prev_sampleset: dimod.SampleSet,
+    elements: List,
+    incoming: List,
+    outgoing: List
+) -> sawatabi.model.LogicalModel:
     """
     Mapping -- Update the model based on the input data elements
     """
@@ -92,6 +98,7 @@ def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, ou
 def npp_solving(
     solver: Union[sawatabi.solver.LocalSolver, sawatabi.solver.DWaveSolver, sawatabi.solver.OptiganSolver, sawatabi.solver.SawatabiSolver],
     model: sawatabi.model.LogicalModel,
+    prev_sampleset: dimod.SampleSet,
     elements: List,
     incoming: List,
     outgoing: List,
