@@ -539,6 +539,15 @@ class LogicalModel(AbstractModel):
                 else:
                     quadratic[self._interactions_array["key"][i]] = coeff
 
+        # For offset as well
+        offset = self._offset
+        if isinstance(self._offset, pyqubo.core.Coefficient):
+            offset = self._offset.evaluate(feed_dict=placeholder)
+        # Calculate coefficient with the placeholder
+        offset_model = (offset + pyqubo.Binary("sawatabi-fake-variable")).compile()  # We need a variable for a valid model for pyqubo
+        offset_ph_resolved = offset_model.to_qubo(feed_dict=placeholder)
+        offset = offset_ph_resolved[1]  # We don't need the variable just prepared, extracting only offset
+
         # set to physical
         for k, v in linear.items():
             if v != 0.0:
@@ -549,7 +558,7 @@ class LogicalModel(AbstractModel):
                 physical.add_interaction(k, body=constants.INTERACTION_QUADRATIC, coefficient=v)
                 physical._variables_set.add(k[0])
                 physical._variables_set.add(k[1])
-        physical._offset = self._offset
+        physical._offset = offset
 
         # label_to_index / index_to_label
         current_index = 0

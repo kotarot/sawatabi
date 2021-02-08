@@ -205,8 +205,9 @@ def test_logical_model_to_physical_with_placeholder(ising):
     ising.add_interaction(x[4], coefficient=pyqubo.Placeholder("f"), scale=3.0)
     ising.add_interaction(x[5], coefficient=4.0, scale=pyqubo.Placeholder("g"))
     ising.add_interaction(x[6], coefficient=pyqubo.Placeholder("h"), scale=pyqubo.Placeholder("i") * 5)
+    ising._offset = pyqubo.Placeholder("j")
 
-    placeholder = {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6, "g": -7, "h": 8, "i": 9}
+    placeholder = {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6, "g": -7, "h": 8, "i": 9, "j": 10}
     physical = ising.to_physical(placeholder=placeholder)
 
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == 1.0
@@ -216,6 +217,7 @@ def test_logical_model_to_physical_with_placeholder(ising):
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[4]"] == 18.0
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[5]"] == -28.0
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[6]"] == 360.0
+    assert physical._offset == 10.0
 
 
 def test_logical_model_to_physical_label_and_index(ising):

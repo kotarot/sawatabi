@@ -289,10 +289,11 @@ def model_convert_with_placeholder():
     model.add_interaction(x[4], coefficient=Placeholder("f"), scale=3.0)
     model.add_interaction(x[5], coefficient=4.0, scale=Placeholder("g"))
     model.add_interaction(x[6], coefficient=Placeholder("h"), scale=Placeholder("i") * 5.0)
+    model._offset = Placeholder("j")
     _print_utf8(model)
 
     print("\nConvert to Physical model with placeholders.")
-    physical_model = model.to_physical(placeholder={"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6.0, "g": -7.0, "h": 8.0, "i": 9.0})
+    physical_model = model.to_physical(placeholder={"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6.0, "g": -7.0, "h": 8.0, "i": 9.0, "j": 10.0})
     _print_utf8(physical_model)
 
 
