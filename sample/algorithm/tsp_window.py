@@ -33,31 +33,33 @@ def tsp_mapping(
     outgoing: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
 ) -> sawatabi.model.LogicalModel:
     """
-    Mapping -- update model based on the input data elements
-    npp_mapping の代わりに tsppd_mapping を作成して、ここに新しいデータが来たときのmodelの更新コードを書く
-    （おそらくここは今の pyqubo の構築コード + それを sawatabi modelに変換するコードを書けばOK）
+    Mapping -- Update model based on the input data elements
 
     Parameters
     ----------
     prev_model : sawatabi.model.LogicalModel
-        qubo の解
+        Previous LogicalModel.
     curr_data : List
-        現在の window に保持するデータ(= prev data + incoming)
-        curr_data :
-            [(0.0, (0, {'Sapporo': [141.34694, 43.064170000000004]})),
-            (1.0, (1, {'Sendai': [140.87194, 38.26889]})), (2.0, (2, {'Tokyo': [139.69167, 35.689440000000005]})),
-            (3.0, (3, {'Yokohama': [139.6425, 35.44778]})), (4.0, (4, {'Nagoya': [136.90667, 35.180279999999996]}))]
+        Elements in the current window (= prev data + incoming - outgoing).
+        curr_data : [
+            (1.0, (1, {'Sendai': [140.87194, 38.26889]})),
+            (2.0, (2, {'Tokyo': [139.69167, 35.689440000000005]})),
+            (3.0, (3, {'Yokohama': [139.6425, 35.44778]})),
+            (4.0, (4, {'Nagoya': [136.90667, 35.180279999999996]})),
+            (5.0, (5, {'Kyoto': [135.75556, 35.021390000000004]})) ]
     incoming : List
-        window に入力するデータ
-        incoming:  [(5.0, (5, {'Kyoto': [135.75556, 35.021390000000004]}))]
+        Elements just coming into the current window.
+        incoming: [
+            (5.0, (5, {'Kyoto': [135.75556, 35.021390000000004]})) ]
     outgoing : List
-        window から出ていくデータ
-        outgoing: [(0.0, (0, {'Sapporo': [141.34694, 43.064170000000004]}))]
+        Elements just going from the current window.
+        outgoing: [
+            (0.0, (0, {'Sapporo': [141.34694, 43.064170000000004]})) ]
 
     Returns
     -------
     model : sawatabi.model.LogicalModel
-        ある時刻の window 内で保持したデータで構築した TSP モデル
+        LogicalModel of TSP created from data in the current window.
     """
 
     model = sawatabi.model.LogicalModel(mtype="qubo")
@@ -97,10 +99,10 @@ def tsp_mapping(
 
 def get_traveling_distance(n_city: int, n_cities: List, x: pyqubo.Array) -> float:
     distance = 0.0
-    for i in range(n_city):  # i: 訪問都市
-        for j in range(n_city):  # j: 訪問都市
-            for k in range(n_city):  # k: 訪問順
-                # 計算の便宜上 O(100)km -> O(1)km にスケール
+    for i in range(n_city):  # i: city to visit
+        for j in range(n_city):  # j: city to visit
+            for k in range(n_city):  # k: visit order
+                # Scale down O(100)km -> O(1)km or convenience
                 long_lat_dist = geodesic((n_cities[i][1], n_cities[i][0]), (n_cities[j][1], n_cities[j][0])).km / 100
                 distance += long_lat_dist * x[k, i] * x[(k + 1) % n_city, j]
 
@@ -110,22 +112,26 @@ def get_traveling_distance(n_city: int, n_cities: List, x: pyqubo.Array) -> floa
 def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]], incoming: List, outgoing: List) -> str:
     """
     Unmapping -- Decode spins to a problem solution
-    ここにアニーリング結果をルートの結果として解釈するコードを書く
-    （おそらくここは今の実装の答えを解釈するコードそのままでOK）
+
     Parameters
     ----------
     sampleset : dimod.SampleSet
-        qubo の解
+        Sampling result of the QUBO.
     elements : List
-        ある時刻の入力データ
+        Elements in the current window.
+    incoming : List
+        Elements just coming into the current window.
+    outgoing : List
+        Elements just going from the current window.
+
     Returns
     -------
     order_to_visit : str
-        都市の訪問順
+        Solution (order of the cities) as a string.
     """
     outputs = ["", "INPUT -->", "  " + str([e[1][1] for e in elements]), "SOLUTION ==>"]
 
-    # 解から訪問順を取得
+    # Get order from the solution
     def get_order_to_visit(solution: Dict, elements: List) -> List:
         # store order of the city
         order_to_visit = []
@@ -142,8 +148,9 @@ def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[
 
 def tsp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, incoming: List, outgoing: List) -> dimod.SampleSet:
     """
-    npp_solving は tsppd_solving にリネームして、内容はおそらく同じままでOK
+    Solving -- Solve model and find results (sampleset)
     """
+
     from sawatabi.solver import LocalSolver
 
     # Solver instance

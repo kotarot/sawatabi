@@ -90,6 +90,10 @@ def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, ou
 
 
 def npp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, incoming: List, outgoing: List) -> dimod.SampleSet:
+    """
+    Solving -- Solve model and find results (sampleset)
+    """
+
     from sawatabi.solver import LocalSolver
 
     # Solver instance
