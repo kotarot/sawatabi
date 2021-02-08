@@ -25,11 +25,7 @@ import sawatabi
 
 
 def npp_mapping(
-    prev_model: sawatabi.model.LogicalModel,
-    prev_sampleset: dimod.SampleSet,
-    elements: List,
-    incoming: List,
-    outgoing: List
+    prev_model: sawatabi.model.LogicalModel, prev_sampleset: dimod.SampleSet, elements: List, incoming: List, outgoing: List
 ) -> sawatabi.model.LogicalModel:
     """
     Mapping -- Update the model based on the input data elements
