@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import traceback
+
 import apache_beam as beam
 from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
@@ -19,6 +21,7 @@ from apache_beam.transforms.userstate import BagStateSpec, CombiningValueStateSp
 
 import sawatabi
 from sawatabi.base_mixin import BaseMixin
+from sawatabi.solver import LocalSolver
 
 
 class AbstractAlgorithm(BaseMixin):
@@ -43,6 +46,7 @@ class AbstractAlgorithm(BaseMixin):
         PREV_TIMESTAMP = BagStateSpec(name="timestamp_state", coder=coders.PickleCoder())
         PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())
         PREV_MODEL = BagStateSpec(name="model_state", coder=coders.PickleCoder())
+        PREV_SAMPLESET = BagStateSpec(name="sampleset_state", coder=coders.PickleCoder())
 
         def process(
             self,
@@ -51,10 +55,12 @@ class AbstractAlgorithm(BaseMixin):
             timestamp_state=beam.DoFn.StateParam(PREV_TIMESTAMP),
             elements_state=beam.DoFn.StateParam(PREV_ELEMENTS),
             model_state=beam.DoFn.StateParam(PREV_MODEL),
+            sampleset_state=beam.DoFn.StateParam(PREV_SAMPLESET),
             algorithm=None,
             map_fn=None,
-            unmap_fn=None,
             solve_fn=None,
+            unmap_fn=None,
+            solver=LocalSolver(exact=False),  # default solver
             initial_mtype=sawatabi.constants.MODEL_ISING,
         ):
             _, elements = value
@@ -68,6 +74,7 @@ class AbstractAlgorithm(BaseMixin):
             timestamp_state_as_list = list(timestamp_state.read())
             elements_state_as_list = list(elements_state.read())
             model_state_as_list = list(model_state.read())
+            sampleset_state_as_list = list(sampleset_state.read())
 
             # Extract the previous timestamp, elements, and model from state
             if len(timestamp_state_as_list) == 0:
@@ -82,6 +89,10 @@ class AbstractAlgorithm(BaseMixin):
                 prev_model = sawatabi.model.LogicalModel(mtype=initial_mtype)
             else:
                 prev_model = model_state_as_list[-1]
+            if len(sampleset_state_as_list) == 0:
+                prev_sampleset = None
+            else:
+                prev_sampleset = sampleset_state_as_list[-1]
 
             # Sometimes, when we use the sliding window algorithm for a bounded data (such as a local file),
             # we may receive an outdated event whose timestamp is older than timestamp of previously processed event.
@@ -130,10 +141,9 @@ class AbstractAlgorithm(BaseMixin):
 
             # Map problem input to the model
             try:
-                model = map_fn(prev_model, sorted_elements, incoming, outgoing)
-                physical = model.to_physical()
+                model = map_fn(prev_model, prev_sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
-                yield f"Failed to map: {e}"
+                yield f"Failed to map: {e}\n{traceback.format_exc()}"
                 return
 
             # Clear the BagState so we can hold only the latest state, and
@@ -143,15 +153,20 @@ class AbstractAlgorithm(BaseMixin):
 
             # Solve and unmap to the solution
             try:
-                sampleset = solve_fn(physical, sorted_elements, incoming, outgoing)
+                sampleset = solve_fn(solver, model, prev_sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
-                yield f"Failed to solve: {e}"
+                yield f"Failed to solve: {e}\n{traceback.format_exc()}"
                 return
+
+            # Clear the BagState so we can hold only the latest state, and
+            # Register new sampleset to the state
+            sampleset_state.clear()
+            sampleset_state.add(sampleset)
 
             try:
                 yield unmap_fn(sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
-                yield f"Failed to unmap: {e}"
+                yield f"Failed to unmap: {e}\n{traceback.format_exc()}"
 
     @classmethod
     def _create_pipeline(
@@ -164,6 +179,7 @@ class AbstractAlgorithm(BaseMixin):
         solve_fn=None,
         unmap_fn=None,
         output_fn=None,
+        solver=LocalSolver(exact=False),  # default solver
         initial_mtype=sawatabi.constants.MODEL_ISING,
         pipeline_args=["--runner=DirectRunner"],
     ):
@@ -210,7 +226,13 @@ class AbstractAlgorithm(BaseMixin):
         solved = (algorithm_transformed
             | "Make windows to key-value pairs for stateful DoFn" >> beam.Map(lambda element: (None, element))
             | "Solve" >> beam.ParDo(
-                sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn, initial_mtype=initial_mtype
+                sawatabi.algorithm.Window.SolveDoFn(),
+                algorithm=algorithm,
+                map_fn=map_fn,
+                solve_fn=solve_fn,
+                unmap_fn=unmap_fn,
+                solver=solver,
+                initial_mtype=initial_mtype,
             ))
 
         # --------------------------------

@@ -20,6 +20,7 @@ import pytest
 
 from sample.algorithm import npp_window
 from sawatabi.algorithm import IO, Window
+from sawatabi.solver import LocalSolver
 
 
 def test_window_algorithm_npp_100(capfd):
@@ -42,6 +43,8 @@ def test_window_algorithm_npp_100(capfd):
         solve_fn=npp_window.npp_solving,
         unmap_fn=npp_window.npp_unmapping,
         output_fn=IO.write_to_stdout(),
+        solver=LocalSolver(exact=False),
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 
@@ -88,6 +91,8 @@ def test_window_algorithm_npp_10():
         solve_fn=npp_window.npp_solving,
         unmap_fn=npp_window.npp_unmapping,
         output_fn=IO.write_to_text(path=output_path),
+        solver=LocalSolver(exact=False),
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 
@@ -116,6 +121,7 @@ def test_window_algorithm_npp_invalid_mtype():
             solve_fn=npp_window.npp_solving,
             unmap_fn=npp_window.npp_unmapping,
             output_fn=IO.write_to_text(path=output_path),
+            solver=LocalSolver(exact=False),
             initial_mtype="invalid",
             pipeline_args=pipeline_args,
         )
@@ -128,6 +134,7 @@ def test_window_algorithm_npp_invalid_mtype():
             solve_fn=npp_window.npp_solving,
             unmap_fn=npp_window.npp_unmapping,
             output_fn=IO.write_to_text(path=output_path),
+            solver=LocalSolver(exact=False),
             initial_mtype=123,
             pipeline_args=pipeline_args,
         )
@@ -149,6 +156,8 @@ def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
         solve_fn=npp_window.npp_solving,
         unmap_fn=npp_window.npp_unmapping,
         output_fn=output_fn,
+        solver=LocalSolver(exact=False),
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 
@@ -164,7 +173,7 @@ def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
 
 
 def test_window_algorithm_npp_map_fails(capfd):
-    def invalid_mapping(prev_model, elements, incoming, outgoing):
+    def invalid_mapping(prev_model, prev_sampleset, elements, incoming, outgoing):
         raise Exception("Mapping fails!")
 
     algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
@@ -179,6 +188,8 @@ def test_window_algorithm_npp_map_fails(capfd):
         solve_fn=npp_window.npp_solving,
         unmap_fn=npp_window.npp_unmapping,
         output_fn=IO.write_to_stdout(),
+        solver=LocalSolver(exact=False),
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 
@@ -208,6 +219,8 @@ def test_window_algorithm_npp_unmap_fails(capfd):
         solve_fn=npp_window.npp_solving,
         unmap_fn=invalid_unmapping,
         output_fn=IO.write_to_stdout(),
+        solver=LocalSolver(exact=False),
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 
@@ -223,7 +236,7 @@ def test_window_algorithm_npp_unmap_fails(capfd):
 
 
 def test_window_algorithm_npp_solve_fails(capfd):
-    def invalid_solving(prev_model, elements, incoming, outgoing):
+    def invalid_solving(solver, prev_model, prev_sampleset, elements, incoming, outgoing):
         raise Exception("Solving fails!")
 
     algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
@@ -238,6 +251,8 @@ def test_window_algorithm_npp_solve_fails(capfd):
         solve_fn=invalid_solving,
         unmap_fn=npp_window.npp_unmapping,
         output_fn=IO.write_to_stdout(),
+        solver=LocalSolver(exact=False),
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 

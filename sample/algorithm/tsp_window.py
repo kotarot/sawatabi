@@ -17,7 +17,7 @@
 
 import argparse
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import dimod
 import pyqubo
@@ -28,6 +28,7 @@ import sawatabi
 
 def tsp_mapping(
     prev_model: sawatabi.model.LogicalModel,
+    prev_sampleset: dimod.SampleSet,
     curr_data: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
     incoming: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
     outgoing: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
@@ -39,6 +40,8 @@ def tsp_mapping(
     ----------
     prev_model : sawatabi.model.LogicalModel
         Previous LogicalModel.
+    prev_sampleset : dimod.SampleSet,
+        Previous SampleSet.
     curr_data : List
         Elements in the current window (= prev data + incoming - outgoing).
         curr_data : [
@@ -87,11 +90,9 @@ def tsp_mapping(
 
     n_cities = [list(c[1][1].values())[0] for c in curr_data]
     traveling_distance = get_traveling_distance(n_city, n_cities, binary_vector)
-    hamiltonian_tsp = traveling_distance + 17.5 * time_const + 15.0 * city_const
+    hamiltonian_tsp = traveling_distance + pyqubo.Placeholder("time") * time_const + pyqubo.Placeholder("city") * city_const
 
-    # qubo, offset, feed_dict_tsp = create_tsp_qubo(hamiltonian_tsp, 17.5, 15.0)
     model.from_pyqubo(hamiltonian_tsp)
-
     # print(f"model: {model}", type(model))
 
     return model
@@ -146,16 +147,18 @@ def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[
     return "\n".join(outputs) + "\n  " + " -> ".join(get_order_to_visit(sampleset.samples()[0], elements))
 
 
-def tsp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, incoming: List, outgoing: List) -> dimod.SampleSet:
+def tsp_solving(
+    solver: Union[sawatabi.solver.LocalSolver, sawatabi.solver.DWaveSolver, sawatabi.solver.OptiganSolver, sawatabi.solver.SawatabiSolver],
+    model: sawatabi.model.LogicalModel,
+    prev_sampleset: dimod.SampleSet,
+    elements: List,
+    incoming: List,
+    outgoing: List,
+) -> dimod.SampleSet:
     """
     Solving -- Solve model and find results (sampleset)
     """
 
-    from sawatabi.solver import LocalSolver
-
-    # Solver instance
-    # - LocalSolver
-    solver = LocalSolver(exact=False)
     # Solver options as a dict
     SOLVER_OPTIONS = {
         "num_reads": 1,
@@ -163,6 +166,7 @@ def tsp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, in
         "seed": 12345,
     }
     # The main solve.
+    physical_model = model.to_physical(placeholder={"time": 17.5, "city": 15.0})
     sampleset = solver.solve(physical_model, **SOLVER_OPTIONS)
 
     # Set a fallback solver if needed here.
@@ -228,6 +232,7 @@ def tsp_window(
         solve_fn=tsp_solving,
         unmap_fn=tsp_unmapping,
         output_fn=output_fn,
+        solver=sawatabi.solver.LocalSolver(exact=False),  # use LocalSolver
         initial_mtype="qubo",
         pipeline_args=pipeline_args,
     )

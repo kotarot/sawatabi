@@ -195,7 +195,7 @@ def test_logical_model_to_physical_with_n_hot_constraint_randomly_ising(ising):
             assert physical._raw_interactions[constants.INTERACTION_QUADRATIC][(f"x[{i}]", f"x[{j}]")] == -0.5
 
 
-def test_logical_model_to_physical_with_placeholder(ising):
+def test_logical_model_to_physical_with_placeholder_ising(ising):
     x = ising.variables("x", shape=(7,))
     ising.add_interaction(x[0], coefficient=pyqubo.Placeholder("a"))
     ising.add_interaction(x[1], coefficient=pyqubo.Placeholder("b") + 1.0)
@@ -205,8 +205,9 @@ def test_logical_model_to_physical_with_placeholder(ising):
     ising.add_interaction(x[4], coefficient=pyqubo.Placeholder("f"), scale=3.0)
     ising.add_interaction(x[5], coefficient=4.0, scale=pyqubo.Placeholder("g"))
     ising.add_interaction(x[6], coefficient=pyqubo.Placeholder("h"), scale=pyqubo.Placeholder("i") * 5)
+    ising._offset = pyqubo.Placeholder("j")
 
-    placeholder = {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6, "g": -7, "h": 8, "i": 9}
+    placeholder = {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0, "e": -5.0, "f": 6, "g": -7, "h": 8, "i": 9, "j": 10}
     physical = ising.to_physical(placeholder=placeholder)
 
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[0]"] == 1.0
@@ -216,6 +217,20 @@ def test_logical_model_to_physical_with_placeholder(ising):
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[4]"] == 18.0
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[5]"] == -28.0
     assert physical._raw_interactions[constants.INTERACTION_LINEAR]["x[6]"] == 360.0
+    assert physical._offset == 10.0
+
+
+def test_logical_model_to_physical_with_placeholder_qubo(qubo):
+    # Note: This test is needed to test a PhysicalModel whose offset is pyqubo.core.Coefficient
+    a = qubo.variables("a", shape=(4,))
+    onehot = pyqubo.Constraint((pyqubo.Sum(0, 4, lambda i: a[i]) - 1) ** 2, label="one-hot")
+    hamiltonian = onehot * pyqubo.Placeholder("A")
+    qubo.from_pyqubo(hamiltonian)
+
+    placeholder = {"A": 2.0}
+    physical = qubo.to_physical(placeholder=placeholder)
+
+    assert physical._offset == 2.0
 
 
 def test_logical_model_to_physical_label_and_index(ising):
