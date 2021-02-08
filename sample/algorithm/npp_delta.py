@@ -53,6 +53,8 @@ def npp_delta(project: str = None, input_path: str = None, input_topic: str = No
         solve_fn=npp_window.npp_solving,
         unmap_fn=npp_window.npp_unmapping,
         output_fn=output_fn,
+        solver=sawatabi.solver.LocalSolver(exact=False),  # use LocalSolver
+        initial_mtype="ising",
         pipeline_args=pipeline_args,
     )
 

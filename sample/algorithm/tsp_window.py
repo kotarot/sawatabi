@@ -17,7 +17,7 @@
 
 import argparse
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import dimod
 import pyqubo
@@ -144,16 +144,17 @@ def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[
     return "\n".join(outputs) + "\n  " + " -> ".join(get_order_to_visit(sampleset.samples()[0], elements))
 
 
-def tsp_solving(model: sawatabi.model.LogicalModel, elements: List, incoming: List, outgoing: List) -> dimod.SampleSet:
+def tsp_solving(
+    solver: Union[sawatabi.solver.LocalSolver, sawatabi.solver.DWaveSolver, sawatabi.solver.OptiganSolver, sawatabi.solver.SawatabiSolver],
+    model: sawatabi.model.LogicalModel,
+    elements: List,
+    incoming: List,
+    outgoing: List,
+) -> dimod.SampleSet:
     """
     Solving -- Solve model and find results (sampleset)
     """
 
-    from sawatabi.solver import LocalSolver
-
-    # Solver instance
-    # - LocalSolver
-    solver = LocalSolver(exact=False)
     # Solver options as a dict
     SOLVER_OPTIONS = {
         "num_reads": 1,
@@ -227,6 +228,7 @@ def tsp_window(
         solve_fn=tsp_solving,
         unmap_fn=tsp_unmapping,
         output_fn=output_fn,
+        solver=sawatabi.solver.LocalSolver(exact=False),  # use LocalSolver
         initial_mtype="qubo",
         pipeline_args=pipeline_args,
     )

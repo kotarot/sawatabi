@@ -21,6 +21,7 @@ from apache_beam.transforms.userstate import BagStateSpec, CombiningValueStateSp
 
 import sawatabi
 from sawatabi.base_mixin import BaseMixin
+from sawatabi.solver import LocalSolver
 
 
 class AbstractAlgorithm(BaseMixin):
@@ -45,6 +46,7 @@ class AbstractAlgorithm(BaseMixin):
         PREV_TIMESTAMP = BagStateSpec(name="timestamp_state", coder=coders.PickleCoder())
         PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())
         PREV_MODEL = BagStateSpec(name="model_state", coder=coders.PickleCoder())
+        COMMON_SOLVER = BagStateSpec(name="solver_state", coder=coders.PickleCoder())
 
         def process(
             self,
@@ -55,8 +57,9 @@ class AbstractAlgorithm(BaseMixin):
             model_state=beam.DoFn.StateParam(PREV_MODEL),
             algorithm=None,
             map_fn=None,
-            unmap_fn=None,
             solve_fn=None,
+            unmap_fn=None,
+            solver=LocalSolver(exact=False),  # default solver
             initial_mtype=sawatabi.constants.MODEL_ISING,
         ):
             _, elements = value
@@ -144,7 +147,7 @@ class AbstractAlgorithm(BaseMixin):
 
             # Solve and unmap to the solution
             try:
-                sampleset = solve_fn(model, sorted_elements, incoming, outgoing)
+                sampleset = solve_fn(solver, model, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to solve: {e}\n{traceback.format_exc()}"
                 return
@@ -165,6 +168,7 @@ class AbstractAlgorithm(BaseMixin):
         solve_fn=None,
         unmap_fn=None,
         output_fn=None,
+        solver=LocalSolver(exact=False),  # default solver
         initial_mtype=sawatabi.constants.MODEL_ISING,
         pipeline_args=["--runner=DirectRunner"],
     ):
@@ -211,7 +215,7 @@ class AbstractAlgorithm(BaseMixin):
         solved = (algorithm_transformed
             | "Make windows to key-value pairs for stateful DoFn" >> beam.Map(lambda element: (None, element))
             | "Solve" >> beam.ParDo(
-                sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, unmap_fn=unmap_fn, solve_fn=solve_fn, initial_mtype=initial_mtype
+                sawatabi.algorithm.Window.SolveDoFn(), algorithm=algorithm, map_fn=map_fn, solve_fn=solve_fn, unmap_fn=unmap_fn, solver=solver, initial_mtype=initial_mtype
             ))
 
         # --------------------------------
