@@ -17,11 +17,14 @@
 
 import argparse
 import os
+from typing import List
+
+import dimod
 
 import sawatabi
 
 
-def npp_mapping(prev_model, elements, incoming, outgoing):
+def npp_mapping(prev_model: sawatabi.model.LogicalModel, elements: List, incoming: List, outgoing: List) -> sawatabi.model.LogicalModel:
     """
     Mapping -- Update the model based on the input data elements
     """
@@ -56,7 +59,7 @@ def npp_mapping(prev_model, elements, incoming, outgoing):
     return model
 
 
-def npp_unmapping(sampleset, elements, incoming, outgoing):
+def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, outgoing: List) -> str:
     """
     Unmapping -- Decode spins to a problem solution
     """
@@ -86,7 +89,7 @@ def npp_unmapping(sampleset, elements, incoming, outgoing):
     return "\n".join(outputs)
 
 
-def npp_solving(physical_model, elements, incoming, outgoing):
+def npp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, incoming: List, outgoing: List) -> dimod.SampleSet:
     from sawatabi.solver import LocalSolver
 
     # Solver instance
@@ -108,8 +111,8 @@ def npp_solving(physical_model, elements, incoming, outgoing):
 
 
 def npp_window(
-    project=None, input_path=None, input_topic=None, input_subscription=None, output_path=None, output_topic=None, dataflow=False, dataflow_bucket=None
-):
+    project: str = None, input_path: str = None, input_topic: str = None, input_subscription: str = None, output_path: str = None, output_topic: str = None, dataflow: bool = False, dataflow_bucket: str = None
+) -> None:
 
     if dataflow and dataflow_bucket:
         pipeline_args = [
@@ -166,7 +169,7 @@ def npp_window(
     result.wait_until_finish()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
     parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
