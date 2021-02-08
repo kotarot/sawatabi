@@ -111,7 +111,14 @@ def npp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, in
 
 
 def npp_window(
-    project: str = None, input_path: str = None, input_topic: str = None, input_subscription: str = None, output_path: str = None, output_topic: str = None, dataflow: bool = False, dataflow_bucket: str = None
+    project: str = None,
+    input_path: str = None,
+    input_topic: str = None,
+    input_subscription: str = None,
+    output_path: str = None,
+    output_topic: str = None,
+    dataflow: bool = False,
+    dataflow_bucket: str = None,
 ) -> None:
 
     if dataflow and dataflow_bucket:
