@@ -22,7 +22,7 @@ import npp_window
 import sawatabi
 
 
-def npp_incremental(project=None, input_path=None, input_topic=None, input_subscription=None, output_path=None):
+def npp_incremental(project: str = None, input_path: str = None, input_topic: str = None, input_subscription: str = None, output_path: str = None) -> None:
 
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
@@ -61,9 +61,9 @@ def npp_incremental(project=None, input_path=None, input_topic=None, input_subsc
     result.wait_until_finish()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
+    parser.add_argument("--project", dest="project", help="Google Cloud Platform project name.")
     parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
     parser.add_argument("--input-topic", dest="input_topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
     parser.add_argument("--input-subscription", dest="input_subscription", help="Google Cloud Pub/Sub subscription name.")

@@ -22,6 +22,9 @@ pip install sawatabi
 
 ### Sample Applications
 
+This section only describes a sample application of NPP (Number Partition Problem), for other sample applications please see:  
+https://github.com/kotarot/sawatabi/tree/main/sample/algorithm
+
 #### To run a sample NPP (Number Partition Problem) Sawatabi application on local environment
 
 The following application reads numbers from a local file, run continuous annealing computations to solve NPP on local environment, and writes solutions to the stdout:

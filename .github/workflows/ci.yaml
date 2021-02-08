@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   lint:
-    name: 'Lint with black, flake8, and isort'
+    name: 'Lint with black, flake8, isort, and mypy'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -27,6 +27,8 @@ jobs:
       run: flake8 . --statistics --count --show-source --ignore=E128,W503
     - name: Lint with isort
       run: isort . --check-only --diff
+    - name: Check types with mypy
+      run: mypy
 
   unit_tests:
     name: 'Run unit tests'
