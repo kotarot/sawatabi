@@ -63,7 +63,7 @@ def npp_incremental(project: str = None, input_path: str = None, input_topic: st
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--project", dest="project", help="Google Cloud Pub/Sub project name.")
+    parser.add_argument("--project", dest="project", help="Google Cloud Platform project name.")
     parser.add_argument("--input", dest="input", help="Path to the local file or the GCS object to read from.")
     parser.add_argument("--input-topic", dest="input_topic", help="Google Cloud Pub/Sub topic name to subscribe messages from.")
     parser.add_argument("--input-subscription", dest="input_subscription", help="Google Cloud Pub/Sub subscription name.")
