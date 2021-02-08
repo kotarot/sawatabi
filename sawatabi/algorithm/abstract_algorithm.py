@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import traceback
+
 import apache_beam as beam
 from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
@@ -131,9 +133,8 @@ class AbstractAlgorithm(BaseMixin):
             # Map problem input to the model
             try:
                 model = map_fn(prev_model, sorted_elements, incoming, outgoing)
-                physical = model.to_physical()
             except Exception as e:
-                yield f"Failed to map: {e}"
+                yield f"Failed to map: {e}\n{traceback.format_exc()}"
                 return
 
             # Clear the BagState so we can hold only the latest state, and
@@ -143,15 +144,15 @@ class AbstractAlgorithm(BaseMixin):
 
             # Solve and unmap to the solution
             try:
-                sampleset = solve_fn(physical, sorted_elements, incoming, outgoing)
+                sampleset = solve_fn(model, sorted_elements, incoming, outgoing)
             except Exception as e:
-                yield f"Failed to solve: {e}"
+                yield f"Failed to solve: {e}\n{traceback.format_exc()}"
                 return
 
             try:
                 yield unmap_fn(sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
-                yield f"Failed to unmap: {e}"
+                yield f"Failed to unmap: {e}\n{traceback.format_exc()}"
 
     @classmethod
     def _create_pipeline(
