@@ -46,7 +46,6 @@ class AbstractAlgorithm(BaseMixin):
         PREV_TIMESTAMP = BagStateSpec(name="timestamp_state", coder=coders.PickleCoder())
         PREV_ELEMENTS = BagStateSpec(name="elements_state", coder=coders.PickleCoder())
         PREV_MODEL = BagStateSpec(name="model_state", coder=coders.PickleCoder())
-        COMMON_SOLVER = BagStateSpec(name="solver_state", coder=coders.PickleCoder())
 
         def process(
             self,
