@@ -89,7 +89,7 @@ def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, ou
     return "\n".join(outputs)
 
 
-def npp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, incoming: List, outgoing: List) -> dimod.SampleSet:
+def npp_solving(model: sawatabi.model.LogicalModel, elements: List, incoming: List, outgoing: List) -> dimod.SampleSet:
     """
     Solving -- Solve model and find results (sampleset)
     """
@@ -106,6 +106,7 @@ def npp_solving(physical_model: sawatabi.model.PhysicalModel, elements: List, in
         "seed": 12345,
     }
     # The main solve.
+    physical_model = model.to_physical()
     sampleset = solver.solve(physical_model, **SOLVER_OPTIONS)
 
     # Set a fallback solver if needed here.
