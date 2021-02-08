@@ -55,7 +55,7 @@ $ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/publish_p
 """
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
 
     # fmt: off

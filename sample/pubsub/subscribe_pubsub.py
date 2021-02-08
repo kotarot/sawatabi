@@ -30,7 +30,7 @@ $ GOOGLE_APPLICATION_CREDENTIALS="./gcp-key.json" python sample/pubsub/subscribe
 """
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
 
     # fmt: off
@@ -54,7 +54,7 @@ def main():
     client = pubsub_v1.SubscriberClient()
     subscription_path = client.subscription_path(args.project, args.subscription)
 
-    def callback(message):
+    def callback(message: pubsub_v1.subscriber.message.Message) -> None:
         dt_now = datetime.datetime.now()
         print(f"[{dt_now}] Received message from '{subscription_path}': {message.data.decode('utf-8')}")
         message.ack()
