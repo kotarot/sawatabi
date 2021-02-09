@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import argparse
+import datetime
 import os
 from typing import List, Union
 
@@ -131,12 +132,14 @@ def npp_window(
 ) -> None:
 
     if dataflow and dataflow_bucket:
+        yymmddhhmmss = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         pipeline_args = [
             "--runner=DataflowRunner",
             f"--project={project}",
             "--region=asia-northeast1",
             f"--temp_location=gs://{dataflow_bucket}/temp",
             f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
+            f"--job_name=beamapp-npp-{yymmddhhmmss}",
             # Reference: https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
             "--experiments=use_runner_v2",
             # Worker options
