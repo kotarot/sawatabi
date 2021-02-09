@@ -21,7 +21,6 @@ import os
 from typing import Dict, List, Tuple, Union
 
 import dimod
-import pyqubo
 
 import sawatabi
 
