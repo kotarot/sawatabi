@@ -113,21 +113,23 @@ jobs:
       run: python sample/utils/npp.py
 
     # Algorithm (NPP sample)
-    - name: Run sample/algorithm/npp_incremental.py (local file)
+    - name: Run sample/algorithm/npp_incremental.py (NPP -- local input file)
       run: python sample/algorithm/npp_incremental.py --input="tests/algorithm/numbers_100.txt"
-    - name: Run sample/algorithm/npp_incremental.py (GCS and output)
-      run: python sample/algorithm/npp_incremental.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_incremental.txt"
-    - name: Run sample/algorithm/npp_delta.py (local file)
+    - name: Run sample/algorithm/npp_incremental.py (NPP -- GCS and local output)
+      run: python sample/algorithm/npp_incremental.py --input="gs://sawatabi-public/numbers_100.txt" --output="/tmp/npp_incremental_output.txt"
+    - name: Run sample/algorithm/npp_delta.py (NPP -- local input file)
       run: python sample/algorithm/npp_delta.py --input="tests/algorithm/numbers_100.txt"
-    - name: Run sample/algorithm/npp_delta.py (GCS and output)
-      run: python sample/algorithm/npp_delta.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_delta.txt"
-    - name: Run sample/algorithm/npp_window.py (local file)
+    - name: Run sample/algorithm/npp_delta.py (NPP -- GCS and local output)
+      run: python sample/algorithm/npp_delta.py --input="gs://sawatabi-public/numbers_100.txt" --output="/tmp/npp_delta_output.txt"
+    - name: Run sample/algorithm/npp_window.py (NPP -- local input file)
       run: python sample/algorithm/npp_window.py --input="tests/algorithm/numbers_100.txt"
-    - name: Run sample/algorithm/npp_window.py (GCS and output)
-      run: python sample/algorithm/npp_window.py --input="gs://sawatabi-bucket/numbers_100.txt" --output="tests/algorithm/output_window.txt"
+    - name: Run sample/algorithm/npp_window.py (NPP -- GCS and local output)
+      run: python sample/algorithm/npp_window.py --input="gs://sawatabi-public/numbers_100.txt" --output="/tmp/npp_window_output.txt"
 
     # Algorithm (TSP sample)
     - name: Install additional dependencies for TSP sample
       run: pip install geopy
-    - name: Run sample/algorithm/tsp_window.py (TSP local file)
+    - name: Run sample/algorithm/tsp_window.py (TSP -- local input file)
       run: python sample/algorithm/tsp_window.py --input="tests/algorithm/cities_47.json"
+    - name: Run sample/algorithm/tsp_window.py (TSP -- GCS and local output)
+      run: python sample/algorithm/tsp_window.py --input="gs://sawatabi-public/cities_47.json" --output="/tmp/tsp_window_output.txt"
