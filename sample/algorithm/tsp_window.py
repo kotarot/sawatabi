@@ -66,7 +66,7 @@ def tsp_mapping(
     import pyqubo
     from geopy.distance import geodesic
 
-    model = prev_model.empty()
+    model: sawatabi.model.LogicalModel = prev_model.empty()
 
     # print(f"incoming: {incoming}", type(incoming))
     # print(f"curr_data: {curr_data}", type(curr_data))
