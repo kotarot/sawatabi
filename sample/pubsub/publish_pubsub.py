@@ -83,6 +83,11 @@ def main() -> None:
         dest="random_number",
         action="store_true",
         help="If true, a message will be a random number.")
+    parser.add_argument(
+        "--random-city",
+        dest="random_city",
+        action="store_true",
+        help="If true, a message will be a random city JSON string.")
 
     # Incremental
     parser.add_argument(
@@ -129,6 +134,11 @@ def main() -> None:
         elif args.random_number:
             n = random.randint(1, 99)
             message = str(n)
+        elif args.random_city:
+            name = "".join([random.choice(string.ascii_letters) for i in range(random.randint(2, 10))]).capitalize()
+            lon = random.uniform(120.0, 140.0)
+            lat = random.uniform(20.0, 40.0)
+            message = f'{{"{name}": [{lon}, {lat}]}}'
         elif args.incremental_text:
             message = "".join([random.choice(string.ascii_letters + string.digits) for i in range(i)])
         elif args.incremental_number:

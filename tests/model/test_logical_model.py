@@ -55,6 +55,21 @@ def test_logical_model_invalid_mtype():
         LogicalModel(mtype=12345)
 
 
+@pytest.mark.parametrize("mtype", ["ising", "qubo"])
+def test_logical_model_empty(mtype):
+    model = LogicalModel(mtype=mtype)
+    x = model.variables("x", shape=(10, 10))
+    model.add_interaction(x[0, 0], coefficient=10.0)
+
+    empty_model = model.empty()
+    assert empty_model.get_mtype() == mtype
+    assert len(empty_model._variables) == 0
+    assert len(empty_model._interactions_array) == len(empty_model._default_keys)
+    for k, v in empty_model._interactions_array.items():
+        assert len(v) == 0
+    assert empty_model._interactions_length == 0
+
+
 ################################
 # Variables
 ################################

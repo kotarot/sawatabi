@@ -47,6 +47,12 @@ class LogicalModel(AbstractModel):
         self._interactions_length = 0
         self._previous_physical_model = None
 
+    def empty(self):
+        """
+        Returns an empty LogicalModel with the same model type.
+        """
+        return LogicalModel(mtype=self._mtype)
+
     ################################
     # Variables
     ################################

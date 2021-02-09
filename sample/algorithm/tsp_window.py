@@ -16,12 +16,11 @@
 # limitations under the License.
 
 import argparse
+import datetime
 import os
 from typing import Dict, List, Tuple, Union
 
 import dimod
-import pyqubo
-from geopy.distance import geodesic
 
 import sawatabi
 
@@ -64,8 +63,10 @@ def tsp_mapping(
     model : sawatabi.model.LogicalModel
         LogicalModel of TSP created from data in the current window.
     """
+    import pyqubo
+    from geopy.distance import geodesic
 
-    model = sawatabi.model.LogicalModel(mtype="qubo")
+    model: sawatabi.model.LogicalModel = prev_model.empty()
 
     # print(f"incoming: {incoming}", type(incoming))
     # print(f"curr_data: {curr_data}", type(curr_data))
@@ -78,36 +79,34 @@ def tsp_mapping(
     else:
         return model
 
-    # Constraint not to visit more than two cities at the same time.
+    # Constraint not to visit more than one citie at the same time.
     time_const = 0.0
     for i in range(n_city):
         time_const += pyqubo.Constraint((pyqubo.Sum(0, n_city, lambda j: binary_vector[i, j]) - 1) ** 2, label="time{}".format(i))
 
-    # Constraint not to visit the same city more than twice.
+    # Constraint not to visit the same city more than once.
     city_const = 0.0
     for j in range(n_city):
         city_const += pyqubo.Constraint((pyqubo.Sum(0, n_city, lambda i: binary_vector[i, j]) - 1) ** 2, label="city{}".format(j))
 
+    # Objective term
     n_cities = [list(c[1][1].values())[0] for c in curr_data]
-    traveling_distance = get_traveling_distance(n_city, n_cities, binary_vector)
-    hamiltonian_tsp = traveling_distance + pyqubo.Placeholder("time") * time_const + pyqubo.Placeholder("city") * city_const
-
-    model.from_pyqubo(hamiltonian_tsp)
-    # print(f"model: {model}", type(model))
-
-    return model
-
-
-def get_traveling_distance(n_city: int, n_cities: List, x: pyqubo.Array) -> float:
-    distance = 0.0
+    traveling_distance = 0.0
     for i in range(n_city):  # i: city to visit
         for j in range(n_city):  # j: city to visit
             for k in range(n_city):  # k: visit order
                 # Scale down O(100)km -> O(1)km or convenience
                 long_lat_dist = geodesic((n_cities[i][1], n_cities[i][0]), (n_cities[j][1], n_cities[j][0])).km / 100
-                distance += long_lat_dist * x[k, i] * x[(k + 1) % n_city, j]
+                traveling_distance += long_lat_dist * binary_vector[k, i] * binary_vector[(k + 1) % n_city, j]
 
-    return distance
+    # Build an Hamiltonian from the constraint terms and the objective term.
+    hamiltonian_tsp = traveling_distance + pyqubo.Placeholder("time") * time_const + pyqubo.Placeholder("city") * city_const
+
+    # Load QUBO from the PyQUBO expression into the Sawatabi model.
+    model.from_pyqubo(hamiltonian_tsp)
+    # print(f"model: {model}", type(model))
+
+    return model
 
 
 def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]], incoming: List, outgoing: List) -> str:
@@ -132,19 +131,17 @@ def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[
     """
     outputs = ["", "INPUT -->", "  " + str([e[1][1] for e in elements]), "SOLUTION ==>"]
 
+    solution = sampleset.samples()[0]
+
     # Get order from the solution
-    def get_order_to_visit(solution: Dict, elements: List) -> List:
-        # store order of the city
-        order_to_visit = []
-        for i, _ in enumerate(elements):
-            for j, e in enumerate(elements):
-                if solution[f"city[{i}][{j}]"] == 1:
-                    order_to_visit.append(list(e[1][1].keys())[0])
-                    break
+    order_to_visit = []  # store order of the city
+    for i, _ in enumerate(elements):
+        for j, e in enumerate(elements):
+            if solution[f"city[{i}][{j}]"] == 1:
+                order_to_visit.append(list(e[1][1].keys())[0])
+                break
 
-        return order_to_visit
-
-    return "\n".join(outputs) + "\n  " + " -> ".join(get_order_to_visit(sampleset.samples()[0], elements))
+    return "\n".join(outputs) + "\n  " + " -> ".join(order_to_visit)
 
 
 def tsp_solving(
@@ -187,12 +184,14 @@ def tsp_window(
 ) -> None:
 
     if dataflow and dataflow_bucket:
+        yymmddhhmmss = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         pipeline_args = [
             "--runner=DataflowRunner",
             f"--project={project}",
             "--region=asia-northeast1",
             f"--temp_location=gs://{dataflow_bucket}/temp",
             f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
+            f"--job_name=beamapp-tsp-{yymmddhhmmss}",
             # Reference: https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
             "--experiments=use_runner_v2",
             # Worker options
@@ -210,9 +209,9 @@ def tsp_window(
     algorithm_options = {"window.size": 5, "window.period": 1, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
 
     if (project is not None) and (input_topic is not None):
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=input_topic)
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_json(project=project, topic=input_topic)
     elif (project is not None) and (input_subscription is not None):
-        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, subscription=input_subscription)
+        input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_json(project=project, subscription=input_subscription)
     elif input_path is not None:
         input_fn = sawatabi.algorithm.IO.read_from_text_as_json(path=input_path)
         algorithm_options["input.reassign_timestamp"] = True
