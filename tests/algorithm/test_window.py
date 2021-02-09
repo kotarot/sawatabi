@@ -140,10 +140,10 @@ def test_window_algorithm_npp_invalid_mtype():
         )
 
 
-def test_window_algorithm_npp_gcp_and_custom_fn(capfd):
+def test_window_algorithm_npp_gcs_and_custom_fn(capfd):
     algorithm_options = {"window.size": 30, "window.period": 10, "input.reassign_timestamp": True}
 
-    input_fn = beam.io.ReadFromText("gs://sawatabi-bucket/numbers_100.txt") | beam.Map(lambda x: int(x))
+    input_fn = beam.io.ReadFromText("gs://sawatabi-public/numbers_100.txt") | beam.Map(lambda x: int(x))
     output_fn = beam.Map(lambda x: "custom output --- " + x) | beam.Map(print)
 
     pipeline_args = ["--runner=DirectRunner"]
