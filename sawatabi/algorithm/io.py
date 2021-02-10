@@ -17,8 +17,6 @@ import re
 
 import apache_beam as beam
 
-import sawatabi
-
 
 class IO:
 
@@ -26,8 +24,8 @@ class IO:
     # Input (Read)
     ################################
 
-    @staticmethod
-    def _read_as_number(messages):
+    @classmethod
+    def _read_as_number(cls, messages):
         # fmt: off
         number_pattern = re.compile(r"^[0-9]+$")
         return (messages
@@ -35,15 +33,15 @@ class IO:
             | "To int" >> beam.Map(lambda e: int(e)))
         # fmt: on
 
-    @staticmethod
-    def _read_as_json(messages):
+    @classmethod
+    def _read_as_json(cls, messages):
         # fmt: off
         return (messages
             | "To JSON" >> beam.Map(lambda e: json.loads(e)))
         # fmt: on
 
-    @staticmethod
-    def read_from_pubsub(project, topic=None, subscription=None):
+    @classmethod
+    def read_from_pubsub(cls, project, topic=None, subscription=None):
         # fmt: off
         if topic is not None:
             messages = beam.io.ReadFromPubSub(topic=f"projects/{project}/topics/{topic}")
@@ -53,45 +51,45 @@ class IO:
             | "Decode" >> beam.Map(lambda m: m.decode("utf-8")))
         # fmt: on
 
-    @staticmethod
-    def read_from_pubsub_as_number(project, topic=None, subscription=None):
-        messages = sawatabi.algorithm.IO.read_from_pubsub(project=project, topic=topic, subscription=subscription)
-        return sawatabi.algorithm.IO._read_as_number(messages)
+    @classmethod
+    def read_from_pubsub_as_number(cls, project, topic=None, subscription=None):
+        messages = cls.read_from_pubsub(project=project, topic=topic, subscription=subscription)
+        return cls._read_as_number(messages)
 
-    @staticmethod
-    def read_from_pubsub_as_json(project, topic=None, subscription=None):
-        messages = sawatabi.algorithm.IO.read_from_pubsub(project=project, topic=topic, subscription=subscription)
-        return sawatabi.algorithm.IO._read_as_json(messages)
+    @classmethod
+    def read_from_pubsub_as_json(cls, project, topic=None, subscription=None):
+        messages = cls.read_from_pubsub(project=project, topic=topic, subscription=subscription)
+        return cls._read_as_json(messages)
 
-    @staticmethod
-    def read_from_text(path):
+    @classmethod
+    def read_from_text(cls, path):
         return beam.io.ReadFromText(file_pattern=path)
 
-    @staticmethod
-    def read_from_text_as_number(path):
-        messages = sawatabi.algorithm.IO.read_from_text(path)
-        return sawatabi.algorithm.IO._read_as_number(messages)
+    @classmethod
+    def read_from_text_as_number(cls, path):
+        messages = cls.read_from_text(path)
+        return cls._read_as_number(messages)
 
-    @staticmethod
-    def read_from_text_as_json(path):
-        messages = sawatabi.algorithm.IO.read_from_text(path)
-        return sawatabi.algorithm.IO._read_as_json(messages)
+    @classmethod
+    def read_from_text_as_json(cls, path):
+        messages = cls.read_from_text(path)
+        return cls._read_as_json(messages)
 
     ################################
     # Output (Write)
     ################################
 
-    @staticmethod
-    def write_to_stdout():
+    @classmethod
+    def write_to_stdout(cls):
         return "Print to stdout" >> beam.Map(print)
 
-    @staticmethod
-    def write_to_pubsub(project, topic):
+    @classmethod
+    def write_to_pubsub(cls, project, topic):
         # fmt: off
         return ("Encode" >> beam.Map(lambda s: s.encode("utf-8"))
             | beam.io.WriteToPubSub(topic=f"projects/{project}/topics/{topic}"))
         # fmt: on
 
-    @staticmethod
-    def write_to_text(path):
+    @classmethod
+    def write_to_text(cls, path):
         return beam.io.WriteToText(file_path_prefix=path)
