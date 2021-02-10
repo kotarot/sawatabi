@@ -26,6 +26,7 @@ import sawatabi
 
 
 def tsp_mapping(
+    sawatabi,
     prev_model: sawatabi.model.LogicalModel,
     prev_sampleset: dimod.SampleSet,
     curr_data: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]],
@@ -109,7 +110,7 @@ def tsp_mapping(
     return model
 
 
-def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]], incoming: List, outgoing: List) -> str:
+def tsp_unmapping(sawatabi, sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[int, Dict[str, List[float]]]]], incoming: List, outgoing: List) -> str:
     """
     Unmapping -- Decode spins to a problem solution
 
@@ -145,6 +146,7 @@ def tsp_unmapping(sampleset: dimod.SampleSet, elements: List[Tuple[float, Tuple[
 
 
 def tsp_solving(
+    sawatabi,
     solver: Union[sawatabi.solver.LocalSolver, sawatabi.solver.DWaveSolver, sawatabi.solver.OptiganSolver, sawatabi.solver.SawatabiSolver],
     model: sawatabi.model.LogicalModel,
     prev_sampleset: dimod.SampleSet,
@@ -190,7 +192,7 @@ def tsp_window(
             f"--project={project}",
             "--region=asia-northeast1",
             f"--temp_location=gs://{dataflow_bucket}/temp",
-            f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
+            #f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
             f"--job_name=beamapp-tsp-{yymmddhhmmss}",
             # Reference: https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
             "--experiments=use_runner_v2",

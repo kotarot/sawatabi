@@ -19,9 +19,9 @@ from apache_beam import coders
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.userstate import BagStateSpec, CombiningValueStateSpec
 
-import sawatabi
+#import sawatabi
 from sawatabi.base_mixin import BaseMixin
-from sawatabi.solver import LocalSolver
+#from sawatabi.solver import LocalSolver
 
 
 class AbstractAlgorithm(BaseMixin):
@@ -56,12 +56,13 @@ class AbstractAlgorithm(BaseMixin):
             elements_state=beam.DoFn.StateParam(PREV_ELEMENTS),
             model_state=beam.DoFn.StateParam(PREV_MODEL),
             sampleset_state=beam.DoFn.StateParam(PREV_SAMPLESET),
+            sawatabi=None,
             algorithm=None,
             map_fn=None,
             solve_fn=None,
             unmap_fn=None,
-            solver=LocalSolver(exact=False),  # default solver
-            initial_mtype=sawatabi.constants.MODEL_ISING,
+            solver=None, #solver=LocalSolver(exact=False),  # default solver
+            initial_mtype="ising", #initial_mtype=sawatabi.constants.MODEL_ISING,
         ):
             _, elements = value
 
@@ -141,7 +142,7 @@ class AbstractAlgorithm(BaseMixin):
 
             # Map problem input to the model
             try:
-                model = map_fn(prev_model, prev_sampleset, sorted_elements, incoming, outgoing)
+                model = map_fn(sawatabi, prev_model, prev_sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to map: {e}\n{traceback.format_exc()}"
                 return
@@ -153,7 +154,7 @@ class AbstractAlgorithm(BaseMixin):
 
             # Solve and unmap to the solution
             try:
-                sampleset = solve_fn(solver, model, prev_sampleset, sorted_elements, incoming, outgoing)
+                sampleset = solve_fn(sawatabi, solver, model, prev_sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to solve: {e}\n{traceback.format_exc()}"
                 return
@@ -164,13 +165,14 @@ class AbstractAlgorithm(BaseMixin):
             sampleset_state.add(sampleset)
 
             try:
-                yield unmap_fn(sampleset, sorted_elements, incoming, outgoing)
+                yield unmap_fn(sawatabi, sampleset, sorted_elements, incoming, outgoing)
             except Exception as e:
                 yield f"Failed to unmap: {e}\n{traceback.format_exc()}"
 
     @classmethod
     def _create_pipeline(
         cls,
+        sawatabi,
         algorithm,
         algorithm_transform,
         algorithm_options,
@@ -179,8 +181,8 @@ class AbstractAlgorithm(BaseMixin):
         solve_fn=None,
         unmap_fn=None,
         output_fn=None,
-        solver=LocalSolver(exact=False),  # default solver
-        initial_mtype=sawatabi.constants.MODEL_ISING,
+        solver=None, #solver=LocalSolver(exact=False),  # default solver
+        initial_mtype="ising", #initial_mtype=sawatabi.constants.MODEL_ISING,
         pipeline_args=["--runner=DirectRunner"],
     ):
         cls._check_argument_type("initial_mtype", initial_mtype, str)
@@ -227,6 +229,7 @@ class AbstractAlgorithm(BaseMixin):
             | "Make windows to key-value pairs for stateful DoFn" >> beam.Map(lambda element: (None, element))
             | "Solve" >> beam.ParDo(
                 sawatabi.algorithm.Window.SolveDoFn(),
+                sawatabi=sawatabi,
                 algorithm=algorithm,
                 map_fn=map_fn,
                 solve_fn=solve_fn,

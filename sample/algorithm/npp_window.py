@@ -26,7 +26,7 @@ import sawatabi
 
 
 def npp_mapping(
-    prev_model: sawatabi.model.LogicalModel, prev_sampleset: dimod.SampleSet, elements: List, incoming: List, outgoing: List
+    sawatabi, prev_model: sawatabi.model.LogicalModel, prev_sampleset: dimod.SampleSet, elements: List, incoming: List, outgoing: List
 ) -> sawatabi.model.LogicalModel:
     """
     Mapping -- Update the model based on the input data elements
@@ -62,7 +62,7 @@ def npp_mapping(
     return model
 
 
-def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, outgoing: List) -> str:
+def npp_unmapping(sawatabi, sampleset: dimod.SampleSet, elements: List, incoming: List, outgoing: List) -> str:
     """
     Unmapping -- Decode spins to a problem solution
     """
@@ -93,6 +93,7 @@ def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, ou
 
 
 def npp_solving(
+    sawatabi,
     solver: Union[sawatabi.solver.LocalSolver, sawatabi.solver.DWaveSolver, sawatabi.solver.OptiganSolver, sawatabi.solver.SawatabiSolver],
     model: sawatabi.model.LogicalModel,
     prev_sampleset: dimod.SampleSet,
@@ -138,7 +139,7 @@ def npp_window(
             f"--project={project}",
             "--region=asia-northeast1",
             f"--temp_location=gs://{dataflow_bucket}/temp",
-            f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
+            #f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
             f"--job_name=beamapp-npp-{yymmddhhmmss}",
             # Reference: https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
             "--experiments=use_runner_v2",
@@ -173,6 +174,7 @@ def npp_window(
 
     # Pipeline creation with Sawatabi
     pipeline = sawatabi.algorithm.Window.create_pipeline(
+        sawatabi=sawatabi,
         algorithm_options=algorithm_options,
         input_fn=input_fn,
         map_fn=npp_mapping,
