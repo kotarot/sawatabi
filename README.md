@@ -1,4 +1,4 @@
-![sawatabi-logo](https://github.com/kotarot/sawatabi/blob/main/figs/sawatabi-logo.gif)
+![sawatabi-logo](./figs/sawatabi-logo.gif)
 
 # sawatabi
 
@@ -11,6 +11,15 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
 Sawatabi is an application framework to develop and run stream-data-oriented Ising applications with quantum annealing.
+
+## Visualization of a Sample Sawatabi Application
+
+The animation shows visualization of Outlier Detection Problem and its solutions obtained by a Sawatabi application.
+The left figure represents continuous input event data (stream-data) where blue points mean normal values and red points mean abnormal values (outliers).
+The right figure represents solutions for Outlier Detection for each window of the input stream-data.
+The boxes try to cover only normal points as much as possible.
+
+![Outlier_Detection_JMA_Tokyo_202010_WINDOW](./figs/Outlier_Detection_JMA_Tokyo_202010_WINDOW.gif)
 
 ## Usage
 
