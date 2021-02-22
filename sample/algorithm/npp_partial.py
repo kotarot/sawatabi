@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import argparse
+from typing import List
 
 import npp_window
 
@@ -31,7 +32,7 @@ def npp_partial(project: str = None, input_path: str = None, input_topic: str = 
         pipeline_args.append("--streaming")
 
     # Filter function for patial algorithm
-    def filter_fn(x):
+    def filter_fn(x: List) -> bool:
         # If the number is greater than 90, it remains in the window.
         if x[1][1] > 90:
             return True
