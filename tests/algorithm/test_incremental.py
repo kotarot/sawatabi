@@ -20,7 +20,7 @@ from sample.algorithm import npp_window
 from sawatabi.algorithm import IO, Incremental
 
 
-def test_all_algorithm_npp_100(capfd):
+def test_incremental_algorithm_npp_100(capfd):
     algorithm_options = {
         "incremental.size": 10,
         "output.with_timestamp": True,
@@ -74,5 +74,5 @@ def test_all_algorithm_npp_100(capfd):
     assert out.count(">> suffix >>") == 10
 
 
-def test_all_algorithm_repr():
+def test_incremental_algorithm_repr():
     assert str(Incremental()) == "Incremental()"

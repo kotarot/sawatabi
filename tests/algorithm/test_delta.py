@@ -20,7 +20,7 @@ from sample.algorithm import npp_window
 from sawatabi.algorithm import IO, Delta
 
 
-def test_new_algorithm_npp_100(capfd):
+def test_delta_algorithm_npp_100(capfd):
     algorithm_options = {
         "window.size": 10,
         "output.with_timestamp": True,
@@ -70,5 +70,5 @@ def test_new_algorithm_npp_100(capfd):
     assert out.count(">> suffix >>") == 10
 
 
-def test_new_algorithm_repr():
+def test_delta_algorithm_repr():
     assert str(Delta()) == "Delta()"
