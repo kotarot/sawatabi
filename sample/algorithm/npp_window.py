@@ -53,7 +53,11 @@ def npp_mapping(
                 idx_i = i[1][0]
                 idx_j = j[1][0]
                 coeff = -1.0 * i[1][1] * j[1][1]
-                model.add_interaction(target=(x[idx_i], x[idx_j]), coefficient=coeff)
+                model.add_interaction(
+                    target=(x[idx_i], x[idx_j]),
+                    coefficient=coeff,
+                    attributes={"n": str(j), "attn_ts": j[0]},  # metadata for affected number and timestamp for attenuation
+                )
 
     for o in outgoing:
         idx = o[1][0]
@@ -70,7 +74,8 @@ def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, ou
     outputs = []
     outputs.append("")
     outputs.append("INPUT -->")
-    outputs.append("  " + str([e[1][1] for e in elements]))
+    outputs.append(f"  {[e[1][1] for e in elements]}")
+    outputs.append(f"  (length: {len(elements)})")
     outputs.append("SOLUTION ==>")
 
     # Decode spins to solution
@@ -154,7 +159,13 @@ def npp_window(
     if (project is not None) and ((input_topic is not None) or (input_subscription is not None)):
         pipeline_args.append("--streaming")
 
-    algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
+    algorithm_options = {
+        "window.size": 30,  # required
+        "window.period": 5,  # required
+        "output.with_timestamp": True,  # optional
+        "output.prefix": "<<<\n",  # optional
+        "output.suffix": "\n>>>\n",  # optional
+    }
 
     if (project is not None) and (input_topic is not None):
         input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=input_topic)

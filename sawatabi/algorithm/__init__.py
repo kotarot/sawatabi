@@ -13,9 +13,11 @@
 # limitations under the License.
 
 from sawatabi.algorithm.abstract_algorithm import AbstractAlgorithm
+from sawatabi.algorithm.io import IO
+from sawatabi.algorithm.attenuation import Attenuation
 from sawatabi.algorithm.delta import Delta
 from sawatabi.algorithm.incremental import Incremental
-from sawatabi.algorithm.io import IO
+from sawatabi.algorithm.partial import Partial
 from sawatabi.algorithm.window import Window
 
-__all__ = ["AbstractAlgorithm", "IO", "Delta", "Incremental", "Window"]
+__all__ = ["AbstractAlgorithm", "IO", "Attenuation", "Delta", "Incremental", "Partial", "Window"]

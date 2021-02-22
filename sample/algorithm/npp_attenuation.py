@@ -22,7 +22,7 @@ import npp_window
 import sawatabi
 
 
-def npp_incremental(project: str = None, input_path: str = None, input_topic: str = None, input_subscription: str = None, output_path: str = None) -> None:
+def npp_attenuation(project: str = None, input_path: str = None, input_topic: str = None, input_subscription: str = None, output_path: str = None) -> None:
 
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
@@ -31,7 +31,10 @@ def npp_incremental(project: str = None, input_path: str = None, input_topic: st
         pipeline_args.append("--streaming")
 
     algorithm_options = {
-        "incremental.size": 10,  # required
+        "window.size": 20,  # required
+        "window.period": 5,  # required
+        "attenuation.key": "attributes.attn_ts",  # required: attribute key name referenced by attenuation
+        "attenuation.min_scale": 0.1,  # required: minimum scale factor referenced by attenuation
         "output.with_timestamp": True,  # optional
         "output.prefix": "<<<\n",  # optional
         "output.suffix": "\n>>>\n",  # optional
@@ -51,7 +54,7 @@ def npp_incremental(project: str = None, input_path: str = None, input_topic: st
         output_fn = sawatabi.algorithm.IO.write_to_stdout()
 
     # Pipeline creation with Sawatabi
-    pipeline = sawatabi.algorithm.Incremental.create_pipeline(
+    pipeline = sawatabi.algorithm.Attenuation.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=input_fn,
         map_fn=npp_window.npp_mapping,
@@ -77,7 +80,7 @@ def main() -> None:
     parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
     args = parser.parse_args()
 
-    npp_incremental(args.project, args.input, args.input_topic, args.input_subscription, args.output)
+    npp_attenuation(args.project, args.input, args.input_topic, args.input_subscription, args.output)
 
 
 if __name__ == "__main__":

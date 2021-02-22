@@ -16,13 +16,14 @@
 # limitations under the License.
 
 import argparse
+from typing import List
 
 import npp_window
 
 import sawatabi
 
 
-def npp_incremental(project: str = None, input_path: str = None, input_topic: str = None, input_subscription: str = None, output_path: str = None) -> None:
+def npp_partial(project: str = None, input_path: str = None, input_topic: str = None, input_subscription: str = None, output_path: str = None) -> None:
 
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
@@ -30,8 +31,18 @@ def npp_incremental(project: str = None, input_path: str = None, input_topic: st
     if (project is not None) and ((input_topic is not None) or (input_subscription is not None)):
         pipeline_args.append("--streaming")
 
+    # Filter function for patial algorithm
+    def filter_fn(x: List) -> bool:
+        # If the number is greater than 90, it remains in the window.
+        if x[1][1] > 90:
+            return True
+        else:
+            return False
+
     algorithm_options = {
-        "incremental.size": 10,  # required
+        "window.size": 10,  # required
+        "window.period": 10,  # required
+        "filter_fn": filter_fn,  # required
         "output.with_timestamp": True,  # optional
         "output.prefix": "<<<\n",  # optional
         "output.suffix": "\n>>>\n",  # optional
@@ -51,7 +62,7 @@ def npp_incremental(project: str = None, input_path: str = None, input_topic: st
         output_fn = sawatabi.algorithm.IO.write_to_stdout()
 
     # Pipeline creation with Sawatabi
-    pipeline = sawatabi.algorithm.Incremental.create_pipeline(
+    pipeline = sawatabi.algorithm.Partial.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=input_fn,
         map_fn=npp_window.npp_mapping,
@@ -77,7 +88,7 @@ def main() -> None:
     parser.add_argument("--output", dest="output", help="Path (prefix) to the output file or the object to write to.")
     args = parser.parse_args()
 
-    npp_incremental(args.project, args.input, args.input_topic, args.input_subscription, args.output)
+    npp_partial(args.project, args.input, args.input_topic, args.input_subscription, args.output)
 
 
 if __name__ == "__main__":

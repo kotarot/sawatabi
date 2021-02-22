@@ -23,9 +23,12 @@ from pyqubo import Array, Placeholder
 
 import sawatabi
 
+# Display settings for sawatabi model.
 pd.options.display.max_columns = None
 pd.options.display.width = None
 pd.options.display.max_colwidth = 80
+pd.options.display.max_rows = 100
+pd.options.display.float_format = "{:.3f}".format  # timestamp format
 
 
 def _print_utf8(model):

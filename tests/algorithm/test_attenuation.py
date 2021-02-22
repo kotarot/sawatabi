@@ -17,12 +17,15 @@ import datetime
 import pytest
 
 from sample.algorithm import npp_window
-from sawatabi.algorithm import IO, Delta
+from sawatabi.algorithm import IO, Attenuation
 
 
-def test_delta_algorithm_npp_100(capfd):
+def test_attenuation_algorithm_npp_100(capfd):
     algorithm_options = {
-        "window.size": 10,
+        "window.size": 20,
+        "window.period": 5,
+        "attenuation.key": "attributes.attn_ts",
+        "attenuation.min_scale": 0.1,
         "output.with_timestamp": True,
         "output.prefix": "<< prefix <<\n",
         "output.suffix": "\n>> suffix >>\n",
@@ -32,7 +35,7 @@ def test_delta_algorithm_npp_100(capfd):
     pipeline_args = ["--runner=DirectRunner"]
     # pipeline_args.append("--save_main_session")  # If save_main_session is true, pickle of the session fails on Windows unit tests
 
-    pipeline = Delta.create_pipeline(
+    pipeline = Attenuation.create_pipeline(
         algorithm_options=algorithm_options,
         input_fn=IO.read_from_text_as_number(path="tests/algorithm/numbers_100.txt"),
         map_fn=npp_window.npp_mapping,
@@ -55,20 +58,20 @@ def test_delta_algorithm_npp_100(capfd):
         assert datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S.%f%z") in out
 
     # Check inputs
-    assert "[47, 60, 87, 60, 91, 71, 28, 37, 7, 65]" in out  # 1--10
-    assert "[28, 29, 38, 55, 6, 75, 57, 49, 34, 83]" in out  # 11--20
-    assert "[30, 46, 78, 29, 99, 32, 86, 82, 7, 81]" in out  # 21--30
+    assert "[47, 60, 87, 60, 91, 71, 28, 37, 7, 65, 28, 29, 38, 55, 6, 75, 57, 49, 34, 83]" in out  # 1--20
+    assert "[71, 28, 37, 7, 65, 28, 29, 38, 55, 6, 75, 57, 49, 34, 83, 30, 46, 78, 29, 99]" in out  # 6--25
+    assert "[28, 29, 38, 55, 6, 75, 57, 49, 34, 83, 30, 46, 78, 29, 99, 32, 86, 82, 7, 81]" in out  # 10--30
 
     # Check (Count) Solution
-    assert out.count("INPUT -->") == 10
-    assert out.count("SOLUTION ==>") == 10
-    assert out.count("The received event is outdated") == 0
-    assert "diff   : 0" in out
+    assert out.count("INPUT -->") == 20
+    assert out.count("SOLUTION ==>") == 20
+    assert out.count("The received event is outdated") == 3
+    assert "diff   : 1" in out
 
     # Output prefix/suffix
-    assert out.count("<< prefix <<") == 10
-    assert out.count(">> suffix >>") == 10
+    assert out.count("<< prefix <<") == 23
+    assert out.count(">> suffix >>") == 23
 
 
-def test_delta_algorithm_repr():
-    assert str(Delta()) == "Delta()"
+def test_attenuation_algorithm_repr():
+    assert str(Attenuation()) == "Attenuation()"

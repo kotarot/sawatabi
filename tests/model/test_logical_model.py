@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
+
 import numpy as np
 import pyqubo
 import pytest
@@ -429,7 +431,7 @@ def test_logical_model_get_attributes(ising):
 
 def test_logical_model_eq():
     model_a = _create_ising_model_for_eq()
-    model_b = _create_ising_model_for_eq()
+    model_b = copy.deepcopy(model_a)  # Note: If _create_ising_model_for_eq() called again, timestamp will be different.
     assert model_a == model_b
 
 

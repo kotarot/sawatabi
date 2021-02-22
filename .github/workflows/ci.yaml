@@ -125,6 +125,14 @@ jobs:
       run: python sample/algorithm/npp_window.py --input="tests/algorithm/numbers_100.txt"
     - name: Run sample/algorithm/npp_window.py (NPP -- GCS and local output)
       run: python sample/algorithm/npp_window.py --input="gs://sawatabi-public/numbers_100.txt" --output="/tmp/npp_window_output.txt"
+    - name: Run sample/algorithm/npp_partial.py (NPP -- local input file)
+      run: python sample/algorithm/npp_partial.py --input="tests/algorithm/numbers_100.txt"
+    - name: Run sample/algorithm/npp_partial.py (NPP -- GCS and local output)
+      run: python sample/algorithm/npp_partial.py --input="gs://sawatabi-public/numbers_100.txt" --output="/tmp/npp_partial_output.txt"
+    - name: Run sample/algorithm/npp_attenuation.py (NPP -- local input file)
+      run: python sample/algorithm/npp_attenuation.py --input="tests/algorithm/numbers_100.txt"
+    - name: Run sample/algorithm/npp_attenuation.py (NPP -- GCS and local output)
+      run: python sample/algorithm/npp_attenuation.py --input="gs://sawatabi-public/numbers_100.txt" --output="/tmp/npp_attenuation_output.txt"
 
     # Algorithm (TSP sample)
     - name: Install additional dependencies for TSP sample

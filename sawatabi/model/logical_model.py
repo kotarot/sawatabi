@@ -131,10 +131,12 @@ class LogicalModel(AbstractModel):
         coefficient=0.0,
         scale=1.0,
         attributes={},
-        timestamp=current_time(),
+        timestamp=None,
     ):
         if not target:
             raise ValueError("'target' must be specified.")
+        if timestamp is None:
+            timestamp = current_time()
 
         self._check_argument_type("coefficient", coefficient, (numbers.Number, pyqubo.core.Express, pyqubo.core.Coefficient))
         self._check_argument_type("scale", scale, (numbers.Number, pyqubo.core.Express))
