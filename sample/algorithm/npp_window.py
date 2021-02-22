@@ -138,7 +138,10 @@ def npp_window(
             f"--project={project}",
             "--region=asia-northeast1",
             f"--temp_location=gs://{dataflow_bucket}/temp",
-            f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
+            #f"--setup_file={os.path.dirname(os.path.abspath(__file__))}/../../setup.py",
+            #"--requirements_file=/Users/kotaro/Downloads/requirements_npp.txt",
+            #f"--extra_package={os.path.dirname(os.path.abspath(__file__))}/../../dist/sawatabi-0.0.2.tar.gz",
+            f"--extra_package={os.path.dirname(os.path.abspath(__file__))}/../../dist/sawatabi-0.0.2-py3-none-any.whl",
             f"--job_name=beamapp-npp-{yymmddhhmmss}",
             # Reference: https://stackoverflow.com/questions/56403572/no-userstate-context-is-available-google-cloud-dataflow
             "--experiments=use_runner_v2",
