@@ -155,7 +155,13 @@ def npp_window(
     if (project is not None) and ((input_topic is not None) or (input_subscription is not None)):
         pipeline_args.append("--streaming")
 
-    algorithm_options = {"window.size": 30, "window.period": 5, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
+    algorithm_options = {
+        "window.size": 30,  # required
+        "window.period": 5,  # required
+        "output.with_timestamp": True,  # optional
+        "output.prefix": "<<<\n",  # optional
+        "output.suffix": "\n>>>\n",  # optional
+    }
 
     if (project is not None) and (input_topic is not None):
         input_fn = sawatabi.algorithm.IO.read_from_pubsub_as_number(project=project, topic=input_topic)

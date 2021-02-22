@@ -30,7 +30,13 @@ def npp_attenuation(project: str = None, input_path: str = None, input_topic: st
     if (project is not None) and ((input_topic is not None) or (input_subscription is not None)):
         pipeline_args.append("--streaming")
 
-    algorithm_options = {"window.size": 10, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
+    algorithm_options = {
+        "window.size": 10,  # required
+        "window.period": 10,  # required
+        "output.with_timestamp": True,  # optional
+        "output.prefix": "<<<\n",  # optional
+        "output.suffix": "\n>>>\n",  # optional
+    }
 
     if input_path is not None:
         input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)

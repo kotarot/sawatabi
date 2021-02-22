@@ -38,7 +38,14 @@ def npp_partial(project: str = None, input_path: str = None, input_topic: str = 
         else:
             return False
 
-    algorithm_options = {"window.size": 10, "window.period": 10, "filter_fn": filter_fn, "output.with_timestamp": True, "output.prefix": "<<<\n", "output.suffix": "\n>>>\n"}
+    algorithm_options = {
+        "window.size": 10,  # required
+        "window.period": 10,  # required
+        "filter_fn": filter_fn,  # required
+        "output.with_timestamp": True,  # optional
+        "output.prefix": "<<<\n",  # optional
+        "output.suffix": "\n>>>\n",  # optional
+    }
 
     if input_path is not None:
         input_fn = sawatabi.algorithm.IO.read_from_text_as_number(path=input_path)
