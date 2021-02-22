@@ -57,6 +57,7 @@ class AbstractAlgorithm(BaseMixin):
             model_state=beam.DoFn.StateParam(PREV_MODEL),
             sampleset_state=beam.DoFn.StateParam(PREV_SAMPLESET),
             algorithm=None,
+            algorithm_options=None,
             map_fn=None,
             solve_fn=None,
             unmap_fn=None,
@@ -103,8 +104,16 @@ class AbstractAlgorithm(BaseMixin):
                 )
                 return
 
+            # Algorithm specific operations
+            # Incremental: Append current window into the all previous data.
             if algorithm == sawatabi.constants.ALGORITHM_INCREMENTAL:
                 sorted_elements.extend(prev_elements)
+                sorted_elements = sorted(sorted_elements)
+            # Partial: Merge current window with the specified data.
+            elif algorithm == sawatabi.constants.ALGORITHM_PARTIAL:
+                filter_fn = algorithm_options["filter_fn"]
+                filtered = filter(filter_fn, prev_elements)
+                sorted_elements = list(filtered) + sorted_elements
                 sorted_elements = sorted(sorted_elements)
 
             # Resolve outgoing elements in this iteration
@@ -228,6 +237,7 @@ class AbstractAlgorithm(BaseMixin):
             | "Solve" >> beam.ParDo(
                 sawatabi.algorithm.Window.SolveDoFn(),
                 algorithm=algorithm,
+                algorithm_options=algorithm_options,
                 map_fn=map_fn,
                 solve_fn=solve_fn,
                 unmap_fn=unmap_fn,

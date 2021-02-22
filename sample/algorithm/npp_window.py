@@ -70,7 +70,8 @@ def npp_unmapping(sampleset: dimod.SampleSet, elements: List, incoming: List, ou
     outputs = []
     outputs.append("")
     outputs.append("INPUT -->")
-    outputs.append("  " + str([e[1][1] for e in elements]))
+    outputs.append(f"  {[e[1][1] for e in elements]}")
+    outputs.append(f"  (length: {len(elements)})")
     outputs.append("SOLUTION ==>")
 
     # Decode spins to solution
