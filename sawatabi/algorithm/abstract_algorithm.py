@@ -160,6 +160,19 @@ class AbstractAlgorithm(BaseMixin):
             model_state.clear()
             model_state.add(model)
 
+            # Algorithm specific operations
+            # Attenuation: Update scale based on data timestamp.
+            if algorithm == sawatabi.constants.ALGORITHM_ATTENUATION:
+                model.to_physical()  # Resolve removed interactions. TODO: Deal with placeholders.
+                ref_timestamp = model._interactions_array[algorithm_options["attenuation.key"]]
+                min_ts = min(ref_timestamp)
+                max_ts = max(ref_timestamp)
+                min_scale = algorithm_options["attenuation.min_scale"]
+                if min_ts < max_ts:
+                    for i, t in enumerate(ref_timestamp):
+                        new_scale = (1.0 - min_scale) / (max_ts - min_ts) * (t - min_ts) + min_scale
+                        model._interactions_array["scale"][i] = new_scale
+
             # Solve and unmap to the solution
             try:
                 sampleset = solve_fn(solver, model, prev_sampleset, sorted_elements, incoming, outgoing)

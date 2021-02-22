@@ -31,8 +31,10 @@ def npp_attenuation(project: str = None, input_path: str = None, input_topic: st
         pipeline_args.append("--streaming")
 
     algorithm_options = {
-        "window.size": 10,  # required
-        "window.period": 10,  # required
+        "window.size": 20,  # required
+        "window.period": 5,  # required
+        "attenuation.key": "attributes.attn_ts",  # required: attribute key name referenced by attenuation
+        "attenuation.min_scale": 0.1,  # required: minimum scale factor referenced by attenuation
         "output.with_timestamp": True,  # optional
         "output.prefix": "<<<\n",  # optional
         "output.suffix": "\n>>>\n",  # optional

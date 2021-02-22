@@ -53,7 +53,11 @@ def npp_mapping(
                 idx_i = i[1][0]
                 idx_j = j[1][0]
                 coeff = -1.0 * i[1][1] * j[1][1]
-                model.add_interaction(target=(x[idx_i], x[idx_j]), coefficient=coeff)
+                model.add_interaction(
+                    target=(x[idx_i], x[idx_j]),
+                    coefficient=coeff,
+                    attributes={"n": str(j), "attn_ts": j[0]},  # metadata for affected number and timestamp for attenuation
+                )
 
     for o in outgoing:
         idx = o[1][0]
