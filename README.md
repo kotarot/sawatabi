@@ -15,11 +15,14 @@ Sawatabi is an application framework to develop and run stream-data-oriented Isi
 ## Visualization of a Sample Sawatabi Application
 
 The animation shows visualization of Outlier Detection Problem and its solutions obtained by a Sawatabi application.
+The Ising fomulation for the Outlier Detection Problem proposed in [1] is used.
 The left figure represents continuous input event data (stream-data) where blue points mean normal values and red points mean abnormal values (outliers).
 The right figure represents solutions for Outlier Detection for each window of the input stream-data.
 The boxes try to cover only normal points as much as possible.
 
 ![Outlier_Detection_JMA_Tokyo_202010_WINDOW](./figs/Outlier_Detection_JMA_Tokyo_202010_WINDOW.gif)
+
+[1] V. N. Smelyanskiy, E. G. Rieffel, S. I. Knysh, C. P. Williams, M. W. Johnson, M. C. Thom, W. G. Macready, and K. L. Pudenz, "A near-term quantum computing approach for hard computational problems in space exploration," arXiv:1204.2821 [quant-ph], 2012. Available: https://arxiv.org/abs/1204.2821
 
 ## Usage
 
