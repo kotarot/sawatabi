@@ -29,15 +29,15 @@ class IO:
         # fmt: off
         number_pattern = re.compile(r"^[0-9]+$")
         return (messages
-            | "Filter" >> beam.Filter(lambda element: number_pattern.match(element))
-            | "To int" >> beam.Map(lambda e: int(e)))
+            | "Filter" >> beam.Filter(number_pattern.match)
+            | "To int" >> beam.Map(int))
         # fmt: on
 
     @classmethod
     def _read_as_json(cls, messages):
         # fmt: off
         return (messages
-            | "To JSON" >> beam.Map(lambda e: json.loads(e)))
+            | "To JSON" >> beam.Map(json.loads))
         # fmt: on
 
     @classmethod
