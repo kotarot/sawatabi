@@ -36,8 +36,7 @@ def npp_partial(project: str = None, input_path: str = None, input_topic: str = 
         # If the number is greater than 90, it remains in the window.
         if x[1][1] > 90:
             return True
-        else:
-            return False
+        return False
 
     algorithm_options = {
         "window.size": 10,  # required

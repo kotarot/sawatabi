@@ -38,12 +38,11 @@ class AbstractConstraint(BaseMixin):
             self._check_argument_type_in_list("variables", variables, (pyqubo.Spin, pyqubo.Binary))
         if isinstance(variables, set):
             return variables
-        else:
-            if isinstance(variables, pyqubo.Array):
-                variables = list(Functions._flatten(variables.bit_list))
-            elif isinstance(variables, (pyqubo.Spin, pyqubo.Binary)):
-                variables = [variables]
-            return set(variables)
+        if isinstance(variables, pyqubo.Array):
+            variables = list(Functions._flatten(variables.bit_list))
+        elif isinstance(variables, (pyqubo.Spin, pyqubo.Binary)):
+            variables = [variables]
+        return set(variables)
 
     def get_constraint_class(self):
         return self._constraint_class

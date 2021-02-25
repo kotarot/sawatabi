@@ -27,8 +27,7 @@ def test_partial_algorithm_npp_100(capfd):
         # If the number is greater than 90, it remains in the window.
         if x[1][1] > 90:
             return True
-        else:
-            return False
+        return False
 
     algorithm_options = {
         "window.size": 10,
