@@ -34,23 +34,23 @@ def test_zero_or_one_hot_constraint():
     x2 = pyqubo.Binary("x2")
 
     c.add_variable(x0)
-    assert c.get_variables() == set([x0])
+    assert c.get_variables() == {x0}
     assert len(c.get_variables()) == 1
 
     c.add_variable([x1, x2])
-    assert c.get_variables() == set([x0, x1, x2])
+    assert c.get_variables() == {x0, x1, x2}
     assert len(c.get_variables()) == 3
 
-    c.add_variable(set([x0]))
-    assert c.get_variables() == set([x0, x1, x2])
+    c.add_variable({x0})
+    assert c.get_variables() == {x0, x1, x2}
     assert len(c.get_variables()) == 3
 
     c.add_variable(variables=[x0, x1])
-    assert c.get_variables() == set([x0, x1, x2])
+    assert c.get_variables() == {x0, x1, x2}
     assert len(c.get_variables()) == 3
 
     c.remove_variable(variables=[x0])
-    assert c.get_variables() == set([x1, x2])
+    assert c.get_variables() == {x1, x2}
     assert len(c.get_variables()) == 2
 
     with pytest.raises(ValueError):
@@ -61,7 +61,7 @@ def test_zero_or_one_hot_constraint_constructors():
     a = pyqubo.Array.create("a", shape=(2, 2), vartype="SPIN")
 
     c1 = ZeroOrOneHotConstraint(variables=a)
-    assert c1.get_variables() == set([a[0, 0], a[0, 1], a[1, 0], a[1, 1]])
+    assert c1.get_variables() == {a[0, 0], a[0, 1], a[1, 0], a[1, 1]}
     assert c1.get_label() == "Default Zero-or-One-hot Constraint"
     assert c1.get_strength() == 1.0
 
@@ -81,7 +81,7 @@ def test_zero_or_one_hot_constraint_typeerror():
         ZeroOrOneHotConstraint(variables="invalid type")
 
     with pytest.raises(TypeError):
-        ZeroOrOneHotConstraint(variables=set([1, 2, 3]))
+        ZeroOrOneHotConstraint(variables={1, 2, 3})
 
     with pytest.raises(TypeError):
         ZeroOrOneHotConstraint(label=12345)
@@ -100,7 +100,7 @@ def test_zero_or_one_hot_constraint_eq():
 
     a = pyqubo.Spin("a")
     b = pyqubo.Binary("b")
-    c1 = ZeroOrOneHotConstraint(variables=set([a, b]), label="my label", strength=20)
+    c1 = ZeroOrOneHotConstraint(variables={a, b}, label="my label", strength=20)
     c2 = ZeroOrOneHotConstraint(variables=[a, b], label="my label", strength=2 * 10)
     assert c1 == c2
 
@@ -111,7 +111,7 @@ def test_zero_or_one_hot_constraint_ne():
     c = []
     c.append(ZeroOrOneHotConstraint())
     c.append(ZeroOrOneHotConstraint(variables=[a, b], label="my label", strength=20))
-    c.append(ZeroOrOneHotConstraint(variables=set([a, b])))
+    c.append(ZeroOrOneHotConstraint(variables={a, b}))
     c.append(ZeroOrOneHotConstraint(variables=a))
     c.append(ZeroOrOneHotConstraint(label="my label"))
     c.append(ZeroOrOneHotConstraint(strength=20))
