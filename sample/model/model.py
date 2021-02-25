@@ -115,7 +115,7 @@ def model_constraints():
     _print_utf8(model)
 
     print("\nSet a one-hot constraint to a[0] and a[1]")
-    vset = set([a[0], a[1]])
+    vset = {a[0], a[1]}
     constraint = sawatabi.model.constraint.NHotConstraint(variables=vset, n=1, label="my constraint 1", strength=1.0)
     model.add_constraint(constraint=constraint)
     _print_utf8(model)
