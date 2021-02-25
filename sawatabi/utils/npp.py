@@ -75,7 +75,7 @@ def solve_npp_with_dp(numbers, enumerate_all=False, print_dp_table=False):
             print("")
 
     def find_the_other_partition(p, n):
-        a = set([i for i in range(n)])
+        a = set(list(range(n)))
         return list(a - set(p))
 
     # The bottom right element (dp[s][n]) is the exact answer
