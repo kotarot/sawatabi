@@ -171,7 +171,7 @@ class SawatabiSolver(AbstractSolver):
             reverse_target_temperature = reverse_options["reverse_temperature"]  # The max temperature when the phase is reverse annealing
 
         energy = initial_energy
-        reversing_phase = True if reverse_options is not None else False
+        reversing_phase = reverse_options is not None
         sweep = 0
 
         energy_hist = []
