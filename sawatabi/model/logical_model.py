@@ -129,9 +129,11 @@ class LogicalModel(AbstractModel):
         name="",
         coefficient=0.0,
         scale=1.0,
-        attributes={},
+        attributes=None,
         timestamp=None,
     ):
+        if attributes is None:
+            attributes = {}
         if not target:
             raise ValueError("'target' must be specified.")
         if timestamp is None:
@@ -493,7 +495,9 @@ class LogicalModel(AbstractModel):
     # Converts
     ################################
 
-    def to_physical(self, placeholder={}):
+    def to_physical(self, placeholder=None):
+        if placeholder is None:
+            placeholder = {}
         physical = PhysicalModel(mtype=self._mtype)
 
         linear, quadratic = {}, {}
