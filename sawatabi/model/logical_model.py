@@ -108,10 +108,9 @@ class LogicalModel(AbstractModel):
 
         if fmt == constants.SELECT_SERIES:
             return searched
-        elif fmt == constants.SELECT_DICT:
+        if fmt == constants.SELECT_DICT:
             return searched.to_dict(orient="index")
-        else:
-            raise ValueError(f"Format '{fmt}' is invalid.")
+        raise ValueError(f"Format '{fmt}' is invalid.")
 
     def select_interactions_by_variable(self, target):
         self._update_interactions_dataframe_from_arrays()
