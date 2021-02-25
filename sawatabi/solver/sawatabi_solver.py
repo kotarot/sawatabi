@@ -145,8 +145,7 @@ class SawatabiSolver(AbstractSolver):
         sampleset = sampleset.change_vartype(self._original_bqm.vartype, inplace=True)
         if not need_stats:
             return sampleset
-        else:
-            return sampleset, stats
+        return sampleset, stats
 
     def annealing(self, num_reads, num_sweeps, cooling_rate, initial_temperature, initial_state, reverse_options, pickup_mode):
         num_variables = self._bqm.num_variables
@@ -172,7 +171,7 @@ class SawatabiSolver(AbstractSolver):
             reverse_target_temperature = reverse_options["reverse_temperature"]  # The max temperature when the phase is reverse annealing
 
         energy = initial_energy
-        reversing_phase = True if reverse_options is not None else False
+        reversing_phase = reverse_options is not None
         sweep = 0
 
         energy_hist = []
@@ -251,9 +250,8 @@ class SawatabiSolver(AbstractSolver):
         """
         if diff <= 0.0:
             return True
-        else:
-            p = math.exp(-diff / temperature)  # Note: np.exp is slow here
-            self._accept_randoms_idx += 1
-            if self._accept_randoms[self._accept_randoms_idx] < p:
-                return True
+        p = math.exp(-diff / temperature)  # Note: np.exp is slow here
+        self._accept_randoms_idx += 1
+        if self._accept_randoms[self._accept_randoms_idx] < p:
+            return True
         return False

@@ -35,23 +35,23 @@ def test_n_hot_constraint():
     x2 = pyqubo.Binary("x2")
 
     c.add_variable(x0)
-    assert c.get_variables() == set([x0])
+    assert c.get_variables() == {x0}
     assert len(c.get_variables()) == 1
 
     c.add_variable([x1, x2])
-    assert c.get_variables() == set([x0, x1, x2])
+    assert c.get_variables() == {x0, x1, x2}
     assert len(c.get_variables()) == 3
 
-    c.add_variable(set([x0]))
-    assert c.get_variables() == set([x0, x1, x2])
+    c.add_variable({x0})
+    assert c.get_variables() == {x0, x1, x2}
     assert len(c.get_variables()) == 3
 
     c.add_variable(variables=[x0, x1])
-    assert c.get_variables() == set([x0, x1, x2])
+    assert c.get_variables() == {x0, x1, x2}
     assert len(c.get_variables()) == 3
 
     c.remove_variable(variables=[x0])
-    assert c.get_variables() == set([x1, x2])
+    assert c.get_variables() == {x1, x2}
     assert len(c.get_variables()) == 2
 
     with pytest.raises(ValueError):
@@ -62,7 +62,7 @@ def test_n_hot_constraint_constructors():
     a = pyqubo.Array.create("a", shape=(2, 2), vartype="SPIN")
 
     c1 = NHotConstraint(variables=a)
-    assert c1.get_variables() == set([a[0, 0], a[0, 1], a[1, 0], a[1, 1]])
+    assert c1.get_variables() == {a[0, 0], a[0, 1], a[1, 0], a[1, 1]}
     assert c1.get_n() == 1
     assert c1.get_label() == "Default N-hot Constraint"
     assert c1.get_strength() == 1.0
@@ -100,7 +100,7 @@ def test_n_hot_constraint_typeerror():
         NHotConstraint(variables="invalid type")
 
     with pytest.raises(TypeError):
-        NHotConstraint(variables=set([1, 2, 3]))
+        NHotConstraint(variables={1, 2, 3})
 
     with pytest.raises(TypeError):
         NHotConstraint(n="invalid type")
@@ -125,7 +125,7 @@ def test_n_hot_constraint_eq():
 
     a = pyqubo.Spin("a")
     b = pyqubo.Binary("b")
-    c1 = NHotConstraint(variables=set([a, b]), n=2, label="my label", strength=20)
+    c1 = NHotConstraint(variables={a, b}, n=2, label="my label", strength=20)
     c2 = NHotConstraint(variables=[a, b], n=2, label="my label", strength=2 * 10)
     assert c1 == c2
 
@@ -136,7 +136,7 @@ def test_n_hot_constraint_ne():
     c = []
     c.append(NHotConstraint())
     c.append(NHotConstraint(variables=[a, b], n=2, label="my label", strength=20))
-    c.append(NHotConstraint(variables=set([a, b])))
+    c.append(NHotConstraint(variables={a, b}))
     c.append(NHotConstraint(variables=a))
     c.append(NHotConstraint(n=2))
     c.append(NHotConstraint(label="my label"))

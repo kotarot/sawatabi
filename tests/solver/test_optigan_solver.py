@@ -26,7 +26,8 @@ class ResponseMock:
     def __init__(self):
         self.status_code = 200
 
-    def json(self):
+    @staticmethod
+    def json():
         return {
             "execution_parameters": {"num_unit_steps": 10},
             "execution_time": {"annealing_time": 123.456789, "queue_time": 123.456789, "cpu_time": 123.456789, "time_stamps": [123.456798]},

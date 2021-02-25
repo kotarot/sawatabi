@@ -75,7 +75,7 @@ def solve_npp_with_dp(numbers, enumerate_all=False, print_dp_table=False):
             print("")
 
     def find_the_other_partition(p, n):
-        a = set([i for i in range(n)])
+        a = set(list(range(n)))
         return list(a - set(p))
 
     # The bottom right element (dp[s][n]) is the exact answer
@@ -87,12 +87,11 @@ def solve_npp_with_dp(numbers, enumerate_all=False, print_dp_table=False):
             the_others.append(find_the_other_partition(p, n))
         assert len(dp[s][n][1]) == len(the_others)
         return (True, dp[s][n][1], the_others)
-    else:
-        for i in range(s, -1, -1):
-            if dp[i][n][0]:
-                if not enumerate_all:
-                    dp[i][n] = (dp[i][n][0], [dp[i][n][1]])
-                for p in dp[i][n][1]:
-                    the_others.append(find_the_other_partition(p, n))
-                assert len(dp[i][n][1]) == len(the_others)
-                return (False, dp[i][n][1], the_others)
+    for i in range(s, -1, -1):
+        if dp[i][n][0]:
+            if not enumerate_all:
+                dp[i][n] = (dp[i][n][0], [dp[i][n][1]])
+            for p in dp[i][n][1]:
+                the_others.append(find_the_other_partition(p, n))
+            assert len(dp[i][n][1]) == len(the_others)
+            return (False, dp[i][n][1], the_others)

@@ -108,10 +108,9 @@ class LogicalModel(AbstractModel):
 
         if fmt == constants.SELECT_SERIES:
             return searched
-        elif fmt == constants.SELECT_DICT:
+        if fmt == constants.SELECT_DICT:
             return searched.to_dict(orient="index")
-        else:
-            raise ValueError(f"Format '{fmt}' is invalid.")
+        raise ValueError(f"Format '{fmt}' is invalid.")
 
     def select_interactions_by_variable(self, target):
         self._update_interactions_dataframe_from_arrays()
@@ -130,9 +129,11 @@ class LogicalModel(AbstractModel):
         name="",
         coefficient=0.0,
         scale=1.0,
-        attributes={},
+        attributes=None,
         timestamp=None,
     ):
+        if attributes is None:
+            attributes = {}
         if not target:
             raise ValueError("'target' must be specified.")
         if timestamp is None:
@@ -157,8 +158,7 @@ class LogicalModel(AbstractModel):
         if self._has_name(internal_name):
             if not self._is_removed(internal_name):
                 raise ValueError(f"An interaction named '{internal_name}' already exists. Cannot add the same name.")
-            else:
-                raise ValueError(f"An interaction named '{internal_name}' is already removed.")
+            raise ValueError(f"An interaction named '{internal_name}' is already removed.")
 
         if body == 1:
             keys = (interaction_info["key"], np.nan)
@@ -495,7 +495,9 @@ class LogicalModel(AbstractModel):
     # Converts
     ################################
 
-    def to_physical(self, placeholder={}):
+    def to_physical(self, placeholder=None):
+        if placeholder is None:
+            placeholder = {}
         physical = PhysicalModel(mtype=self._mtype)
 
         linear, quadratic = {}, {}
@@ -905,9 +907,9 @@ class LogicalModel(AbstractModel):
         s.append("┣" + ("━" * 64))
         s.append("┣━ mtype: " + str(self._mtype))
         s.append("┣━ variables: " + str(list(self._variables.keys())))
-        for name, vars in self._variables.items():
+        for name, variables in self._variables.items():
             s.append("┃  name: " + name)
-            s.append(self.append_prefix(str(vars), length=4))
+            s.append(self.append_prefix(str(variables), length=4))
         s.append("┣━ interactions:")
         if self._interactions.empty:
             s.append(self.append_prefix("Empty", length=4))

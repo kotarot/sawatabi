@@ -23,7 +23,7 @@ def test_version_format():
 
 def test_version_info_format():
     ver_info = sawatabi.__version_info__
-    assert (len(ver_info) == 3) or (len(ver_info) == 4)
+    assert len(ver_info) in (3, 4)
 
     assert isinstance(ver_info[0], int)
     assert isinstance(ver_info[1], int)

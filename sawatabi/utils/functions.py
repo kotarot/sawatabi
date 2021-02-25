@@ -30,34 +30,30 @@ class Functions:
     def elementwise_add(cls, a, b):
         if isinstance(a, tuple) and isinstance(b, tuple):
             return tuple(map(operator.add, a, b))
-        elif isinstance(a, list) and isinstance(b, list):
+        if isinstance(a, list) and isinstance(b, list):
             return list(map(operator.add, a, b))
-        else:
-            raise TypeError("a and b must be the same type and must be one of [tuple, list].")
+        raise TypeError("a and b must be the same type and must be one of [tuple, list].")
 
     @classmethod
     def elementwise_sub(cls, a, b):
         if isinstance(a, tuple) and isinstance(b, tuple):
             return tuple(map(operator.sub, a, b))
-        elif isinstance(a, list) and isinstance(b, list):
+        if isinstance(a, list) and isinstance(b, list):
             return list(map(operator.sub, a, b))
-        else:
-            raise TypeError("a and b must be the same type and must be one of [tuple, list].")
+        raise TypeError("a and b must be the same type and must be one of [tuple, list].")
 
     @classmethod
     def elementwise_max(cls, a, b):
         if isinstance(a, tuple) and isinstance(b, tuple):
             return tuple(np.maximum(a, b))
-        elif isinstance(a, list) and isinstance(b, list):
+        if isinstance(a, list) and isinstance(b, list):
             return list(np.maximum(a, b))
-        else:
-            raise TypeError("a and b must be the same type and must be one of [tuple, list].")
+        raise TypeError("a and b must be the same type and must be one of [tuple, list].")
 
     @classmethod
     def elementwise_min(cls, a, b):
         if isinstance(a, tuple) and isinstance(b, tuple):
             return tuple(np.minimum(a, b))
-        elif isinstance(a, list) and isinstance(b, list):
+        if isinstance(a, list) and isinstance(b, list):
             return list(np.minimum(a, b))
-        else:
-            raise TypeError("a and b must be the same type and must be one of [tuple, list].")
+        raise TypeError("a and b must be the same type and must be one of [tuple, list].")
