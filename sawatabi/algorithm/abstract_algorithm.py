@@ -203,8 +203,10 @@ class AbstractAlgorithm(BaseMixin):
         output_fn=None,
         solver=LocalSolver(exact=False),  # default solver
         initial_mtype=sawatabi.constants.MODEL_ISING,
-        pipeline_args=["--runner=DirectRunner"],
+        pipeline_args=None,
     ):
+        if pipeline_args is None:
+            pipeline_args = ["--runner=DirectRunner"]
         cls._check_argument_type("initial_mtype", initial_mtype, str)
         valid_initial_mtypes = [sawatabi.constants.MODEL_ISING, sawatabi.constants.MODEL_QUBO]
         if initial_mtype not in valid_initial_mtypes:
