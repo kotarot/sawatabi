@@ -907,9 +907,9 @@ class LogicalModel(AbstractModel):
         s.append("┣" + ("━" * 64))
         s.append("┣━ mtype: " + str(self._mtype))
         s.append("┣━ variables: " + str(list(self._variables.keys())))
-        for name, vars in self._variables.items():
+        for name, variables in self._variables.items():
             s.append("┃  name: " + name)
-            s.append(self.append_prefix(str(vars), length=4))
+            s.append(self.append_prefix(str(variables), length=4))
         s.append("┣━ interactions:")
         if self._interactions.empty:
             s.append(self.append_prefix("Empty", length=4))
