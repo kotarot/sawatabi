@@ -44,7 +44,7 @@ def test_logical_model_select(ising):
 
     # single result
     selected = ising.select_interaction("name == 'x[0][0]'")
-    assert type(selected) == pd.core.frame.DataFrame
+    assert type(selected) is pd.core.frame.DataFrame
     assert len(selected) == 1
     assert selected["name"].values[0] == "x[0][0]"
     assert selected["key"].values[0] == "x[0][0]"
@@ -53,7 +53,7 @@ def test_logical_model_select(ising):
 
     # dict format
     selected = ising.select_interaction("name == 'my name'", fmt="dict")
-    assert type(selected) == dict
+    assert type(selected) is dict
     assert len(selected) == 1
     key = list(selected.keys())[0]
     assert selected[key]["name"] == "my name"
@@ -102,7 +102,7 @@ def test_logical_model_select_interactions_by_variable(ising):
     ising.add_interaction((x[0, 0], x[0, 1]), coefficient=30.0)
 
     selected = ising.select_interactions_by_variable(x[0, 0])
-    assert type(selected) == np.ndarray
+    assert type(selected) is np.ndarray
     assert len(selected) == 2
     assert selected[0] == "x[0][0]"
     assert selected[1] == "x[0][0]*x[0][1]"
