@@ -148,4 +148,4 @@ def _print_sampleset(sampleset):
     print("\nsampleset.first:")
     print(sampleset.first)
     print("\nsampleset.samples():")
-    print([sample for sample in sampleset.samples()])
+    print(list(sampleset.samples()))
