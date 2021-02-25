@@ -156,8 +156,7 @@ class LogicalModel(AbstractModel):
         if self._has_name(internal_name):
             if not self._is_removed(internal_name):
                 raise ValueError(f"An interaction named '{internal_name}' already exists. Cannot add the same name.")
-            else:
-                raise ValueError(f"An interaction named '{internal_name}' is already removed.")
+            raise ValueError(f"An interaction named '{internal_name}' is already removed.")
 
         if body == 1:
             keys = (interaction_info["key"], np.nan)
