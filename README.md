@@ -9,6 +9,7 @@
 [![Codecov branch](https://img.shields.io/codecov/c/gh/kotarot/sawatabi/main?flag=unittests&style=flat-square&token=SKXOS0VKOA)](https://codecov.io/gh/kotarot/sawatabi)
 [![GitHub](https://img.shields.io/github/license/kotarot/sawatabi?style=flat-square)](https://github.com/kotarot/sawatabi/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkotarot%2Fsawatabi.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkotarot%2Fsawatabi?ref=badge_shield)
 
 Sawatabi is an application framework to develop and run stream-data-oriented Ising applications with quantum annealing.
 
@@ -128,3 +129,7 @@ pip install --editable ".[dev]"
 ## Acknowledgement
 
 This work is supported by the MITOU Target program from Information-technology Promotion Agency, Japan (IPA).
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkotarot%2Fsawatabi.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkotarot%2Fsawatabi?ref=badge_large)
