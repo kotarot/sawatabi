@@ -45,32 +45,32 @@ setup(
     version=version,
     license="Apache 2.0",
     install_requires=[
-        "apache-beam>=2.26.0,<3.0.0",
-        "apache-beam[gcp]>=2.26.0,<3.0.0",
-        "dwave-system>=1.2.1,<2.0.0",
-        "dwave-neal>=0.5.6,<1.0.0",
-        "pandas>=1.1.4,<2.0.0",
+        "apache-beam>=2.29.0,<3.0.0",
+        "apache-beam[gcp]>=2.29.0,<3.0.0",
+        "dwave-system>=1.5.0,<2.0.0",
+        "dwave-neal>=0.5.7,<1.0.0",
+        "pandas>=1.2.4,<2.0.0",
         "pyqubo>=0.4.0,<1.0.0",
-        "PyYAML>=5.3.1,<6.0.0",
+        "PyYAML>=5.4.1,<6.0.0",
     ],
     extras_require={
         "dev": [
             # Beam interactive runner
-            "apache-beam[interactive]>=2.26.0,<3.0.0",
+            "apache-beam[interactive]>=2.29.0,<3.0.0",
             # For test
-            "pytest>=6.1.2,<7.0.0",
-            "pytest-cov>=2.10.1,<3.0.0",
-            "pytest-mock>=3.3.1,<4.0.0",
+            "pytest>=6.2.4,<7.0.0",
+            "pytest-cov>=2.11.1,<3.0.0",
+            "pytest-mock>=3.6.1,<4.0.0",
             "pytest-timeout>=1.4.2,<2.0.0",
             # For lint
-            "black>=20.8b1,<21.0",
-            "flake8>=3.8.4,<4.0.0",
-            "isort>=5.6.4,<6.0.0",
-            "mypy>=0.800,<1.0",
+            "black>=21.5b0,<22.0",
+            "flake8>=3.9.1,<4.0.0",
+            "isort>=5.8.0,<6.0.0",
+            "mypy>=0.812,<1.0",
             # For profiling visualization
             "snakeviz>=2.1.0,<3.0.0",
             # For samples
-            "geopy>=2.0.0,<3.0.0",
+            "geopy>=2.1.0,<3.0.0",
         ],
     },
     author="Kotaro Terada",
